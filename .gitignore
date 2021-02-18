@@ -122,3 +122,18 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+*.npy
+*.tif
+*.h5
+*.pkl
+*.csv
+!TrainTestMask.tif
+
+*.png
+*.directory
+*.zip
+*.txt
+*metadata.txt
+*summary*
+*.rar
