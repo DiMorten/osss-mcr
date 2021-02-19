@@ -228,7 +228,7 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 		print(" shapes", test_predictions.shape, batch['label'].shape)
 		print( "uniques",np.unique(test_predictions, return_counts=True),np.unique(batch['label'], return_counts=True))
 		
-		translate_mode=True
+		translate_mode=False
 		deb.prints(translate_mode)
 
 		if translate_mode==True:
@@ -240,7 +240,7 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 					bcknd_flag=False)
 						
 			batch['label'] = self.newLabel2labelTranslate(batch['label'], 
-					translate_label_path + 'new_labels2labels_l2_'+ds.im_list[-1]+'.pkl',
+					translate_label_path + 'new_labels2labels_'+self.dataset+'_'+ds.im_list[-1]+'.pkl',
 					bcknd_flag=True)
 		print("End shapes", test_predictions.shape, batch['label'].shape)
 		print(" shapes", test_predictions.shape, batch['label'].shape)

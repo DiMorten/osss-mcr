@@ -87,7 +87,7 @@ def labels_predictions_filter_transform(label_test,predictions,class_n,
 	deb.prints(np.unique(predictions,return_counts=True))
 	deb.prints(np.unique(label_test,return_counts=True))
 
-	translate_mode = True
+	translate_mode = False
 	deb.prints(translate_mode)
 	if translate_mode == False:
 		bcknd_id = np.unique(label_test)[-1]
@@ -640,7 +640,7 @@ path_img="../../../../dataset/dataset/"+dataset+"_data/patches_bckndfixed/test/p
 imgs_in = np.load(path_img,mmap_mode='r')
 
 load_metrics=False
-small_classes_ignore=True
+small_classes_ignore=False
 #mode='global'
 mode='each_date'
 if dataset=='cv':
@@ -952,6 +952,9 @@ elif dataset=='lm':
 
 		experiment_groups=[[
 			'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+args.seq_date+'_700perclass.h5'
+		]]	
+		experiment_groups=[[
+			'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+args.seq_date+'_l2_traintimes2.h5'
 		]]	
 
 elif dataset=='lm_optical':

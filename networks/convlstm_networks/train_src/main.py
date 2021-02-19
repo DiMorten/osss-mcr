@@ -292,6 +292,7 @@ class Dataset(NetObject):
 		#if self.ds.name =='l2':
 		#	self.patches['train']['label'] = self.patches['test']['label'].copy()
 		#	self.patches['train']['in'] = self.patches['test']['in'].copy() 
+		'''
 		if self.ds.name == 'lm':
 			self.patches['train']['in'] = np.concatenate((self.patches['train']['in'],
 							self.patches['test']['in']), axis=0)
@@ -304,7 +305,7 @@ class Dataset(NetObject):
 			self.patches['test']['label'] = np.expand_dims(
 							np.zeros(self.patches['test']['label'].shape[1:]),
 							axis = 0)
-
+		'''
 		self.dataset=None
 		unique,count=np.unique(self.patches['train']['label'],return_counts=True)
 		deb.prints(np.unique(self.patches['train']['label'],return_counts=True))
@@ -2800,8 +2801,11 @@ class NetModel(NetObject):
 		batch, data, min_seq_len = self.mim.trainingInit(batch, data, self.t_len, 
 									model_t_len=model_t_len)
 		data = self.mim.valLabelSelect(data)
-		data.doty_flag=True
-		data.ds.doty_flag=True
+
+#		data.doty_flag=True
+#		data.ds.doty_flag=True
+		data.doty_flag=False
+		data.ds.doty_flag=False
 		deb.prints(self.mim)
 		#==============================START TRAIN/TEST LOOP============================#
 		for epoch in range(self.epochs):
@@ -3147,7 +3151,8 @@ if __name__ == '__main__':
 		dotys_sin_cos = dotys_sin_cos, ds = ds)
 	#t_len=args.t_len
 
-	args.patience=30
+#	args.patience=30 # more for the Nice paper
+	args.patience=10 # more for the Nice paper
 
 	val_set=True
 	#val_set_mode='stratified'
@@ -3210,8 +3215,8 @@ if __name__ == '__main__':
 			elif args.seq_mode=='var' or args.seq_mode=='var_label':	
 				label_type = 'NtoN'
 			deb.prints(label_type)
-#			data.semantic_balance(500,label_type = label_type) #More for seq2seq
-			data.semantic_balance(700,label_type = label_type) #More for seq2seq
+			data.semantic_balance(500,label_type = label_type) #Less for fixed i guess
+#			data.semantic_balance(700,label_type = label_type) #More for seq2seq
 						
 
 

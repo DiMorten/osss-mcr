@@ -9,37 +9,24 @@
 
 
 ::dataset=cv
-set dataset=l2
+set dataset=lm
 :: set dataset=lm
 
 ::::dataSource='OpticalWithClouds'
 ::dataSource='SAR'
 set dataSource=SAR
-set model=UUnet4ConvLSTM_doty
+set model=UUnet4ConvLSTM
+:: set model=UUnet4ConvLSTM_doty
+
 set seq_mode=fixed
 
 
 
 
-set seq_date=jun
-set id=fixed_label_%seq_mode%_%seq_date%_l2_traintimes2
-call patches_extract.bat %dataset% %dataSource% %seq_mode% %seq_date%
-call experiment_automation.bat %id% %model% %dataset% %dataSource% %seq_mode% %seq_date%
 
-
-set seq_date=jul
-set id=fixed_label_%seq_mode%_%seq_date%_l2_traintimes2
-call patches_extract.bat %dataset% %dataSource% %seq_mode% %seq_date%
-call experiment_automation.bat %id% %model% %dataset% %dataSource% %seq_mode% %seq_date%
-
-set seq_date=aug
-set id=fixed_label_%seq_mode%_%seq_date%_l2_traintimes2
-call patches_extract.bat %dataset% %dataSource% %seq_mode% %seq_date%
-call experiment_automation.bat %id% %model% %dataset% %dataSource% %seq_mode% %seq_date%
-
-set seq_date=sep
-set id=fixed_label_%seq_mode%_%seq_date%_l2_traintimes2
-call patches_extract.bat %dataset% %dataSource% %seq_mode% %seq_date%
+set seq_date=apr
+set id=fixed_label_%seq_mode%_%seq_date%_lm_testlm2
+:: call patches_extract.bat %dataset% %dataSource% %seq_mode% %seq_date%
 call experiment_automation.bat %id% %model% %dataset% %dataSource% %seq_mode% %seq_date%
 
 :: set seq_date=jul
