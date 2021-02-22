@@ -228,7 +228,7 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 		print(" shapes", test_predictions.shape, batch['label'].shape)
 		print( "uniques",np.unique(test_predictions, return_counts=True),np.unique(batch['label'], return_counts=True))
 		
-		translate_mode=False
+		translate_mode=True
 		deb.prints(translate_mode)
 
 		if translate_mode==True:

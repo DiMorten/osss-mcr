@@ -106,6 +106,8 @@ parser.add_argument('-save_patches_only', '--save_patches_only', dest='save_patc
 parser.add_argument('-id', '--id', dest='id',
 					type=str, default='default_id', help='id')
 
+parser.add_argument('-loco_class', '--loco_class', dest='loco_class',
+					type=str, default='0', help='loco_class')
 
 args = parser.parse_args()
 
@@ -339,6 +341,15 @@ class Dataset(NetObject):
 			
 		self.class_n=unique.shape[0] #10 plus background
 
+		print('*'*20, 'Open set - ignoring class')
+		deb.prints(np.unique(self.patches['train']['label'],return_counts=True))
+		deb.prints(args.loco_class)
+		self.patches['train']['label'][self.patches['train']['label']==int(args.loco_class) + 1] = 0
+		self.patches['test']['label'][self.patches['test']['label']==int(args.loco_class) + 1] = 0
+		deb.prints(np.unique(self.patches['train']['label'],return_counts=True))
+		
+		print('*'*20, 'End open set - ignoring class')
+
 		# ======================================= fix labels before one hot
 		print("===== preprocessing labels")
 		classes = np.unique(self.patches['train']['label'])
@@ -427,6 +438,8 @@ class Dataset(NetObject):
 				sys.exit("Test bckndfixed patches were saved")
 
 		# ======================================= end fix labels
+
+
 
 		print("Switching to one hot")
 		self.patches['train']['label']=self.batch_label_to_one_hot(self.patches['train']['label'])
@@ -861,7 +874,7 @@ class Dataset(NetObject):
 
 					# Percentage for each class is equal to: (validation sample number)/(train sample number)*100
 					# If percentage from any class is larger than 20% repeat random choice
-					if np.any(percentages>0.2):
+					if np.any(percentages>0.3):
 					
 						pass
 					else:
@@ -3151,13 +3164,14 @@ if __name__ == '__main__':
 		dotys_sin_cos = dotys_sin_cos, ds = ds)
 	#t_len=args.t_len
 
+	
 #	args.patience=30 # more for the Nice paper
 	args.patience=10 # more for the Nice paper
 
 	val_set=True
 	#val_set_mode='stratified'
 	val_set_mode='stratified'
-	#val_set_mode='random'
+#	val_set_mode='random'
 	if premade_split_patches_load==False:
 		randomly_subsample_sets=False
 
@@ -3203,7 +3217,9 @@ if __name__ == '__main__':
 		 
 		val_set = True # fix this
 		if val_set:
+#			data.val_set_get(val_set_mode,0.15)
 			data.val_set_get(val_set_mode,0.15)
+
 			deb.prints(data.patches['val']['label'].shape)
 			
 		print("=== AUGMENTING TRAINING DATA")

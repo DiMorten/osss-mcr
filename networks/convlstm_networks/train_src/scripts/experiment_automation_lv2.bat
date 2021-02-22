@@ -22,12 +22,13 @@ set seq_mode=fixed
 
 
 
+set loco_class=8
+:: pasture
 
-
-set seq_date=apr
-set id=fixed_label_%seq_mode%_%seq_date%_lm_testlm2
+set seq_date=mar
+set id=fixed_label_%seq_mode%_%seq_date%_loco%loco_class%_lm_testlm_stratifiedval
 :: call patches_extract.bat %dataset% %dataSource% %seq_mode% %seq_date%
-call experiment_automation.bat %id% %model% %dataset% %dataSource% %seq_mode% %seq_date%
+call experiment_automation.bat %id% %model% %dataset% %dataSource% %seq_mode% %seq_date% %loco_class%
 
 :: set seq_date=jul
 :: set id=fixed_label_%seq_mode%_%seq_date%_l2

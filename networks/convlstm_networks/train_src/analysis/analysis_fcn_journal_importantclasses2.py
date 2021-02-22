@@ -833,6 +833,8 @@ elif dataset=='lm':
 			'model_best_var_may18_ext_f1es_pt100.h5']
 			
 		]	
+	experiment_groups=[[
+		'model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_loco8_lm_testlm.h5']]	
 
 elif dataset=='lm_optical':
 	exp_id=1

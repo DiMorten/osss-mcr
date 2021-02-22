@@ -87,7 +87,7 @@ def labels_predictions_filter_transform(label_test,predictions,class_n,
 	deb.prints(np.unique(predictions,return_counts=True))
 	deb.prints(np.unique(label_test,return_counts=True))
 
-	translate_mode = False
+	translate_mode = True
 	deb.prints(translate_mode)
 	if translate_mode == False:
 		bcknd_id = np.unique(label_test)[-1]
