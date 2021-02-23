@@ -23,6 +23,7 @@ init()
 save_bar_flag=True
 sys.path.append('../')
 import deb
+from open_set import SoftmaxThresholding
 import argparse
 parser = argparse.ArgumentParser(description='Process some integers.')
 
@@ -66,7 +67,7 @@ def dense_crf(probs, img=None, n_iters=10, n_classes=19,
 
 def labels_predictions_filter_transform(label_test,predictions,class_n,
 		debug=1,small_classes_ignore=True,
-		important_classes=None,dataset='cv',skip_crf=False,t=None):
+		important_classes=None,dataset='cv',skip_crf=False,t=None, predictionsLoader=None):
 
 	if not skip_crf:
 		# CRF
@@ -77,6 +78,13 @@ def labels_predictions_filter_transform(label_test,predictions,class_n,
 			v = scipy.special.softmax(v, axis=-1)
 			v = np.expand_dims(v, axis=0)
 			predictions[i] = dense_crf(v,img=img_in,n_iters=10,sxy_gaussian=(3, 3), compat_gaussian=3,n_classes=class_n)
+
+
+#			openModel = OpenPCS(loco_class = predictionsLoader.loco_class)
+	openModel = SoftmaxThresholding(loco_class = predictionsLoader.loco_class)
+	openModel.setThreshold(0.6)
+	predictions = openModel.postprocess(label_test, predictions, predictionsLoader.test_pred_proba)
+
 
 	#predictions=predictions.argmax(axis=-1)
 	predictions=np.reshape(predictions,-1)
@@ -269,7 +277,9 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 			deb.prints(args.seq_date in additionalTestClsses)
 		else:
 #			predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabel(path_test, dataset=dataset)
-			predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset, loco_class=8)
+#			predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset, loco_class=8)
+			predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset)
+
 		deb.prints(predictionsLoader)
 
 		predictions, label_test = predictionsLoader.loadPredictions(model_path, seq_date=args.seq_date, model_dataset=args.model_dataset)
@@ -318,10 +328,10 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 			label_test_t,predictions_t = labels_predictions_filter_transform(
 				label_test_t, predictions_t, class_n=class_n,
 				debug=debug,small_classes_ignore=small_classes_ignore,
-				important_classes=None, dataset=dataset, skip_crf=skip_crf, t=t)
+				important_classes=None, dataset=dataset, skip_crf=skip_crf, t=t,
+				predictionsLoader = predictionsLoader)
 
-			openModel = OpenPCS(loco_class = predictionsLoader.loco_class)
-			openModel.postprocess(predictions_t)
+
 			metrics = metrics_get(label_test_t, predictions_t,
 				only_basics=True, debug=debug, detailed_t = t)	
 			print(metrics)

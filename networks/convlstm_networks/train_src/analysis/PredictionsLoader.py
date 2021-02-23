@@ -243,7 +243,6 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 			test_predictions = self.newLabel2labelTranslate(test_predictions, 
 					#translate_label_path + 'new_labels2labels_lm_20171209_S1.pkl',
 					translate_label_path + 'new_labels2labels_'+model_dataset+'_'+train_ds.im_list[-1]+'.pkl',
-					
 					bcknd_flag=False)
 						
 			batch['label'] = self.newLabel2labelTranslate(batch['label'], 
