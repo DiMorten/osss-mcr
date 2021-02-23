@@ -25,6 +25,8 @@ class PatchesStorageAllSamples(PatchesStorage):
 		self.path['train_bckndfixed']=self.path_patches+'train/'
 		self.path['val_bckndfixed']=self.path_patches+'val/'
 		self.path['test_bckndfixed']=self.path_patches+'test/'
+		self.path['test_loco']=self.path_patches+'test_loco/'
+
 		self.seq_mode = seq_mode
 		self.seq_date = seq_date
 		print("Path, ",self.path)
@@ -54,6 +56,22 @@ class PatchesStorageAllSamples(PatchesStorage):
 		out['in']=np.load(self.path[split]+'patches_in.npy',mmap_mode='r')
 		out['label']=np.load(self.path[split]+'patches_label.npy')
 		return out
+
+class PatchesStorageAllSamplesOpenSet(PatchesStorageAllSamples):
+	def storeLabel(self, patches, split='test_loco'):
+		pathlib.Path(self.path[split]).mkdir(parents=True, exist_ok=True) 
+		print("Storing in ",self.path[split])
+		
+		#pathlib.Path(self.path[split]['label']).mkdir(parents=True, exist_ok=True) 
+		np.save(self.path[split]+'patches_label_'+self.seq_mode+'_'+self.seq_date+'.npy', patches) #to-do: add polymorphism for other types of input 
+
+	def store(self,data_patches):
+		self.storeSplit(data_patches['train'],'train_bckndfixed')
+		self.storeSplit(data_patches['test'],'test_bckndfixed')
+		#self.storeSplit(data_patches['val'],'val_bckndfixed')
+		self.storeLabel(data_patches['test']['label_with_loco_class'],'test_loco')
+
+
 
 class PatchesStorageEachSample(PatchesStorage):
 	def __init__(self,path):

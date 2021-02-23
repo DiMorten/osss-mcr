@@ -45,7 +45,7 @@ from keras.layers import Conv3DTranspose, Conv3D
 from keras.callbacks import EarlyStopping
 import tensorflow as tf
 
-from patches_storage import PatchesStorageEachSample,PatchesStorageAllSamples
+from patches_storage import PatchesStorageEachSample,PatchesStorageAllSamples, PatchesStorageAllSamplesOpenSet
 from datagenerator import DataGenerator
 
 sys.path.append('../../../dataset/dataset/patches_extract_script/')
@@ -227,6 +227,7 @@ class NetObject(object):
 		self.path['train_bckndfixed']=self.path_patches_bckndfixed+'train/'
 		self.path['val_bckndfixed']=self.path_patches_bckndfixed+'val/'
 		self.path['test_bckndfixed']=self.path_patches_bckndfixed+'test/'
+		self.path['test_loco'] = self.path_patches_bckndfixed+'test_loco/'
 
 		self.channel_n = channel_n
 		deb.prints(self.channel_n)
@@ -342,6 +343,10 @@ class Dataset(NetObject):
 		self.class_n=unique.shape[0] #10 plus background
 
 		print('*'*20, 'Open set - ignoring class')
+		
+		# making label with loco class copy
+		self.patches['test']['label_with_loco_class'] = self.patches['test']['label'].copy()
+
 		deb.prints(np.unique(self.patches['train']['label'],return_counts=True))
 		deb.prints(args.loco_class)
 		self.patches['train']['label'][self.patches['train']['label']==int(args.loco_class) + 1] = 0
@@ -3282,11 +3287,18 @@ if __name__ == '__main__':
 		print("================== PATCHES WERE STORED =====================")
 
 	elif store_patches==True and store_patches_each_sample==False:
-		patchesStorage = PatchesStorageAllSamples(data.path['v'], args.seq_mode, args.seq_date)
+		patchesStorage = PatchesStorageAllSamplesOpenSet(data.path['v'], args.seq_mode, args.seq_date)
 	
 		print("===== STORING THE LOADED PATCHES AS ALL SAMPLES IN A SINGLE FILE ======")
 		
 		patchesStorage.store(data.patches)
+		#patchesStorage.storeSplit(data.patches['train'],'train_bckndfixed')
+		#patchesStorage.storeSplit(data.patches['test'],'test_bckndfixed')
+		#patchesStorage.storeSplit(data.patches['test_loco_class'],'test_loco_class')
+#		np.save()
+#self.patches['test']['label_with_loco_class']
+
+
 		print("================== PATCHES WERE STORED =====================")
 
 	if args.save_patches_only==True:

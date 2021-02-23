@@ -130,11 +130,7 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 		##label = label - 1 # bcknd is 255
 		##label[label==255] = np.unique(label)[-2]
 		return translated_label 
-	def loadPredictions(self,path_model,seq_date=None, model_dataset=None):
-		print("============== loading model =============")
-		model=load_model(path_model, compile=False)
-		print("Model", model)
-		print("Loading in data: ",self.path_test+'patches_in.npy')
+	def npyLoadPredictions(self, seq_date):
 		batch = {}
 		dated_patches_name =True
 		if dated_patches_name==False:
@@ -147,11 +143,20 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 	#		test_label=np.load(self.path_test+'patches_label.npy')
 			deb.prints(self.path_test+'patches_label_fixed_'+seq_date+'.npy')
 			batch['label']=np.load(self.path_test+'patches_label_fixed_'+seq_date+'.npy') # may18			
-		self.labeled_dates = 12
 
 
 		deb.prints(batch['in'].shape)
 		deb.prints(batch['label'].shape)
+		return batch
+	def loadPredictions(self,path_model,seq_date=None, model_dataset=None):
+		print("============== loading model =============")
+		model=load_model(path_model, compile=False)
+		print("Model", model)
+		print("Loading in data: ",self.path_test+'patches_in.npy')
+
+		batch = self.npyLoadPredictions(seq_date)
+
+		self.labeled_dates = 12
 
 		one_hot_label=True
 		if one_hot_label==True:
@@ -179,7 +184,7 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 		ds.addDataSource(dataSource)
 	
 		time_delta = ds.getTimeDelta(delta=True,format='days')
-		ds.setDotyFlag(True)
+		ds.setDotyFlag(False)
 		dotys, dotys_sin_cos = ds.getDayOfTheYear()
 		ds.dotyReplicateSamples(sample_n = batch['label'].shape[0])
 
@@ -218,10 +223,12 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 		
 		print("batch['in'][0].shape, batch['label'].shape, test_predictions.shape",batch['in'][0].shape, batch['label'].shape, test_predictions.shape)
 		print("Test predictions dtype",test_predictions.dtype)
+
 		deb.prints(np.unique(test_predictions.argmax(axis=-1), return_counts=True))
 		deb.prints(np.unique(batch['label'], return_counts=True))
 
 		print(" shapes", test_predictions.shape, batch['label'].shape)
+		self.test_pred_proba = test_predictions.copy()
 
 		test_predictions = test_predictions.argmax(axis=-1)
 		#batch['label'] = batch['label'].argmax(axis=-1)
@@ -246,8 +253,58 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 		print(" shapes", test_predictions.shape, batch['label'].shape)
 		print( "uniques",np.unique(test_predictions, return_counts=True),np.unique(batch['label'], return_counts=True))
 		#pdb.set_trace()
+
+		
 		del batch['in']
 		return test_predictions, batch['label']
+
+class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModelNto1FixedSeqFixedLabel):
+	def npyLoadPredictions(self, seq_date):
+		batch = {}
+		dated_patches_name =True
+		if dated_patches_name==False:
+
+			batch['in']=np.load(self.path_test+'patches_in.npy',mmap_mode='r') # len is 21
+	#		test_label=np.load(self.path_test+'patches_label.npy')
+			batch['label']=np.load(self.path_test+'patches_label.npy') # may18
+		else:
+			batch['in']=np.load(self.path_test+'patches_in_fixed_'+seq_date+'.npy',mmap_mode='r') # len is 21
+	#		test_label=np.load(self.path_test+'patches_label.npy')
+			deb.prints(self.path_test+'patches_label_fixed_'+seq_date+'.npy')
+			batch['label']=np.load(self.path_test+'patches_label_fixed_'+seq_date+'.npy') # may18
+
+		self.loco_class = 8			
+		batch['label_with_loco_class']=np.load(self.path_test+'patches_label_fixed_'+seq_date+'_loco'+str(self.loco_class)+'.npy') # may18			
+		# test label with loco class. 
+		# If loco_class=8, batch['label_with_loco_class'] contains the loco class as 8+1=9 because 0 is the background ID
+		deb.prints(np.unique(batch['label_with_loco_class'], return_counts=True))
+
+		batch['label_with_loco_class'][batch['label_with_loco_class']!=self.loco_class+1]=0 
+		deb.prints(np.unique(batch['label_with_loco_class'], return_counts=True))
+
+		self.label_with_loco_class = batch['label_with_loco_class'].copy() 
+		
+		deb.prints(batch['in'].shape)
+		deb.prints(batch['label'].shape)
+		return batch
+	def addLocoClass(self, test_label):
+		print('*'*20, 'addLocoClass')
+		deb.prints(np.unique(test_label,return_counts=True))
+		deb.prints(np.unique(self.label_with_loco_class, return_counts=True))
+		test_label[self.label_with_loco_class == self.loco_class + 1] = self.loco_class + 1
+		deb.prints(np.unique(test_label,return_counts=True))
+		print('*'*20, 'end addLocoClass')
+		return test_label
+
+	def loadPredictions(self,path_model,seq_date=None, model_dataset=None):
+		print(1)
+		test_predictions, test_label = super().loadPredictions(path_model, seq_date, model_dataset)
+		print(2)
+
+		test_label = self.addLocoClass(test_label)
+		print(3)
+
+		return test_predictions, test_label
 
 
 
@@ -459,7 +516,7 @@ class PredictionsLoaderModelNto1FixedSeqVarLabel(PredictionsLoaderModelNto1):
 		ds.addDataSource(dataSource)
 	
 		time_delta = ds.getTimeDelta(delta=True,format='days')
-		ds.setDotyFlag(True)
+		ds.setDotyFlag(False)
 		dotys, dotys_sin_cos = ds.getDayOfTheYear()
 		ds.dotyReplicateSamples(sample_n = batch['label'].shape[0])
 
@@ -484,6 +541,7 @@ class PredictionsLoaderModelNto1FixedSeqVarLabel(PredictionsLoaderModelNto1):
 			##deb.prints(batch_val_label.shape)
 			##deb.prints(t_step-data['labeled_dates'])
 			#pdb.set_trace()
+			deb.prints(ds.doty_flag)
 			input_ = self.mim.batchTrainPreprocess(batch, ds,  
 						label_date_id = t_step-data['labeled_dates']) # tstep is -12 to -1
 			deb.prints(input_[0].shape)

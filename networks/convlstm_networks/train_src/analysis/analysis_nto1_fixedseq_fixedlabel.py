@@ -17,7 +17,7 @@ import cv2
 import pdb
 file_id="importantclasses"
 
-from PredictionsLoader import PredictionsLoaderNPY, PredictionsLoaderModel, PredictionsLoaderModelNto1, PredictionsLoaderModelNto1FixedSeqFixedLabel, PredictionsLoaderModelNto1FixedSeqFixedLabelAdditionalTestClsses
+from PredictionsLoader import PredictionsLoaderNPY, PredictionsLoaderModel, PredictionsLoaderModelNto1, PredictionsLoaderModelNto1FixedSeqFixedLabel, PredictionsLoaderModelNto1FixedSeqFixedLabelAdditionalTestClsses, PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet
 from colorama import init
 init()
 save_bar_flag=True
@@ -268,7 +268,8 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 				predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabel(path_test, dataset=dataset)
 			deb.prints(args.seq_date in additionalTestClsses)
 		else:
-			predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabel(path_test, dataset=dataset)
+#			predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabel(path_test, dataset=dataset)
+			predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset, loco_class=8)
 		deb.prints(predictionsLoader)
 
 		predictions, label_test = predictionsLoader.loadPredictions(model_path, seq_date=args.seq_date, model_dataset=args.model_dataset)
@@ -318,6 +319,9 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 				label_test_t, predictions_t, class_n=class_n,
 				debug=debug,small_classes_ignore=small_classes_ignore,
 				important_classes=None, dataset=dataset, skip_crf=skip_crf, t=t)
+
+			openModel = OpenPCS(loco_class = predictionsLoader.loco_class)
+			openModel.postprocess(predictions_t)
 			metrics = metrics_get(label_test_t, predictions_t,
 				only_basics=True, debug=debug, detailed_t = t)	
 			print(metrics)
@@ -748,121 +752,10 @@ elif dataset=='l2':
 #		]]	
 elif dataset=='lm':
 
-	experiment_groups=[[
-		'prediction_ConvLSTM_seq2seq_batch16_full.npy',
-		'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
-		'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy'],
-		['prediction_ConvLSTM_seq2seq_redoing.npy',
-		'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
-		'prediction_DenseNetTimeDistributed_128x2_redoing.npy'],
-		['prediction_ConvLSTM_seq2seq_redoingz.npy',
-		'prediction_ConvLSTM_seq2seq_bi_redoingz.npy',
-		'prediction_DenseNetTimeDistributed_128x2_redoingz.npy'],
-		['prediction_ConvLSTM_seq2seq_redoingz2.npy',
-		'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
-		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy'],]
 	#exp_id=8 # choose 4 for thesis and journal paper
 	exp_id=9 # choose 4 for thesis and journal paper
 	
-	if exp_id==2:
-		experiment_groups=[['prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
-			'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy',
-			'prediction_BUnetConvLSTM_2convins5.npy',
-			'prediction_BUnet2ConvLSTM_raulapproved.npy',
-			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
-			'prediction_BAtrousConvLSTM_2convins5.npy',
-			'prediction_BUnetAtrousConvLSTM_2convins5.npy',
-			'prediction_BUnetAtrousConvLSTM_v3p_2convins5.npy'		
-			]]
-	elif exp_id==3:
-		experiment_groups=[['prediction_ConvLSTM_seq2seq_batch16_full.npy',
-			'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
-			'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy',
-			#'prediction_BUnetConvLSTM_2convins5.npy',
-			#'prediction_BUnet3ConvLSTM_repeating1.npy',
-			'prediction_BUnet4ConvLSTM_repeating1.npy',
-			'prediction_BAtrousConvLSTM_2convins5.npy',
-			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
-			]]
-			#'prediction_BUnetAtrousConvLSTM_v3p_2convins2.npy'
-	elif exp_id==4:
-		experiment_groups=[[
-			'prediction_ConvLSTM_seq2seq_batch16_full.npy',
-			'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
-			'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy',
-			'prediction_BUnet4ConvLSTM_repeating1.npy',
-			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
-			],
-			['prediction_ConvLSTM_seq2seq_redoing.npy',
-			'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
-			'prediction_DenseNetTimeDistributed_128x2_redoing.npy',
-			'prediction_BUnet4ConvLSTM_repeating2.npy',
-			'prediction_BAtrousGAPConvLSTM_repeating6.npy',
-			],
-			['prediction_ConvLSTM_seq2seq_redoingz.npy',
-			'prediction_ConvLSTM_seq2seq_bi_redoingz.npy',
-			'prediction_DenseNetTimeDistributed_128x2_redoingz.npy',
-			'prediction_BUnet4ConvLSTM_repeating4.npy',
-			'prediction_BAtrousGAPConvLSTM_repeating4.npy',
-			],
-			['prediction_ConvLSTM_seq2seq_redoingz2.npy',
-			'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
-			'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy',
-			'prediction_BUnet4ConvLSTM_repeating6.npy',
-			'prediction_BAtrousGAPConvLSTM_repeating3.npy',
-			],
-			['prediction_ConvLSTM_seq2seq_redoingz2.npy',
-			'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
-			'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy',
-			'prediction_BUnet4ConvLSTM_repeating7.npy',
-			'prediction_BAtrousGAPConvLSTM_repeating7.npy',
-			],
-
-			]
-	elif exp_id==5:
-
-		experiment_groups=[[
-
-			'prediction_BAtrousGAPConvLSTM_repeating3.npy',
-			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
-			'prediction_BAtrousGAPConvLSTM_repeating4.npy',
-			'prediction_BAtrousGAPConvLSTM_repeating6.npy',
-			
-			]]		
-		experiment_groups=[[
-			'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy',
-			'prediction_DenseNetTimeDistributed_128x2_3blocks_3blocks_check.npy'
-			]]		
-		experiment_groups=[[
-			'prediction_BUnet4ConvLSTM_repeating1.npy',
-			'prediction_BUnet4ConvLSTM_repeating2.npy',
-			'prediction_BUnet4ConvLSTM_repeating4.npy',
-			'prediction_BUnet4ConvLSTM_unet_one_conv_in.npy',
-			'prediction_BUnet5ConvLSTM_unet_one_conv_in.npy',
-			
-			]]
-
-
-		experiment_groups=[[
-			'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy',
-			'prediction_DenseNetTimeDistributed_128x2_inconv_unet_one_conv_in.npy'
-			#'prediction_DenseNetTimeDistributed_128x2_3blocks_3blocks_check.npy'
-			]]
-	elif exp_id==6: #hyperparams
-		experiment_groups=[[
-			'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
-			'prediction_ConvLSTM_seq2seq_bi_hyperparams.npy' #double filters
-			]]
-	elif exp_id==7: #Check against matlab f1 results
-		experiment_groups=[[
-			'prediction_ConvLSTM_seq2seq_batch16_full.npy',
-			'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy' #double filters
-			]]			
-	elif exp_id==8: #Check against matlab f1 results
-		experiment_groups=[[
-			'prediction_convlstm.npy'
-		]]
-	elif exp_id==9: #Check against matlab f1 results
+	if exp_id==9: #Check against matlab f1 results
 		experiment_groups=[[
 			'model_best_BConvLSTM_2.h5'
 		]]
@@ -957,6 +850,11 @@ elif dataset=='lm':
 			'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+args.seq_date+'_l2_traintimes2.h5'
 		]]	
 
+		loco_class = 8
+		experiment_groups=[[
+			'model_best_UUnet4ConvLSTM_fixed_label_fixed_'+args.seq_date+'_loco'+str(loco_class)+'_lm_testlm.h5'
+		]]	
+#model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_loco8_lm_testlm_stratifiedval
 elif dataset=='lm_optical':
 	exp_id=1
 	experiment_groups=[[
