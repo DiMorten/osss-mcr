@@ -255,7 +255,7 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 
 		
 		del batch['in']
-		return test_predictions, batch['label']
+		return test_predictions, batch['label'], model
 
 class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModelNto1FixedSeqFixedLabel):
 	def npyLoadPredictions(self, seq_date):
@@ -297,14 +297,15 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 
 	def loadPredictions(self,path_model,seq_date=None, model_dataset=None):
 		print(1)
-		test_predictions, test_label = super().loadPredictions(path_model, seq_date, model_dataset)
+		test_predictions, test_label, model = super().loadPredictions(path_model, seq_date, model_dataset)
 		print(2)
 
 		test_label = self.addLocoClass(test_label)
 		print(3)
 
-		return test_predictions, test_label
+		return test_predictions, test_label, model
 
+#class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModelNto1FixedSeqFixedLabel):
 
 
 class PredictionsLoaderModelNto1FixedSeqFixedLabelAdditionalTestClsses(PredictionsLoaderModelNto1FixedSeqFixedLabel):

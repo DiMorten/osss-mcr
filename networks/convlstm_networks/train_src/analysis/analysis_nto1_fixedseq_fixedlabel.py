@@ -23,7 +23,7 @@ init()
 save_bar_flag=True
 sys.path.append('../')
 import deb
-from open_set import SoftmaxThresholding
+from open_set import SoftmaxThresholding, OpenPCS
 import argparse
 parser = argparse.ArgumentParser(description='Process some integers.')
 
@@ -81,8 +81,19 @@ def labels_predictions_filter_transform(label_test,predictions,class_n,
 
 
 #			openModel = OpenPCS(loco_class = predictionsLoader.loco_class)
-	openModel = SoftmaxThresholding(loco_class = predictionsLoader.loco_class)
-	openModel.setThreshold(0.6)
+#	openModel = SoftmaxThresholding(loco_class = predictionsLoader.loco_class)
+	known_classes = np.unique(label_test)
+	deb.prints(known_classes)
+	known_classes = list(known_classes)
+	deb.prints(known_classes)
+	#pdb.set_trace()
+	known_classes.remove(predictionsLoader.loco_class + 1)
+	known_classes.remove(0) #background
+	deb.prints(known_classes)
+	openModel = OpenPCS(loco_class = predictionsLoader.loco_class,  known_classes = known_classes,
+			n_components = 12)
+
+	openModel.setThreshold(-100)
 	predictions = openModel.postprocess(label_test, predictions, predictionsLoader.test_pred_proba)
 
 
@@ -282,7 +293,8 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 
 		deb.prints(predictionsLoader)
 
-		predictions, label_test = predictionsLoader.loadPredictions(model_path, seq_date=args.seq_date, model_dataset=args.model_dataset)
+		predictions, label_test, model = predictionsLoader.loadPredictions(model_path, seq_date=args.seq_date, 
+				model_dataset=args.model_dataset)
 		deb.prints(np.unique(np.concatenate((predictions,label_test),axis=0)))
 	
 	#predictions=np.load(prediction_path, allow_pickle=True)
