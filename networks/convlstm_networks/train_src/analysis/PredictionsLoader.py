@@ -218,6 +218,12 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 
 		#pdb.set_trace()
 		test_predictions=(model.predict(input_)).astype(prediction_dtype) 
+		load_decoder_features_flag = True
+		if load_decoder_features_flag==True:
+			self.test_pred_proba = self.load_decoder_features(model, input_)
+		else:
+			self.test_pred_proba = test_predictions.copy()
+		
 		#pdb.set_trace()
 		print(" shapes", test_predictions.shape, batch['label'].shape)
 		
@@ -228,7 +234,6 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 		deb.prints(np.unique(batch['label'], return_counts=True))
 
 		print(" shapes", test_predictions.shape, batch['label'].shape)
-		self.test_pred_proba = test_predictions.copy()
 
 		test_predictions = test_predictions.argmax(axis=-1)
 		#batch['label'] = batch['label'].argmax(axis=-1)
@@ -258,6 +263,34 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 		return test_predictions, batch['label'], model
 
 class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModelNto1FixedSeqFixedLabel):
+	def load_decoder_features(self, model, input_, prediction_dtype = np.float16):
+		print(model.summary())
+
+		layer_names = ['conv_lst_m2d_1', 'activation_6', 'activation_8', 'activation_10']
+		intermediate_layer_model = Model(inputs=model.input, outputs=[model.get_layer(layer_names[0]).output, #4x4
+																	model.get_layer(layer_names[1]).output, #8x8
+																	model.get_layer(layer_names[2]).output, #16x16
+																	model.get_layer(layer_names[3]).output]) #32x32
+		
+		open_features=intermediate_layer_model.predict(input_) 
+
+		deb.prints(open_features[0].shape)
+		open_features = [x.reshape(x.shape[0], -1) for x in open_features]
+		[deb.prints(open_features[x].shape) for x in [0,1,2,3]]
+
+		open_features = np.concatenate(open_features, axis=1)# .astype(prediction_dtype)
+
+#		open_features_flat = []
+#		for feature in open_features:
+#			feature = feature.flatten()
+#			deb.prints(feature.shape)
+
+
+
+
+		deb.prints(open_features.shape)
+		print("open_features stats", np.min(open_features), np.average(open_features), np.max(open_features))
+		return open_features
 	def npyLoadPredictions(self, seq_date):
 		batch = {}
 		dated_patches_name =True

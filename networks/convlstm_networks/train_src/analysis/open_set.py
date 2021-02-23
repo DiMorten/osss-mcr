@@ -43,10 +43,10 @@ class OpenPCS(OpenSetMethod):
 
     def postprocess(self, label_test, predictions_test, pred_proba_test):
         # pred proba shape is (n_samples, h, w, classes)
-        pred_proba_test = scipy.special.softmax(pred_proba_test, axis=-1)
+        ##pred_proba_test = scipy.special.softmax(pred_proba_test, axis=-1)
 
-        print("pred_proba_max stats min, avg, max",np.min(pred_proba_test),
-                np.average(pred_proba_test),np.max(pred_proba_test))
+        ##print("pred_proba_max stats min, avg, max",np.min(pred_proba_test),
+        ##        np.average(pred_proba_test),np.max(pred_proba_test))
 
         deb.prints(predictions_test.shape)
 
@@ -62,7 +62,7 @@ class OpenPCS(OpenSetMethod):
         #pred_proba_test = pred_proba_test.reshape((pred_proba_test.shape[0], -1))
         #deb.prints(pred_proba_test.shape)
 
-        pred_proba_test = pred_proba_test.reshape((-1, pred_proba_test.shape[-1]))
+        ##pred_proba_test = pred_proba_test.reshape((-1, pred_proba_test.shape[-1]))
         print("*"*20, " Flattened the results")
         deb.prints(label_test.shape)
         deb.prints(predictions_test.shape)

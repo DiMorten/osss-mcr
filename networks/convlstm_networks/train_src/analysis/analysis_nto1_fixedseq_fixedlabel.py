@@ -91,7 +91,7 @@ def labels_predictions_filter_transform(label_test,predictions,class_n,
 	known_classes.remove(0) #background
 	deb.prints(known_classes)
 	openModel = OpenPCS(loco_class = predictionsLoader.loco_class,  known_classes = known_classes,
-			n_components = 12)
+			n_components = 16)
 
 	openModel.setThreshold(-100)
 	predictions = openModel.postprocess(label_test, predictions, predictionsLoader.test_pred_proba)
