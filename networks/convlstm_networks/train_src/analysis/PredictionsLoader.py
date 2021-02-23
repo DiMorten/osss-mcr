@@ -1,4 +1,4 @@
-from keras.layers import Input, Dense, Conv2D, MaxPool2D, Flatten, Dropout, Conv2DTranspose
+from keras.layers import Input, Dense, Conv2D, MaxPool2D, Flatten, Dropout, Conv2DTranspose, UpSampling2D
 # from keras.callbacks import ModelCheckpoint , EarlyStopping
 from keras.optimizers import Adam,Adagrad 
 from keras.models import Model
@@ -267,15 +267,37 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 		print(model.summary())
 
 		layer_names = ['conv_lst_m2d_1', 'activation_6', 'activation_8', 'activation_10']
+		upsample_ratios = [8, 4, 2, 1]
+
+		out1 = UpSampling2D(size=(upsample_ratios[0], upsample_ratios[0]))(model.get_layer(layer_names[0]).output)
+		out2 = UpSampling2D(size=(upsample_ratios[1], upsample_ratios[1]))(model.get_layer(layer_names[1]).output)
+		out3 = UpSampling2D(size=(upsample_ratios[2], upsample_ratios[2]))(model.get_layer(layer_names[2]).output)
+		out4 = UpSampling2D(size=(upsample_ratios[3], upsample_ratios[3]))(model.get_layer(layer_names[3]).output)
+		'''
 		intermediate_layer_model = Model(inputs=model.input, outputs=[model.get_layer(layer_names[0]).output, #4x4
-																	model.get_layer(layer_names[1]).output, #8x8
-																	model.get_layer(layer_names[2]).output, #16x16
-																	model.get_layer(layer_names[3]).output]) #32x32
-		
+															model.get_layer(layer_names[1]).output, #8x8
+															model.get_layer(layer_names[2]).output, #16x16
+															model.get_layer(layer_names[3]).output]) #32x32
+		'''
+		intermediate_layer_model = Model(inputs=model.input, outputs=[out1, #4x4
+															out2, #8x8
+															out3, #16x16
+															out4]) #32x32
+
 		open_features=intermediate_layer_model.predict(input_) 
+		'''
+		# upsample
+		from skimage.transform import rescale
+
+		upsample_ratios = [8, 4, 2, 1]
+		for idx, feature in enumerate(open_features):
+			open_features[idx] = rescale(feature, upsample_ratios[idx])
+		'''
+
+
 
 		deb.prints(open_features[0].shape)
-		open_features = [x.reshape(x.shape[0], -1) for x in open_features]
+		open_features = [x.reshape(-1, x.shape[-1]) for x in open_features]
 		[deb.prints(open_features[x].shape) for x in [0,1,2,3]]
 
 		open_features = np.concatenate(open_features, axis=1)# .astype(prediction_dtype)
