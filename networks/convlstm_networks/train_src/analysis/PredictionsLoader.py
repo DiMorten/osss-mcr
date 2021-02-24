@@ -332,8 +332,24 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 		# test label with loco class. 
 		# If loco_class=8, batch['label_with_loco_class'] contains the loco class as 8+1=9 because 0 is the background ID
 		deb.prints(np.unique(batch['label_with_loco_class'], return_counts=True))
-
-		batch['label_with_loco_class'][batch['label_with_loco_class']!=self.loco_class+1]=0 
+		
+		self.known_classes = [0, 1, 10, 12]
+		known_classes_flag = True
+		if known_classes_flag==False:
+			batch['label_with_loco_class'][batch['label_with_loco_class']!=self.loco_class+1]=0 
+		else:
+#			all_classes = np.unique(batch['label_with_loco_class']) # with background
+#			all_classes = all_classes[1:] - 1 # no bcknd
+#			deb.prints(all_classes)
+#			deb.prints(known_classes)
+#			unknown_classes = np.setdiff1d(all_classes, args.known_classes)
+#			deb.prints(unknown_classes)
+			for clss in self.known_classes:
+				batch['label_with_loco_class'][batch['label_with_loco_class']==int(clss) + 1] = 0
+#				self.patches['train']['label'][self.patches['train']['label']==int(clss) + 1] = 0
+#				self.patches['test']['label'][self.patches['test']['label']==int(clss) + 1] = 0
+		
+		batch['label_with_loco_class'][batch['label_with_loco_class']!=0] = 40 # group all unknown classes into one single class
 		deb.prints(np.unique(batch['label_with_loco_class'], return_counts=True))
 
 		self.label_with_loco_class = batch['label_with_loco_class'].copy() 
@@ -345,7 +361,7 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 		print('*'*20, 'addLocoClass')
 		deb.prints(np.unique(test_label,return_counts=True))
 		deb.prints(np.unique(self.label_with_loco_class, return_counts=True))
-		test_label[self.label_with_loco_class == self.loco_class + 1] = self.loco_class + 1
+		test_label[self.label_with_loco_class == 40] = 40
 		deb.prints(np.unique(test_label,return_counts=True))
 		print('*'*20, 'end addLocoClass')
 		return test_label

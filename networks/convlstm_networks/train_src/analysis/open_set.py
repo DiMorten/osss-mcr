@@ -29,7 +29,7 @@ class SoftmaxThresholding(OpenSetMethod):
         deb.prints(predictions_test.shape)
         deb.prints(pred_proba_max.shape)
 
-        predictions_test[pred_proba_max < self.threshold] = self.loco_class + 1
+        predictions_test[pred_proba_max < self.threshold] = 40 #self.loco_class + 1
 
         return predictions_test
 
@@ -98,7 +98,8 @@ class OpenPCS(OpenSetMethod):
         #print("scores stats min, avg, max",np.min(scores),
         #        np.average(scores),np.max(scores))
         #deb.prints(scores.shape)
-        predictions_test[scores < self.threshold] = self.loco_class + 1
+        predictions_test[scores < self.threshold] = 40 #self.loco_class + 1
+
         return predictions_test, scores #scores in case you want to threshold them again
 
     def fit_pca_models(self, label_test, predictions_test, open_features):

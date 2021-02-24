@@ -138,6 +138,9 @@ deb.prints(args.seq_mode)
 deb.prints(args.mim)
 
 dataset = args.dataset
+
+args.known_classes = [0, 1, 10, 12] # soybean, maize, cerrado, soil
+
 #========= overwrite for direct execution of this py file
 direct_execution=False
 if direct_execution==True:
@@ -349,10 +352,31 @@ class Dataset(NetObject):
 
 		deb.prints(np.unique(self.patches['train']['label'],return_counts=True))
 		deb.prints(args.loco_class)
-		self.patches['train']['label'][self.patches['train']['label']==int(args.loco_class) + 1] = 0
-		self.patches['test']['label'][self.patches['test']['label']==int(args.loco_class) + 1] = 0
-		deb.prints(np.unique(self.patches['train']['label'],return_counts=True))
+
+
+		select_kept_classes_flag = True
+		if select_kept_classes_flag==False:		
+			self.patches['train']['label'][self.patches['train']['label']==int(args.loco_class) + 1] = 0
+			self.patches['test']['label'][self.patches['test']['label']==int(args.loco_class) + 1] = 0
+		#	self.patches['train']['label'] = openSetConfig.deleteLocoClass(self.patches['train']['label'], args.loco_class)
+		#	self.patches['test']['label'] = openSetConfig.deleteLocoClass(self.patches['test']['label'], args.loco_class)
+		else:
+			all_classes = np.unique(self.patches['train']['label']) # with background
+			all_classes = all_classes[1:] - 1 # no bcknd
+			deb.prints(all_classes)
+			deb.prints(args.known_classes)
+			unknown_classes = np.setdiff1d(all_classes, args.known_classes)
+			deb.prints(unknown_classes)
+			for clss in unknown_classes:
+				self.patches['train']['label'][self.patches['train']['label']==int(clss) + 1] = 0
+				self.patches['test']['label'][self.patches['test']['label']==int(clss) + 1] = 0
+
+
 		
+		deb.prints(np.unique(self.patches['train']['label'],return_counts=True))
+
+		#pdb.set_trace()
+
 		print('*'*20, 'End open set - ignoring class')
 
 		# ======================================= fix labels before one hot
@@ -3236,8 +3260,9 @@ if __name__ == '__main__':
 			elif args.seq_mode=='var' or args.seq_mode=='var_label':	
 				label_type = 'NtoN'
 			deb.prints(label_type)
-			data.semantic_balance(500,label_type = label_type) #Less for fixed i guess
+#			data.semantic_balance(500,label_type = label_type) #Less for fixed i guess
 #			data.semantic_balance(700,label_type = label_type) #More for seq2seq
+			data.semantic_balance(2000,label_type = label_type) #More for known classes few. Compare with 500 later
 						
 
 

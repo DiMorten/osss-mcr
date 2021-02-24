@@ -82,19 +82,25 @@ def labels_predictions_filter_transform(label_test,predictions,class_n,
 
 #			openModel = OpenPCS(loco_class = predictionsLoader.loco_class)
 #	openModel = SoftmaxThresholding(loco_class = predictionsLoader.loco_class)
-	known_classes = np.unique(label_test)
-	deb.prints(known_classes)
-	known_classes = list(known_classes)
-	deb.prints(known_classes)
-	#pdb.set_trace()
-	known_classes.remove(predictionsLoader.loco_class + 1)
-	known_classes.remove(0) #background
-	deb.prints(known_classes)
-	openModel = OpenPCS(loco_class = predictionsLoader.loco_class,  known_classes = known_classes,
-			n_components = 16)
+	open_set_flag = True
+	specify_unknown_classes=False
+	if open_set_flag==True:
+		if specify_unknown_classes==True:
+			known_classes = np.unique(label_test)
+			deb.prints(known_classes)
+			known_classes = list(known_classes)
+			deb.prints(known_classes)
+			#pdb.set_trace()
+			known_classes.remove(predictionsLoader.loco_class + 1)
+			known_classes.remove(0) #background
+		else:
+			known_classes = [x + 1 for x in predictionsLoader.known_classes]
+		deb.prints(known_classes)
+		openModel = OpenPCS(loco_class = predictionsLoader.loco_class,  known_classes = known_classes,
+				n_components = 16)
 
-	openModel.setThreshold(-100)
-	predictions = openModel.postprocess(label_test, predictions, predictionsLoader.test_pred_proba)
+		openModel.setThreshold(200)
+		predictions = openModel.postprocess(label_test, predictions, predictionsLoader.test_pred_proba)
 
 
 	#predictions=predictions.argmax(axis=-1)
@@ -876,6 +882,9 @@ elif dataset=='lm':
 		experiment_groups=[[
 			'model_best_UUnet4ConvLSTM_fixed_label_fixed_'+args.seq_date+'_loco'+str(loco_class)+'_lm_testlm.h5'
 		]]	
+
+		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_'+args.seq_date+'_loco'+str(loco_class)+'_lm_testlm_fewknownclasses.h5']]	
+
 #model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_loco8_lm_testlm_stratifiedval
 elif dataset=='lm_optical':
 	exp_id=1
