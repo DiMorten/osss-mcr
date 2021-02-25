@@ -67,7 +67,8 @@ def dense_crf(probs, img=None, n_iters=10, n_classes=19,
 
 def labels_predictions_filter_transform(label_test,predictions,class_n,
 		debug=1,small_classes_ignore=True,
-		important_classes=None,dataset='cv',skip_crf=False,t=None, predictionsLoader=None):
+		important_classes=None,dataset='cv',skip_crf=False,t=None, predictionsLoader=None, label_train=None,
+		predictions_train=None):
 
 	if not skip_crf:
 		# CRF
@@ -100,7 +101,10 @@ def labels_predictions_filter_transform(label_test,predictions,class_n,
 				n_components = 16)
 
 		openModel.setThreshold(200)
-		predictions = openModel.postprocess(label_test, predictions, predictionsLoader.test_pred_proba)
+#		predictions = openModel.postprocess(label_test, predictions, predictionsLoader.test_pred_proba)
+		predictions = openModel.postprocess(label_test, predictions, predictionsLoader.test_pred_proba, 
+						label_train, predictions_train, predictionsLoader.train_pred_proba)
+
 
 
 	#predictions=predictions.argmax(axis=-1)
@@ -272,6 +276,8 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 	path=base_path+dataset+'/'
 	prediction_path=path+prediction_filename
 	path_test='../../../../dataset/dataset/'+dataset+'_data/patches_bckndfixed/test/'
+	path_train='../../../../dataset/dataset/'+dataset+'_data/patches_bckndfixed/train/'
+
 	print('path_test',path_test)
 	
 	#prediction_type = 'model'
@@ -295,11 +301,11 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 		else:
 #			predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabel(path_test, dataset=dataset)
 #			predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset, loco_class=8)
-			predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset)
+			predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, path_train, dataset=dataset)
 
 		deb.prints(predictionsLoader)
 
-		predictions, label_test, model = predictionsLoader.loadPredictions(model_path, seq_date=args.seq_date, 
+		predictions, label_test, predictions_train, label_train, model = predictionsLoader.loadPredictions(model_path, seq_date=args.seq_date, 
 				model_dataset=args.model_dataset)
 		deb.prints(np.unique(np.concatenate((predictions,label_test),axis=0)))
 	
@@ -347,7 +353,8 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 				label_test_t, predictions_t, class_n=class_n,
 				debug=debug,small_classes_ignore=small_classes_ignore,
 				important_classes=None, dataset=dataset, skip_crf=skip_crf, t=t,
-				predictionsLoader = predictionsLoader)
+				predictionsLoader = predictionsLoader, label_train=label_train,
+				predictions_train=predictions_train)
 
 
 			metrics = metrics_get(label_test_t, predictions_t,

@@ -41,7 +41,7 @@ class OpenPCS(OpenSetMethod):
         self.n_components = n_components
         
 
-    def postprocess(self, label_test, predictions_test, pred_proba_test):
+    def postprocess(self, label_test, predictions_test, pred_proba_test, label_train, predictions_train, predict_proba_train):
         # pred proba shape is (n_samples, h, w, classes)
         ##pred_proba_test = scipy.special.softmax(pred_proba_test, axis=-1)
 
@@ -69,7 +69,7 @@ class OpenPCS(OpenSetMethod):
         deb.prints(pred_proba_test.shape)
         #pdb.set_trace()
 
-        self.fit_pca_models(label_test, predictions_test, pred_proba_test)
+        self.fit_pca_models(label_train, predictions_test, pred_proba_train)
         deb.prints(np.unique(predictions_test, return_counts=True))
         predictions_test, _ = self.predict_unknown_class(predictions_test, pred_proba_test)
         deb.prints(np.unique(predictions_test, return_counts=True))

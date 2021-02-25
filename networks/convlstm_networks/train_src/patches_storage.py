@@ -26,6 +26,7 @@ class PatchesStorageAllSamples(PatchesStorage):
 		self.path['val_bckndfixed']=self.path_patches+'val/'
 		self.path['test_bckndfixed']=self.path_patches+'test/'
 		self.path['test_loco']=self.path_patches+'test_loco/'
+		self.path['train_loco'] = self.path_patches+'train_loco/'
 
 		self.seq_mode = seq_mode
 		self.seq_date = seq_date
@@ -70,6 +71,7 @@ class PatchesStorageAllSamplesOpenSet(PatchesStorageAllSamples):
 		self.storeSplit(data_patches['test'],'test_bckndfixed')
 		#self.storeSplit(data_patches['val'],'val_bckndfixed')
 		self.storeLabel(data_patches['test']['label_with_loco_class'],'test_loco')
+		self.storeLabel(data_patches['train']['label_with_loco_class'],'train_loco')
 
 
 

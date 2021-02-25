@@ -231,6 +231,7 @@ class NetObject(object):
 		self.path['val_bckndfixed']=self.path_patches_bckndfixed+'val/'
 		self.path['test_bckndfixed']=self.path_patches_bckndfixed+'test/'
 		self.path['test_loco'] = self.path_patches_bckndfixed+'test_loco/'
+		self.path['train_loco'] = self.path_patches_bckndfixed+'train_loco/'
 
 		self.channel_n = channel_n
 		deb.prints(self.channel_n)
@@ -349,6 +350,7 @@ class Dataset(NetObject):
 		
 		# making label with loco class copy
 		self.patches['test']['label_with_loco_class'] = self.patches['test']['label'].copy()
+		self.patches['train']['label_with_loco_class'] = self.patches['train']['label'].copy()
 
 		deb.prints(np.unique(self.patches['train']['label'],return_counts=True))
 		deb.prints(args.loco_class)

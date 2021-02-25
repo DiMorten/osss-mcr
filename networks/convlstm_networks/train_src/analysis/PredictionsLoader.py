@@ -60,8 +60,10 @@ class PredictionsLoaderModel(PredictionsLoader):
 
 
 class PredictionsLoaderModelNto1(PredictionsLoaderModel):
-	def __init__(self, path_test, dataset):
+	def __init__(self, path_test, path_train, dataset):
 		self.path_test=path_test
+		self.path_train=path_train
+		
 		self.dataset=dataset
 	def loadPredictions(self,path_model):
 		print("============== loading model =============")
@@ -144,17 +146,23 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 			deb.prints(self.path_test+'patches_label_fixed_'+seq_date+'.npy')
 			batch['label']=np.load(self.path_test+'patches_label_fixed_'+seq_date+'.npy') # may18			
 
+			batch_train = {}
+			batch_train['in']=np.load(self.path_train+'patches_in_fixed_'+seq_date+'.npy',mmap_mode='r')
+			batch_train['label']=np.load(self.path_train+'patches_label_fixed_'+seq_date+'.npy') # may18			
 
 		deb.prints(batch['in'].shape)
 		deb.prints(batch['label'].shape)
-		return batch
+		deb.prints(batch_train['in'].shape)
+		deb.prints(batch_train['label'].shape)
+
+		return batch, _
 	def loadPredictions(self,path_model,seq_date=None, model_dataset=None):
 		print("============== loading model =============")
 		model=load_model(path_model, compile=False)
 		print("Model", model)
 		print("Loading in data: ",self.path_test+'patches_in.npy')
 
-		batch = self.npyLoadPredictions(seq_date)
+		batch, batch_train = self.npyLoadPredictions(seq_date)
 
 		self.labeled_dates = 12
 
@@ -216,11 +224,19 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 					label_date_id = -1) # tstep is -12 to -1
 		deb.prints(input_[1].shape)
 
+		input_train = self.mim.batchTrainPreprocess(batch_train, ds,  
+					label_date_id = -1) # tstep is -12 to -1
+
+
 		#pdb.set_trace()
 		test_predictions=(model.predict(input_)).astype(prediction_dtype) 
+		train_predictions=(model.predict(input_train)).astype(prediction_dtype) 
+		
 		load_decoder_features_flag = True
 		if load_decoder_features_flag==True:
 			self.test_pred_proba = self.load_decoder_features(model, input_)
+			self.train_pred_proba = self.load_decoder_features(model, input_train)
+			
 		else:
 			self.test_pred_proba = test_predictions.copy()
 		
@@ -236,6 +252,7 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 		print(" shapes", test_predictions.shape, batch['label'].shape)
 
 		test_predictions = test_predictions.argmax(axis=-1)
+		train_predictions = train_predictions.argmax(axis=-1)
 		#batch['label'] = batch['label'].argmax(axis=-1)
 		print(" shapes", test_predictions.shape, batch['label'].shape)
 		print( "uniques",np.unique(test_predictions, return_counts=True),np.unique(batch['label'], return_counts=True))
@@ -253,6 +270,16 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 			batch['label'] = self.newLabel2labelTranslate(batch['label'], 
 					translate_label_path + 'new_labels2labels_'+self.dataset+'_'+ds.im_list[-1]+'.pkl',
 					bcknd_flag=True)
+			
+			train_predictions = self.newLabel2labelTranslate(train_predictions, 
+					#translate_label_path + 'new_labels2labels_lm_20171209_S1.pkl',
+					translate_label_path + 'new_labels2labels_'+model_dataset+'_'+train_ds.im_list[-1]+'.pkl',
+					bcknd_flag=False)
+						
+			batch_train['label'] = self.newLabel2labelTranslate(batch['label'], 
+					translate_label_path + 'new_labels2labels_'+self.dataset+'_'+ds.im_list[-1]+'.pkl',
+					bcknd_flag=True)
+
 		print("End shapes", test_predictions.shape, batch['label'].shape)
 		print(" shapes", test_predictions.shape, batch['label'].shape)
 		print( "uniques",np.unique(test_predictions, return_counts=True),np.unique(batch['label'], return_counts=True))
@@ -260,7 +287,7 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 
 		
 		del batch['in']
-		return test_predictions, batch['label'], model
+		return test_predictions, batch['label'], train_predictions, batch_train['label'], model
 
 class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModelNto1FixedSeqFixedLabel):
 	def load_decoder_features(self, model, input_, prediction_dtype = np.float16):
@@ -327,8 +354,20 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 			deb.prints(self.path_test+'patches_label_fixed_'+seq_date+'.npy')
 			batch['label']=np.load(self.path_test+'patches_label_fixed_'+seq_date+'.npy') # may18
 
+			batch_train = {}
+			batch_train['in']=np.load(self.path_train+'patches_in_fixed_'+seq_date+'.npy',mmap_mode='r')
+			batch_train['label']=np.load(self.path_train+'patches_label_fixed_'+seq_date+'.npy') # may18			
+
+		deb.prints(batch['in'].shape)
+		deb.prints(batch['label'].shape)
+		deb.prints(batch_train['in'].shape)
+		deb.prints(batch_train['label'].shape)
+
+
 		self.loco_class = 8			
 		batch['label_with_loco_class']=np.load(self.path_test+'patches_label_fixed_'+seq_date+'_loco'+str(self.loco_class)+'.npy') # may18			
+		batch_train['label_with_loco_class']=np.load(self.path_train+'patches_label_fixed_'+seq_date+'_loco'+str(self.loco_class)+'.npy') # may18			
+		
 		# test label with loco class. 
 		# If loco_class=8, batch['label_with_loco_class'] contains the loco class as 8+1=9 because 0 is the background ID
 		deb.prints(np.unique(batch['label_with_loco_class'], return_counts=True))
@@ -337,6 +376,7 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 		known_classes_flag = True
 		if known_classes_flag==False:
 			batch['label_with_loco_class'][batch['label_with_loco_class']!=self.loco_class+1]=0 
+			batch_train['label_with_loco_class'][batch_train['label_with_loco_class']!=self.loco_class+1]=0
 		else:
 #			all_classes = np.unique(batch['label_with_loco_class']) # with background
 #			all_classes = all_classes[1:] - 1 # no bcknd
@@ -346,25 +386,30 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 #			deb.prints(unknown_classes)
 			for clss in self.known_classes:
 				batch['label_with_loco_class'][batch['label_with_loco_class']==int(clss) + 1] = 0
+				batch_train['label_with_loco_class'][batch_train['label_with_loco_class']==int(clss) + 1] = 0
+				
 #				self.patches['train']['label'][self.patches['train']['label']==int(clss) + 1] = 0
 #				self.patches['test']['label'][self.patches['test']['label']==int(clss) + 1] = 0
 		
 		batch['label_with_loco_class'][batch['label_with_loco_class']!=0] = 40 # group all unknown classes into one single class
+		batch_train['label_with_loco_class'][batch_train['label_with_loco_class']!=0] = 40
+				
 		deb.prints(np.unique(batch['label_with_loco_class'], return_counts=True))
 
 		self.label_with_loco_class = batch['label_with_loco_class'].copy() 
+		self.train_label_with_loco_class = batch_train['label_with_loco_class'].copy() 
 		
 		deb.prints(batch['in'].shape)
 		deb.prints(batch['label'].shape)
-		return batch
-	def addLocoClass(self, test_label):
+		return batch, batch_train
+	def addLocoClass(self, label):
 		print('*'*20, 'addLocoClass')
-		deb.prints(np.unique(test_label,return_counts=True))
+		deb.prints(np.unique(label,return_counts=True))
 		deb.prints(np.unique(self.label_with_loco_class, return_counts=True))
-		test_label[self.label_with_loco_class == 40] = 40
-		deb.prints(np.unique(test_label,return_counts=True))
+		label[self.label_with_loco_class == 40] = 40
+		deb.prints(np.unique(label,return_counts=True))
 		print('*'*20, 'end addLocoClass')
-		return test_label
+		return label
 
 	def loadPredictions(self,path_model,seq_date=None, model_dataset=None):
 		print(1)
@@ -372,9 +417,11 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 		print(2)
 
 		test_label = self.addLocoClass(test_label)
+		train_label = self.addLocoClass(train_label)
+		
 		print(3)
 
-		return test_predictions, test_label, model
+		return test_predictions, test_label, train_label, model
 
 #class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModelNto1FixedSeqFixedLabel):
 
