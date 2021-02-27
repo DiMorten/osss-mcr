@@ -65,9 +65,10 @@ def dense_crf(probs, img=None, n_iters=10, n_classes=19,
 	return np.expand_dims(preds, 0)
 
 
-def labels_predictions_filter_transform(label_test,predictions,class_n,
+def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, class_n,
 		debug=1,small_classes_ignore=True,
-		important_classes=None,dataset='cv',skip_crf=False,t=None, predictionsLoader=None):
+		important_classes=None,dataset='cv',skip_crf=False,t=None, predictionsLoaderTest=None,
+		label_train=None, predictions_train=None, train_pred_proba=None):
 
 	if not skip_crf:
 		# CRF
@@ -91,16 +92,23 @@ def labels_predictions_filter_transform(label_test,predictions,class_n,
 			known_classes = list(known_classes)
 			deb.prints(known_classes)
 			#pdb.set_trace()
-			known_classes.remove(predictionsLoader.loco_class + 1)
+			known_classes.remove(predictionsLoaderTest.loco_class + 1)
 			known_classes.remove(0) #background
 		else:
-			known_classes = [x + 1 for x in predictionsLoader.known_classes]
+			known_classes = [x + 1 for x in predictionsLoaderTest.known_classes]
 		deb.prints(known_classes)
-		openModel = OpenPCS(loco_class = predictionsLoader.loco_class,  known_classes = known_classes,
+		openModel = OpenPCS(loco_class = predictionsLoaderTest.loco_class,  known_classes = known_classes,
 				n_components = 16)
 
 		openModel.setThreshold(200)
-		predictions = openModel.postprocess(label_test, predictions, predictionsLoader.test_pred_proba)
+
+		old_openset_mode = False
+		if old_openset_mode==False:
+			openModel.fit(label_train, predictions_train, train_pred_proba)
+#			openModel.fit(label_test, predictions, test_pred_proba)
+			predictions = openModel.predict(label_test, predictions, test_pred_proba)
+		else:
+			predictions = openModel.postprocess(label_test, predictions, test_pred_proba)
 
 
 	#predictions=predictions.argmax(axis=-1)
@@ -272,6 +280,8 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 	path=base_path+dataset+'/'
 	prediction_path=path+prediction_filename
 	path_test='../../../../dataset/dataset/'+dataset+'_data/patches_bckndfixed/test/'
+	path_train='../../../../dataset/dataset/'+dataset+'_data/patches_bckndfixed/train/'
+	
 	print('path_test',path_test)
 	
 	#prediction_type = 'model'
@@ -295,12 +305,19 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 		else:
 #			predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabel(path_test, dataset=dataset)
 #			predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset, loco_class=8)
-			predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset)
+			predictionsLoaderTrain = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_train, dataset=dataset)
+			predictionsLoaderTest = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset)
 
-		deb.prints(predictionsLoader)
 
-		predictions, label_test, model = predictionsLoader.loadPredictions(model_path, seq_date=args.seq_date, 
+		deb.prints(predictionsLoaderTest)
+
+		predictions, label_test, test_pred_proba, model = predictionsLoaderTest.loadPredictions(model_path, seq_date=args.seq_date, 
 				model_dataset=args.model_dataset)
+
+
+		predictions_train, label_train, train_pred_proba, _ = predictionsLoaderTrain.loadPredictions(model_path, seq_date=args.seq_date, 
+				model_dataset=args.model_dataset)
+
 		deb.prints(np.unique(np.concatenate((predictions,label_test),axis=0)))
 	
 	#predictions=np.load(prediction_path, allow_pickle=True)
@@ -344,10 +361,13 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 		
 
 			label_test_t,predictions_t = labels_predictions_filter_transform(
-				label_test_t, predictions_t, class_n=class_n,
+				label_test_t, predictions_t, test_pred_proba, class_n=class_n,
 				debug=debug,small_classes_ignore=small_classes_ignore,
 				important_classes=None, dataset=dataset, skip_crf=skip_crf, t=t,
-				predictionsLoader = predictionsLoader)
+#				predictionsLoaderTest = predictionsLoaderTest, label_train=label_train,
+#				predictions_train=predictions_train, train_pred_proba=train_pred_proba)
+				predictionsLoaderTest = predictionsLoaderTest, label_train=label_train,
+				predictions_train=predictions_train, train_pred_proba=train_pred_proba)
 
 
 			metrics = metrics_get(label_test_t, predictions_t,

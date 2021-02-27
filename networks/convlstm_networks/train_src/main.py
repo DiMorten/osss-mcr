@@ -349,6 +349,7 @@ class Dataset(NetObject):
 		
 		# making label with loco class copy
 		self.patches['test']['label_with_loco_class'] = self.patches['test']['label'].copy()
+		self.patches['train']['label_with_loco_class'] = self.patches['train']['label'].copy()
 
 		deb.prints(np.unique(self.patches['train']['label'],return_counts=True))
 		deb.prints(args.loco_class)
@@ -3244,16 +3245,21 @@ if __name__ == '__main__':
 
 		print("=== SELECT VALIDATION SET FROM TRAIN SET")
 		 
-		val_set = True # fix this
+		val_set = False # fix this
 		if val_set:
 #			data.val_set_get(val_set_mode,0.15)
 			data.val_set_get(val_set_mode,0.15)
+		else:
+			data.patches['val']={}
 
+			data.patches['val']['label']=np.zeros((1,1))
+			data.patches['val']['in']=np.zeros((1,1))
+			
 			deb.prints(data.patches['val']['label'].shape)
 			
 		print("=== AUGMENTING TRAINING DATA")
 
-		balancing=True
+		balancing=False
 		if balancing==True:
 			if args.seq_mode=='fixed' or args.seq_mode=='fixed_label_len':
 				label_type = 'Nto1'

@@ -220,9 +220,9 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 		test_predictions=(model.predict(input_)).astype(prediction_dtype) 
 		load_decoder_features_flag = True
 		if load_decoder_features_flag==True:
-			self.test_pred_proba = self.load_decoder_features(model, input_)
+			pred_proba = self.load_decoder_features(model, input_)
 		else:
-			self.test_pred_proba = test_predictions.copy()
+			pred_proba = test_predictions.copy()
 		
 		#pdb.set_trace()
 		print(" shapes", test_predictions.shape, batch['label'].shape)
@@ -260,7 +260,7 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 
 		
 		del batch['in']
-		return test_predictions, batch['label'], model
+		return test_predictions, batch['label'], pred_proba, model
 
 class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModelNto1FixedSeqFixedLabel):
 	def load_decoder_features(self, model, input_, prediction_dtype = np.float16):
@@ -368,13 +368,13 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 
 	def loadPredictions(self,path_model,seq_date=None, model_dataset=None):
 		print(1)
-		test_predictions, test_label, model = super().loadPredictions(path_model, seq_date, model_dataset)
+		test_predictions, test_label, pred_proba, model = super().loadPredictions(path_model, seq_date, model_dataset)
 		print(2)
 
 		test_label = self.addLocoClass(test_label)
 		print(3)
 
-		return test_predictions, test_label, model
+		return test_predictions, test_label, pred_proba, model
 
 #class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModelNto1FixedSeqFixedLabel):
 
