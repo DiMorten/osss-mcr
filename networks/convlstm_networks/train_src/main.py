@@ -51,6 +51,7 @@ from datagenerator import DataGenerator
 sys.path.append('../../../dataset/dataset/patches_extract_script/')
 from dataSource import DataSource, SARSource, OpticalSource, Dataset, LEM, LEM2, CampoVerde, OpticalSourceWithClouds, Humidity
 from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixedLabelAllLabels, MIMFixed_PaddedSeq
+from parameters.parameters_reader import Params
 
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('-tl', '--t_len', dest='t_len',
@@ -139,8 +140,13 @@ deb.prints(args.mim)
 
 dataset = args.dataset
 
-args.known_classes = [0, 1, 10, 12] # soybean, maize, cerrado, soil
+#args.known_classes = [0, 1, 10, 12] # soybean, maize, cerrado, soil
 
+#parameters_path = 'parameters/parameters_openset.json'
+parameters_path = 'parameters/parameters_closedset_groupclasses.json'
+
+
+params = Params(parameters_path)
 #========= overwrite for direct execution of this py file
 direct_execution=False
 if direct_execution==True:
@@ -344,41 +350,51 @@ class Dataset(NetObject):
 
 			
 		self.class_n=unique.shape[0] #10 plus background
+		if params.open_set==True:
 
-		print('*'*20, 'Open set - ignoring class')
+			print('*'*20, 'Open set - ignoring class')
 		
-		# making label with loco class copy
-		self.patches['test']['label_with_loco_class'] = self.patches['test']['label'].copy()
-		self.patches['train']['label_with_loco_class'] = self.patches['train']['label'].copy()
+			# making label with loco class copy
+			self.patches['test']['label_with_loco_class'] = self.patches['test']['label'].copy()
+			self.patches['train']['label_with_loco_class'] = self.patches['train']['label'].copy()
 
-		deb.prints(np.unique(self.patches['train']['label'],return_counts=True))
-		deb.prints(args.loco_class)
+			deb.prints(np.unique(self.patches['train']['label'],return_counts=True))
+			deb.prints(args.loco_class)
 
-
-		select_kept_classes_flag = True
-		if select_kept_classes_flag==False:		
-			self.patches['train']['label'][self.patches['train']['label']==int(args.loco_class) + 1] = 0
-			self.patches['test']['label'][self.patches['test']['label']==int(args.loco_class) + 1] = 0
-		#	self.patches['train']['label'] = openSetConfig.deleteLocoClass(self.patches['train']['label'], args.loco_class)
-		#	self.patches['test']['label'] = openSetConfig.deleteLocoClass(self.patches['test']['label'], args.loco_class)
-		else:
+			#select_kept_classes_flag = True
+			if params.select_kept_classes_flag==False:		
+				self.patches['train']['label'][self.patches['train']['label']==int(args.loco_class) + 1] = 0
+				self.patches['test']['label'][self.patches['test']['label']==int(args.loco_class) + 1] = 0
+			#	self.patches['train']['label'] = openSetConfig.deleteLocoClass(self.patches['train']['label'], args.loco_class)
+			#	self.patches['test']['label'] = openSetConfig.deleteLocoClass(self.patches['test']['label'], args.loco_class)
+			else:
+				all_classes = np.unique(self.patches['train']['label']) # with background
+				all_classes = all_classes[1:] - 1 # no bcknd
+				deb.prints(all_classes)
+				deb.prints(params.known_classes)
+				unknown_classes = np.setdiff1d(all_classes, params.known_classes)
+				deb.prints(unknown_classes)
+				for clss in unknown_classes:
+					self.patches['train']['label'][self.patches['train']['label']==int(clss) + 1] = 0
+					self.patches['test']['label'][self.patches['test']['label']==int(clss) + 1] = 0
+		elif params.group_bcknd_classes == True:
+			print('*'*20, 'Open set - grouping bcknd class')
 			all_classes = np.unique(self.patches['train']['label']) # with background
 			all_classes = all_classes[1:] - 1 # no bcknd
 			deb.prints(all_classes)
-			deb.prints(args.known_classes)
-			unknown_classes = np.setdiff1d(all_classes, args.known_classes)
+			deb.prints(params.known_classes)
+			unknown_classes = np.setdiff1d(all_classes, params.known_classes)
 			deb.prints(unknown_classes)
 			for clss in unknown_classes:
-				self.patches['train']['label'][self.patches['train']['label']==int(clss) + 1] = 0
-				self.patches['test']['label'][self.patches['test']['label']==int(clss) + 1] = 0
+				self.patches['train']['label'][self.patches['train']['label']==int(clss) + 1] = 20
+				self.patches['test']['label'][self.patches['test']['label']==int(clss) + 1] = 20			
 
+			
+			deb.prints(np.unique(self.patches['train']['label'],return_counts=True))
 
-		
-		deb.prints(np.unique(self.patches['train']['label'],return_counts=True))
+			#pdb.set_trace()
 
-		#pdb.set_trace()
-
-		print('*'*20, 'End open set - ignoring class')
+			print('*'*20, 'End open set - ignoring class')
 
 		# ======================================= fix labels before one hot
 		print("===== preprocessing labels")
@@ -3198,7 +3214,7 @@ if __name__ == '__main__':
 #	args.patience=30 # more for the Nice paper
 	args.patience=10 # more for the Nice paper
 
-	val_set=True
+	#val_set=True
 	#val_set_mode='stratified'
 	val_set_mode='stratified'
 #	val_set_mode='random'
@@ -3234,7 +3250,7 @@ if __name__ == '__main__':
 					 patch_step_train=args.patch_step_train, eval_mode=args.eval_mode,
 					 batch_size_train=args.batch_size_train,batch_size_test=args.batch_size_test,
 					 patience=args.patience,t_len=ds.t_len,class_n=args.class_n,channel_n=args.channel_n,path=args.path,
-					 val_set=val_set,model_type=args.model_type, time_measure=time_measure, stop_epoch=args.stop_epoch,
+					 val_set=params.val_set,model_type=args.model_type, time_measure=time_measure, stop_epoch=args.stop_epoch,
 					 dotys_sin_cos=dotys_sin_cos, mim = args.mim)
 	model.class_n=data.class_n-1 # Model is designed without background class
 	deb.prints(data.class_n)
@@ -3245,8 +3261,8 @@ if __name__ == '__main__':
 
 		print("=== SELECT VALIDATION SET FROM TRAIN SET")
 		 
-		val_set = False # fix this
-		if val_set:
+		#val_set = False # fix this
+		if params.val_set==True:
 #			data.val_set_get(val_set_mode,0.15)
 			data.val_set_get(val_set_mode,0.15)
 		else:
@@ -3259,8 +3275,9 @@ if __name__ == '__main__':
 			
 		print("=== AUGMENTING TRAINING DATA")
 
-		balancing=False
-		if balancing==True:
+		#balancing=False
+		
+		if params.balancing==True:
 			if args.seq_mode=='fixed' or args.seq_mode=='fixed_label_len':
 				label_type = 'Nto1'
 			elif args.seq_mode=='var' or args.seq_mode=='var_label':	
@@ -3301,9 +3318,9 @@ if __name__ == '__main__':
 		deb.prints(data.patches['val']['label'].shape)
 		model.loss_weights=np.load(data.path_patches_bckndfixed+'loss_weights.npy')
 
-	store_patches=True
+	#store_patches=True
 	store_patches_each_sample=False
-	if store_patches==True and store_patches_each_sample==True:
+	if params.store_patches==True and store_patches_each_sample==True:
 		patchesStorageEachSample = PatchesStorageEachSample(data.path['v'])
 	
 		print("===== STORING THE LOADED PATCHES AS EACH SAMPLE IN SEPARATE FILE ======")
@@ -3317,8 +3334,8 @@ if __name__ == '__main__':
 		assert data.patches['val']['in'].all()==patchesStorageEachSample.load()['val']['in'].all()
 		print("================== PATCHES WERE STORED =====================")
 
-	elif store_patches==True and store_patches_each_sample==False:
-		patchesStorage = PatchesStorageAllSamplesOpenSet(data.path['v'], args.seq_mode, args.seq_date)
+	elif params.store_patches==True and store_patches_each_sample==False:
+		patchesStorage = PatchesStorageAllSamplesOpenSet(params, data.path['v'], args.seq_mode, args.seq_date)
 	
 		print("===== STORING THE LOADED PATCHES AS ALL SAMPLES IN A SINGLE FILE ======")
 		

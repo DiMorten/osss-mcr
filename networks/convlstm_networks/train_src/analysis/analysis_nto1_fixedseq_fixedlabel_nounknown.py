@@ -84,7 +84,7 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 
 #			openModel = OpenPCS(loco_class = predictionsLoader.loco_class)
 #	openModel = SoftmaxThresholding(loco_class = predictionsLoader.loco_class)
-	open_set_flag = True
+	open_set_flag = False
 	specify_unknown_classes=False
 	if open_set_flag==True:
 		if specify_unknown_classes==True:
@@ -307,10 +307,10 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 				predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabel(path_test, dataset=dataset)
 			deb.prints(args.seq_date in additionalTestClsses)
 		else:
-#			predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabel(path_test, dataset=dataset)
+			predictionsLoaderTest = PredictionsLoaderModelNto1FixedSeqFixedLabel(path_test, dataset=dataset)
 #			predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset, loco_class=8)
-			predictionsLoaderTrain = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_train, dataset=dataset)
-			predictionsLoaderTest = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset)
+#			predictionsLoaderTrain = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_train, dataset=dataset)
+#			predictionsLoaderTest = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset)
 
 
 		deb.prints(predictionsLoaderTest)
@@ -319,8 +319,8 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 				model_dataset=args.model_dataset)
 
 
-		predictions_train, label_train, train_pred_proba, _ = predictionsLoaderTrain.loadPredictions(model_path, seq_date=args.seq_date, 
-				model_dataset=args.model_dataset)
+#		predictions_train, label_train, train_pred_proba, _ = predictionsLoaderTrain.loadPredictions(model_path, seq_date=args.seq_date, 
+#				model_dataset=args.model_dataset)
 
 		deb.prints(np.unique(np.concatenate((predictions,label_test),axis=0)))
 	
@@ -358,9 +358,7 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 #		thresholds = [-200, -100, -50, 0, 50, 100, 200, 400]
 		#thresholds = [-100, -50, 0]
 		thresholds = np.linspace(-500, 500, 20)
-#		thresholds = [131.57]
-		thresholds = [400]
-
+		thresholds = [0]
 		t=0
 		openModel = None
 		for threshold in thresholds:
@@ -378,8 +376,8 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 				important_classes=None, dataset=dataset, skip_crf=skip_crf, t=t,
 #				predictionsLoaderTest = predictionsLoaderTest, label_train=label_train,
 #				predictions_train=predictions_train, train_pred_proba=train_pred_proba)
-				predictionsLoaderTest = predictionsLoaderTest, label_train=label_train,
-				predictions_train=predictions_train, train_pred_proba=train_pred_proba,
+				predictionsLoaderTest = predictionsLoaderTest, label_train=label_test_t,
+				predictions_train=predictions_t, train_pred_proba=test_pred_proba,
 				threshold = threshold, openModel = openModel)
 
 

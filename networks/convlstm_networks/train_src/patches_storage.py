@@ -18,7 +18,7 @@ class PatchesStorage():
 		pass
 
 class PatchesStorageAllSamples(PatchesStorage):
-	def __init__(self,path, seq_mode, seq_date):
+	def __init__(self,params, path, seq_mode, seq_date):
 		
 		self.path_patches = path + 'patches_bckndfixed/'
 		self.path={}
@@ -31,6 +31,7 @@ class PatchesStorageAllSamples(PatchesStorage):
 		self.seq_mode = seq_mode
 		self.seq_date = seq_date
 		print("Path, ",self.path)
+		self.params = params
 		#pdb.set_trace()
 	def store(self,data_patches):
 		self.storeSplit(data_patches['train'],'train_bckndfixed')
@@ -70,8 +71,9 @@ class PatchesStorageAllSamplesOpenSet(PatchesStorageAllSamples):
 		self.storeSplit(data_patches['train'],'train_bckndfixed')
 		self.storeSplit(data_patches['test'],'test_bckndfixed')
 		#self.storeSplit(data_patches['val'],'val_bckndfixed')
-		self.storeLabel(data_patches['test']['label_with_loco_class'],'test_loco')
-		self.storeLabel(data_patches['train']['label_with_loco_class'],'train_loco')
+		if self.params.open_set==True:
+			self.storeLabel(data_patches['test']['label_with_loco_class'],'test_loco')
+			self.storeLabel(data_patches['train']['label_with_loco_class'],'train_loco')
 
 
 

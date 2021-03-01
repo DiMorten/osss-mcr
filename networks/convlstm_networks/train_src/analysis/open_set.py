@@ -39,6 +39,7 @@ class OpenPCS(OpenSetMethod):
         super().__init__(loco_class)
         self.known_classes = known_classes
         self.n_components = n_components
+        self.fittedFlag = False
         
     def fit(self, label_train, predictions_train, pred_proba_train):
         # pred proba shape is (n_samples, h, w, classes)
@@ -46,7 +47,7 @@ class OpenPCS(OpenSetMethod):
 
         ##print("pred_proba_max stats min, avg, max",np.min(pred_proba_test),
         ##        np.average(pred_proba_test),np.max(pred_proba_test))
-
+        deb.prints(self.threshold)
         deb.prints(predictions_train.shape)
 
 
@@ -70,7 +71,9 @@ class OpenPCS(OpenSetMethod):
 
         self.fit_pca_models(label_train, predictions_train, pred_proba_train)
         deb.prints(np.unique(predictions_train, return_counts=True))
+        self.fittedFlag = True
     def predict(self, label_test, predictions_test, pred_proba_test):
+        deb.prints(self.threshold)
         deb.prints(predictions_test.shape)
 
 
@@ -142,7 +145,7 @@ class OpenPCS(OpenSetMethod):
             feat_msk = (predictions_test == c)
             deb.prints(np.unique(feat_msk,return_counts=True))
             print("open_features stats",np.min(open_features),np.average(open_features),np.max(open_features))
-            print("Model components",self.model_list[idx].components_)
+            ##print("Model components",self.model_list[idx].components_)
 #            deb.stats_print(open_features)
             if np.any(feat_msk):
                 #try:
@@ -181,8 +184,8 @@ class OpenPCS(OpenSetMethod):
             
             # Computing PCA models from features.
             model = self.fit_pca_model_perclass(label_test, predictions_test, open_features, c)#feat_list, true_list, prds_list, c)
-            print("Model components",model.components_)
-            print("Model components",model.mean_)
+            #print("Model components",model.components_)
+            #print("Model components",model.mean_)
             
             self.model_list.append(model)
             
@@ -212,8 +215,8 @@ class OpenPCS(OpenSetMethod):
             
             perm = np.random.permutation(cl_feat_flat.shape[0])
             
-            #if perm.shape[0] > 32768:
-            #    cl_feat_flat = cl_feat_flat[perm[:32768], :]
+            if perm.shape[0] > 32768:
+                cl_feat_flat = cl_feat_flat[perm[:32768], :]
             
             model.fit(cl_feat_flat)
             return model

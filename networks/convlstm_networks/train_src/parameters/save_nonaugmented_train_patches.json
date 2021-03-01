@@ -1,0 +1,9 @@
+{
+    "open_set": false,
+    "balancing": false,
+    "val_set": false,
+    "store_patches": true,
+    "select_kept_classes_flag": true,
+    "known_classes": [0, 1, 10, 12]
+    
+}
