@@ -25,6 +25,11 @@ sys.path.append('../')
 import deb
 from open_set import SoftmaxThresholding, OpenPCS
 import argparse
+from parameters.parameters_reader import ParamsTrain, ParamsAnalysis
+
+paramsTrain = ParamsTrain('../parameters/')
+paramsAnalysis = ParamsAnalysis('parameters_analysis/')
+
 parser = argparse.ArgumentParser(description='Process some integers.')
 
 parser.add_argument('--seq_date', dest='seq_date', 
@@ -84,19 +89,24 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 
 #			openModel = OpenPCS(loco_class = predictionsLoader.loco_class)
 #	openModel = SoftmaxThresholding(loco_class = predictionsLoader.loco_class)
-	open_set_flag = True
-	specify_unknown_classes=False
-	if open_set_flag==True:
+	#open_set_flag = False
+	specify_unknown_classes = False
+	if paramsAnalysis.open_set == True:
 		if specify_unknown_classes==True:
-			known_classes = np.unique(label_test)
-			deb.prints(known_classes)
-			known_classes = list(known_classes)
-			deb.prints(known_classes)
+			all_classes = np.unique(label_test)
+			all_classes = all_classes[1:] - 1 # no bcknd
+			deb.prints(all_classes)
+			deb.prints(paramsTrain.unknown_classes)
+
+
+			paramsTrain.known_classes = np.setdiff1d(all_classes, paramsTrain.unknown_classes)
+			#known_classes = [x + 1 for x in known_classes]
+
 			#pdb.set_trace()
-			known_classes.remove(predictionsLoaderTest.loco_class + 1)
-			known_classes.remove(0) #background
-		else:
-			known_classes = [x + 1 for x in predictionsLoaderTest.known_classes]
+#			known_classes.remove(predictionsLoaderTest.loco_class + 1)
+#			known_classes.remove(0) #background
+		#else:
+		known_classes = [x + 1 for x in paramsTrain.known_classes]
 		deb.prints(known_classes)
 		
 		if openModel == None:
@@ -318,12 +328,13 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 		predictions, label_test, test_pred_proba, model = predictionsLoaderTest.loadPredictions(model_path, seq_date=args.seq_date, 
 				model_dataset=args.model_dataset)
 
-
-		predictions_train, label_train, train_pred_proba, _ = predictionsLoaderTrain.loadPredictions(model_path, seq_date=args.seq_date, 
-				model_dataset=args.model_dataset)
-
-		deb.prints(np.unique(np.concatenate((predictions,label_test),axis=0)))
-	
+		if paramsAnalysis.open_set==True:
+#			predictions_train, label_train, train_pred_proba, _ = predictionsLoaderTrain.loadPredictions(model_path, seq_date=args.seq_date, 
+#					model_dataset=args.model_dataset)
+			predictions_train, label_train, train_pred_proba = predictions.copy(), label_test.copy(), test_pred_proba.copy()
+			deb.prints(np.unique(np.concatenate((predictions,label_test),axis=0)))
+		else:
+			predictions_train, label_train, train_pred_proba = None, None, None	
 	#predictions=np.load(prediction_path, allow_pickle=True)
 	#label_test=np.load(path+'labels.npy', allow_pickle=True)
 
@@ -359,7 +370,13 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 		#thresholds = [-100, -50, 0]
 		thresholds = np.linspace(-500, 500, 20)
 #		thresholds = [131.57]
-		thresholds = [400]
+#		thresholds = [400]
+		thresholds = [-5000]
+		thresholds = [-100, 0]
+		thresholds = [-250]
+
+		
+
 
 		t=0
 		openModel = None
@@ -918,6 +935,8 @@ elif dataset=='lm':
 		]]	
 
 		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_'+args.seq_date+'_loco'+str(loco_class)+'_lm_testlm_fewknownclasses.h5']]	
+
+		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_loco8_lm_testlm_lessclass8_2.h5']]	
 
 #model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_loco8_lm_testlm_stratifiedval
 elif dataset=='lm_optical':

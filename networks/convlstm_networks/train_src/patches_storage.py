@@ -62,18 +62,20 @@ class PatchesStorageAllSamples(PatchesStorage):
 class PatchesStorageAllSamplesOpenSet(PatchesStorageAllSamples):
 	def storeLabel(self, patches, split='test_loco'):
 		pathlib.Path(self.path[split]).mkdir(parents=True, exist_ok=True) 
-		print("Storing in ",self.path[split])
+		name = self.path[split]+'patches_label_'+self.seq_mode+'_'+self.seq_date+'_unknown.npy'
+		print("Storing in ",name)
 		
 		#pathlib.Path(self.path[split]['label']).mkdir(parents=True, exist_ok=True) 
-		np.save(self.path[split]+'patches_label_'+self.seq_mode+'_'+self.seq_date+'.npy', patches) #to-do: add polymorphism for other types of input 
+		np.save(name, patches) #to-do: add polymorphism for other types of input 
 
 	def store(self,data_patches):
 		self.storeSplit(data_patches['train'],'train_bckndfixed')
 		self.storeSplit(data_patches['test'],'test_bckndfixed')
 		#self.storeSplit(data_patches['val'],'val_bckndfixed')
 		if self.params.open_set==True:
-			self.storeLabel(data_patches['test']['label_with_loco_class'],'test_loco')
-			self.storeLabel(data_patches['train']['label_with_loco_class'],'train_loco')
+			print("Storing unknown labels")
+			self.storeLabel(data_patches['test']['label_with_loco_class'],'test_bckndfixed')
+			self.storeLabel(data_patches['train']['label_with_loco_class'],'train_bckndfixed')
 
 
 

@@ -206,7 +206,7 @@ class OpenPCS(OpenSetMethod):
         #deb.prints(np.unique(label_test == cl))
         #deb.prints(np.unique(predictions_test == cl))
  #       deb.prints(np.unique(predictions_test == cl))
-
+        deb.prints(open_features.shape)
         cl_feat_flat = open_features[(label_test == cl) & (predictions_test == cl), :]
         min_samples = 50
         deb.prints(cl_feat_flat.shape)

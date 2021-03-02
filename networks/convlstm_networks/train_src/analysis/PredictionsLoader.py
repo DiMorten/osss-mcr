@@ -27,6 +27,10 @@ from dataSource import DataSource, SARSource, OpticalSource, Dataset, LEM, LEM2,
 sys.path.append('../')
 from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixed_PaddedSeq
 import deb
+from parameters.parameters_reader import ParamsTrain, ParamsAnalysis
+
+paramsTrain = ParamsTrain('../parameters/')
+
 class PredictionsLoader():
 	def __init__(self):
 		pass
@@ -327,16 +331,32 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 			deb.prints(self.path_test+'patches_label_fixed_'+seq_date+'.npy')
 			batch['label']=np.load(self.path_test+'patches_label_fixed_'+seq_date+'.npy') # may18
 
-		self.loco_class = 8			
-		batch['label_with_loco_class']=np.load(self.path_test+'patches_label_fixed_'+seq_date+'_loco'+str(self.loco_class)+'.npy') # may18			
+		self.loco_class = 8		
+		#+'patches_label_'+self.seq_mode+'_'+self.seq_date+'_unknown.npy',
+
+#		batch['label_with_loco_class']=np.load(self.path_test+'patches_label_fixed_'+seq_date+'_loco'+str(self.loco_class)+'.npy') # may18			
+		batch['label_with_loco_class']=np.load(self.path_test+'patches_label_fixed_'+seq_date+'_unknown.npy') # may18			
+
 		# test label with loco class. 
 		# If loco_class=8, batch['label_with_loco_class'] contains the loco class as 8+1=9 because 0 is the background ID
 		deb.prints(np.unique(batch['label_with_loco_class'], return_counts=True))
 		
-		self.known_classes = [0, 1, 10, 12]
-		known_classes_flag = True
-		if known_classes_flag==False:
-			batch['label_with_loco_class'][batch['label_with_loco_class']!=self.loco_class+1]=0 
+#		self.known_classes = [0, 1, 10, 12]
+
+		if paramsTrain.select_kept_classes_flag==False:
+			for clss in np.unique(batch['label_with_loco_class']): # clss is from 1 to clss_n+1
+				if (clss-1>=0) and (clss-1 not in paramsTrain.unknown_classes): 
+					batch['label_with_loco_class'][batch['label_with_loco_class']!=clss]=0 
+
+#			all_classes = np.unique(batch['label_with_loco_class']) # with background
+#			all_classes = all_classes[1:] - 1 # no bcknd
+#			deb.prints(all_classes)
+#			deb.prints(paramsTrain.unknown_classes)
+#			unknown_classes = np.setdiff1d(all_classes, args.known_classes)
+#			deb.prints(unknown_classes)
+
+#			self.loco_class = paramsTrain.unknown_classes
+#			batch['label_with_loco_class'][batch['label_with_loco_class']!=self.loco_class+1]=0 
 		else:
 #			all_classes = np.unique(batch['label_with_loco_class']) # with background
 #			all_classes = all_classes[1:] - 1 # no bcknd
@@ -344,7 +364,7 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 #			deb.prints(known_classes)
 #			unknown_classes = np.setdiff1d(all_classes, args.known_classes)
 #			deb.prints(unknown_classes)
-			for clss in self.known_classes:
+			for clss in paramsTrain.known_classes:
 				batch['label_with_loco_class'][batch['label_with_loco_class']==int(clss) + 1] = 0
 #				self.patches['train']['label'][self.patches['train']['label']==int(clss) + 1] = 0
 #				self.patches['test']['label'][self.patches['test']['label']==int(clss) + 1] = 0

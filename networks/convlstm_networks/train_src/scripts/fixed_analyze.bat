@@ -15,7 +15,7 @@ set model_dataset=lm
 ::::dataSource='OpticalWithClouds'
 ::dataSource='SAR'
 set dataSource=SAR
-set model=UUnet4ConvLSTM_doty
+set model=UUnet4ConvLSTM
 :: set seq_mode=fixed
 set seq_mode=fixed
 
