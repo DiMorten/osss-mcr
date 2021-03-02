@@ -331,7 +331,7 @@ class Dataset(NetObject):
 
 		# ========================================= pick label for N to 1
 		deb.prints(args.seq_mode)
-
+		print('*'*20, 'Selecting date label')
 		if args.seq_mode == 'fixed':
 			args.seq_label = -1
 			self.patches['train']['label'] = self.patches['train']['label'][:,args.seq_label]
@@ -348,7 +348,8 @@ class Dataset(NetObject):
 
 			self.patches['train']['label'] = self.patches['train']['label'][:, -self.labeled_dates:]
 			self.patches['test']['label'] = self.patches['test']['label'][:, -self.labeled_dates:]
-
+		deb.prints(np.unique(self.patches['train']['label'],return_counts=True))
+		deb.prints(np.unique(self.patches['test']['label'],return_counts=True))
 			
 		self.class_n=unique.shape[0] #10 plus background
 		if paramsTrain.open_set==True:

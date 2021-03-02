@@ -215,8 +215,8 @@ class OpenPCS(OpenSetMethod):
             
             perm = np.random.permutation(cl_feat_flat.shape[0])
             
-            if perm.shape[0] > 32768:
-                cl_feat_flat = cl_feat_flat[perm[:32768], :]
+            #if perm.shape[0] > 32768:
+            #    cl_feat_flat = cl_feat_flat[perm[:32768], :]
             
             model.fit(cl_feat_flat)
             return model

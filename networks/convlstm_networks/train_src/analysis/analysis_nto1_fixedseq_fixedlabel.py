@@ -374,6 +374,7 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 		thresholds = [-5000]
 		thresholds = [-100, 0]
 		thresholds = [-250]
+		thresholds = [0]
 
 		
 
