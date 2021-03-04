@@ -61,6 +61,7 @@ class OpenPCS(OpenSetMethod):
         predictions_train = predictions_train.flatten()
         #pred_proba_test = pred_proba_test.reshape((pred_proba_test.shape[0], -1))
         #deb.prints(pred_proba_test.shape)
+        deb.prints(np.unique(label_train, return_counts=True))
 
         ##pred_proba_test = pred_proba_test.reshape((-1, pred_proba_test.shape[-1]))
         print("*"*20, " Flattened the results")

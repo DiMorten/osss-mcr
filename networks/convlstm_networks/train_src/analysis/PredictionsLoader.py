@@ -120,6 +120,7 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 		# translate 
 		f = open(filename, "rb")
 		new_labels2labels = pickle.load(f)
+		print("new_labels2labels filename",f)
 		deb.prints(new_labels2labels)
 
 		classes = np.unique(label)

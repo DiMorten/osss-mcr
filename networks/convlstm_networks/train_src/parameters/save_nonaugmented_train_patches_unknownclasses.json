@@ -7,7 +7,8 @@
     "known_classes": [],
     "group_bcknd_classes": false,
     "unknown_classes": [8],
-    "samples_per_class": 700    
+    "samples_per_class": 700,
+    "val_set_mode": "random"    
 }
 
 

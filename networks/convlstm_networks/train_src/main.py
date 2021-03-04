@@ -437,7 +437,9 @@ class Dataset(NetObject):
 			self.patches['test']['label'][tmp_tst == classes[j]] = labels2new_labels[classes[j]]
 
 		# save dicts
-		f = open("new_labels2labels_"+self.ds.name+"_"+self.ds.im_list[-1]+".pkl", "wb")
+		dict_filename = "new_labels2labels_"+self.ds.name+"_"+self.ds.im_list[-1]+".pkl" 
+		deb.prints(dict_filename)
+		f = open(dict_filename, "wb")
 		pickle.dump(new_labels2labels, f)
 		f.close()
 		deb.prints(new_labels2labels)
@@ -3220,7 +3222,9 @@ if __name__ == '__main__':
 
 	#val_set=True
 	#val_set_mode='stratified'
-	val_set_mode='stratified'
+#	val_set_mode='stratified'
+	#val_set_mode=paramsTrain.val_set_mode
+	
 #	val_set_mode='random'
 	if premade_split_patches_load==False:
 		randomly_subsample_sets=False
@@ -3267,8 +3271,9 @@ if __name__ == '__main__':
 		 
 		#val_set = False # fix this
 		if paramsTrain.val_set==True:
+			deb.prints(paramsTrain.val_set_mode)
 #			data.val_set_get(val_set_mode,0.15)
-			data.val_set_get(val_set_mode,0.15)
+			data.val_set_get(paramsTrain.val_set_mode,0.15)
 		else:
 			data.patches['val']={}
 
