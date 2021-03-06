@@ -43,6 +43,8 @@ parser.add_argument('--model_dataset', dest='model_dataset',
                     help='model_dataset')
 
 args = parser.parse_args()
+
+np.random.seed(0)
 #====================================
 def dense_crf(probs, img=None, n_iters=10, n_classes=19,
 			  sxy_gaussian=(1, 1), compat_gaussian=4,
@@ -254,6 +256,23 @@ def metrics_get(label_test,predictions,only_basics=False,debug=1, detailed_t=Non
 	acc=confusion_matrix_.diagonal()/np.sum(confusion_matrix_,axis=1)
 	acc=acc[~np.isnan(acc)]
 	metrics['average_acc']=np.average(metrics['per_class_acc'][~np.isnan(metrics['per_class_acc'])])
+	
+	# open set metrics
+	if paramsTrain.open_set == True:
+		metrics['f1_score_known'] = np.average(metrics['f1_score_noavg'][:-1])
+		metrics['f1_score_unknown'] = metrics['f1_score_noavg'][-1]
+		
+		
+		precision = precision_score(label_test,predictions, average=None)
+		recall = recall_score(label_test,predictions, average=None)
+		
+		deb.prints(precision)
+		deb.prints(recall)
+		metrics['precision_known'] = np.average(precision[:-1])
+		metrics['recall_known'] = np.average(recall[:-1])
+		metrics['precision_unknown'] = precision[-1]
+		metrics['recall_unknown'] = recall[-1]
+	
 	if debug>0:
 		print("acc",metrics['per_class_acc'])
 		print("Acc",acc)
@@ -356,7 +375,10 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 	skip_crf=True
 	if mode=='each_date':
 		metrics_t={'f1_score':[],'overall_acc':[],
-			'average_acc':[]}
+			'average_acc':[],
+			'precision_known':[], 'recall_known':[], 
+			'precision_unknown':[], 'recall_unknown':[],
+			'f1_score_known':[], 'f1_score_unknown':[]}
 
 		# if dataset=='cv':
 		# 	important_classes=[]
@@ -374,7 +396,8 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 		thresholds = [-5000]
 		thresholds = [-100, 0]
 		thresholds = [-250]
-		thresholds = [0]
+#		thresholds = [550]
+		thresholds = [400]
 
 		
 
@@ -408,6 +431,16 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 			metrics_t['f1_score'].append(round(metrics['f1_score']*100,2))
 			metrics_t['overall_acc'].append(round(metrics['overall_acc']*100,2))
 			metrics_t['average_acc'].append(round(metrics['average_acc']*100,2))
+			if paramsTrain.open_set==True:
+				#pdb.set_trace()
+				metrics_t['precision_known'].append(round(metrics['precision_known']*100,2))
+				metrics_t['recall_known'].append(round(metrics['recall_known']*100,2))
+				metrics_t['f1_score_known'].append(round(metrics['f1_score_known']*100,2))
+
+				metrics_t['precision_unknown'].append(round(metrics['precision_unknown']*100,2))
+				metrics_t['recall_unknown'].append(round(metrics['recall_unknown']*100,2))
+				metrics_t['f1_score_unknown'].append(round(metrics['f1_score_unknown']*100,2))
+
 			print(args.seq_date)
 		deb.prints(thresholds)
 		print(metrics_t)
@@ -937,10 +970,10 @@ elif dataset=='lm':
 
 		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_'+args.seq_date+'_loco'+str(loco_class)+'_lm_testlm_fewknownclasses.h5']]	
 
-		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_loco8_lm_testlm_lessclass8_2.h5']]	
+#		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_loco8_lm_testlm_lessclass8_2.h5']]	
 
-		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_dec_lm_testlm_fewknownclasses_valrand.h5']]	
-		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_feb_lm_testlm_fewknownclasses_valrand.h5']]	
+#		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_dec_lm_testlm_fewknownclasses_valrand.h5']]	
+#		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_feb_lm_testlm_fewknownclasses_valrand.h5']]	
 
 #model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_loco8_lm_testlm_stratifiedval
 elif dataset=='lm_optical':

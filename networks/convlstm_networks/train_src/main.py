@@ -786,6 +786,8 @@ class Dataset(NetObject):
 		acc=acc[~np.isnan(acc)]
 		metrics['average_acc']=np.average(metrics['per_class_acc'][~np.isnan(metrics['per_class_acc'])])
 
+		metrics['precision_avg'] = np.average(precision[:-1])
+		metrics['recall_avg'] = np.average(recall[:-1])
 		return metrics
 
 	def metrics_write_to_txt(self,metrics,loss,epoch=0,path=None):
