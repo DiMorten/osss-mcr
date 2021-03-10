@@ -114,7 +114,7 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 		if openModel == None:
 
 			openModel = OpenPCS(loco_class = predictionsLoaderTest.loco_class,  known_classes = known_classes,
-					n_components = 16, load_model = paramsAnalysis.loadPCA)
+					n_components = 16)
 			#openModel = SoftmaxThresholding(loco_class = predictionsLoaderTest.loco_class)
 
 		#params.findThresholdInTrain=False
@@ -123,10 +123,10 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 		#if loop_threshold_flag == False:
 		openModel.setThreshold(threshold)
 		if openModel.fittedFlag == False:
-			if paramsAnalysis.loadPCA == False:
-				openModel.fit(label_train, predictions_train, train_pred_proba)
-			else:
-				openModel.load()
+			#if paramsAnalysis.loadPCA == False:
+			openModel.fit(label_train, predictions_train, train_pred_proba)
+			#else:
+			#	openModel.load()
 #		openModel.fit(label_test, predictions, test_pred_proba)
 #		if paramsAnalysis.findThresholdInTrain == False:
 
@@ -134,11 +134,11 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 		deb.prints(label_train.shape)
 		deb.prints(predictions.shape)
 		deb.prints(label_test.shape)
-		deb.prints(paramsAnalysis.loadPCA)
-		pdb.set_trace()
+		deb.prints(paramsAnalysis.metricsOnTrain)
+		#pdb.set_trace()
 		print('************* predicting open set postprocessing')
 
-		if paramsAnalysis.loadPCA == True:
+		if paramsAnalysis.metricsOnTrain == False:
 
 			predictions = openModel.predict(label_test, predictions, test_pred_proba)
 		else:
@@ -149,10 +149,10 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 	#predictions=predictions.argmax(axis=-1)
 	predictions=np.reshape(predictions,-1)
 	#label_test=label_test.argmax(axis=-1)
-	label_metrics = label_test if paramsAnalysis.loadPCA == True else label_train
+	label_metrics = label_test if paramsAnalysis.metricsOnTrain == False else label_train
 	deb.prints(label_metrics.shape)
 	deb.prints(label_train.shape)
-	pdb.set_trace()
+	#pdb.set_trace()
 	label_metrics=np.reshape(label_metrics,-1)
 
 
@@ -429,6 +429,7 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 		thresholds = [-500, -300, -100, 0, 100]
 #		thresholds = [0, 100, 200, 300, 400, 500]
 		thresholds = [200]
+		thresholds = [-100, 0, 100, 200, 300, 400, 500, 600]
 
 #		thresholds = [0]
 
@@ -1004,12 +1005,12 @@ elif dataset=='lm':
 			'model_best_UUnet4ConvLSTM_fixed_label_fixed_'+args.seq_date+'_loco'+str(loco_class)+'_lm_testlm.h5'
 		]]	
 
-		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_'+args.seq_date+'_loco'+str(loco_class)+'_lm_testlm_fewknownclasses.h5']]	
+#		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_'+args.seq_date+'_loco'+str(loco_class)+'_lm_testlm_fewknownclasses.h5']]	
 
 #		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_loco8_lm_testlm_lessclass8_2.h5']]	
 
-		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_dec_lm_testlm_fewknownclasses_valrand.h5']]	
-#		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_feb_lm_testlm_fewknownclasses_valrand.h5']]	
+#		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_dec_lm_testlm_fewknownclasses_valrand.h5']]	
+		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_feb_lm_testlm_fewknownclasses_valrand.h5']]	
 
 #model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_loco8_lm_testlm_stratifiedval
 elif dataset=='lm_optical':

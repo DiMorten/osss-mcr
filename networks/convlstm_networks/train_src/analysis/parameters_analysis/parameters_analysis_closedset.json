@@ -1,6 +1,5 @@
 {
     "open_set": true,
     "setTrainAsTest": false,
-    "findThresholdInTrain": true,
-    "loadPCA": true
+    "metricsOnTrain": true
 }

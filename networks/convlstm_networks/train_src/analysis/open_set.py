@@ -43,13 +43,13 @@ class SoftmaxThresholding(OpenSetMethod):
 
 
 class OpenPCS(OpenSetMethod):
-    def __init__(self, loco_class, known_classes, n_components, load_model=False):
+    def __init__(self, loco_class, known_classes, n_components):
         super().__init__(loco_class)
         self.known_classes = known_classes
         self.n_components = n_components
         self.fittedFlag = False
         self.name = 'OpenPCS'
-        self.load_model = load_model
+
         
     def fit(self, label_train, predictions_train, pred_proba_train):
         # pred proba shape is (n_samples, h, w, classes)
