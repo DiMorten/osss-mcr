@@ -112,58 +112,81 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 		deb.prints(known_classes)
 		
 		if openModel == None:
-			openModel = OpenPCS(loco_class = predictionsLoaderTest.loco_class,  known_classes = known_classes,
-					n_components = 16)
-				
 
-		
+			openModel = OpenPCS(loco_class = predictionsLoaderTest.loco_class,  known_classes = known_classes,
+					n_components = 16, load_model = paramsAnalysis.loadPCA)
+			#openModel = SoftmaxThresholding(loco_class = predictionsLoaderTest.loco_class)
+
+		#params.findThresholdInTrain=False
 
 		#loop_threshold_flag = False
 		#if loop_threshold_flag == False:
 		openModel.setThreshold(threshold)
 		if openModel.fittedFlag == False:
-			openModel.fit(label_train, predictions_train, train_pred_proba)
+			if paramsAnalysis.loadPCA == False:
+				openModel.fit(label_train, predictions_train, train_pred_proba)
+			else:
+				openModel.load()
 #		openModel.fit(label_test, predictions, test_pred_proba)
-		predictions = openModel.predict(label_test, predictions, test_pred_proba)
+#		if paramsAnalysis.findThresholdInTrain == False:
 
+		deb.prints(predictions_train.shape)
+		deb.prints(label_train.shape)
+		deb.prints(predictions.shape)
+		deb.prints(label_test.shape)
+		deb.prints(paramsAnalysis.loadPCA)
+		pdb.set_trace()
+		print('************* predicting open set postprocessing')
+
+		if paramsAnalysis.loadPCA == True:
+
+			predictions = openModel.predict(label_test, predictions, test_pred_proba)
+		else:
+			predictions = openModel.predict(label_train, predictions_train, train_pred_proba)
+
+	deb.prints(predictions.shape)
 
 	#predictions=predictions.argmax(axis=-1)
 	predictions=np.reshape(predictions,-1)
 	#label_test=label_test.argmax(axis=-1)
-	label_test=np.reshape(label_test,-1)
+	label_metrics = label_test if paramsAnalysis.loadPCA == True else label_train
+	deb.prints(label_metrics.shape)
+	deb.prints(label_train.shape)
+	pdb.set_trace()
+	label_metrics=np.reshape(label_metrics,-1)
 
 
 	deb.prints(np.unique(predictions,return_counts=True))
-	deb.prints(np.unique(label_test,return_counts=True))
+	deb.prints(np.unique(label_metrics,return_counts=True))
 
 	translate_mode = True
 	deb.prints(translate_mode)
 	if translate_mode == False:
-		bcknd_id = np.unique(label_test)[-1]
+		bcknd_id = np.unique(label_metrics)[-1]
 		deb.prints(bcknd_id)
-		predictions=predictions[label_test<bcknd_id]
-		label_test=label_test[label_test<bcknd_id]
+		predictions=predictions[label_metrics<bcknd_id]
+		label_metrics=label_metrics[label_metrics<bcknd_id]
 	else:
-		predictions=predictions[label_test!=0]
-		label_test=label_test[label_test!=0]	
+		predictions=predictions[label_metrics!=0]
+		label_metrics=label_metrics[label_metrics!=0]	
 		predictions = predictions - 1
-		label_test = label_test - 1
+		label_metrics = label_metrics - 1
 
 	deb.prints(np.unique(predictions,return_counts=True))
-	deb.prints(np.unique(label_test,return_counts=True))
+	deb.prints(np.unique(label_metrics,return_counts=True))
 
 
 	print("========================= Flattened the predictions and labels")	
 	print("Loaded predictions unique: ",np.unique(predictions,return_counts=True))
-	print("Loaded label test unique: ",np.unique(label_test,return_counts=True))
+	print("Loaded label test unique: ",np.unique(label_metrics,return_counts=True))
 	
 	print("Loaded predictions shape: ",predictions.shape)
-	print("Loaded label test shape: ",label_test.shape)
+	print("Loaded label test shape: ",label_metrics.shape)
 
 	# map small classes to single class 20
 	if small_classes_ignore==True:
 		# Eliminate non important classes
-		class_list,class_count = np.unique(label_test,return_counts=True)
+		class_list,class_count = np.unique(label_metrics,return_counts=True)
 		if debug>=0: print("Class unique before eliminating non important classes:",class_list,class_count)
 		
 		if dataset=='cv':
@@ -188,10 +211,10 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 					index=int(np.where(class_list==idx)[0])
 					if class_count[index]<15000:
 						predictions[predictions==idx]=20
-						label_test[label_test==idx]=20
+						label_metrics[label_metrics==idx]=20
 				else:
 					predictions[predictions==idx]=20
-					label_test[label_test==idx]=20
+					label_metrics[label_metrics==idx]=20
 		elif mode==2:
 			class_count_min=100000
 			important_classes_class_count_min=15000
@@ -206,27 +229,27 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 					#print("b",index)
 					if class_count[index]<class_count_min_idx:
 						predictions[predictions==idx]=20
-						label_test[label_test==idx]=20
+						label_metrics[label_metrics==idx]=20
 				else:
 					predictions[predictions==idx]=20
-					label_test[label_test==idx]=20
+					label_metrics[label_metrics==idx]=20
 		elif mode==3: # Just take the important classes, no per-date analysis
 			for idx in range(class_n):
 				if idx not in important_classes_idx:
 					predictions[predictions==idx]=20
-					label_test[label_test==idx]=20
+					label_metrics[label_metrics==idx]=20
 
 
 
 
-		if debug>=0: print("Class unique after eliminating non important classes:",np.unique(label_test,return_counts=True))
+		if debug>=0: print("Class unique after eliminating non important classes:",np.unique(label_metrics,return_counts=True))
 		print("Pred unique after eliminating non important classes:",np.unique(predictions,return_counts=True))
 
 
 	if debug>0:
 		print("Predictions",predictions.shape)
-		print("Label_test",label_test.shape)
-	return label_test,predictions, openModel
+		print("label_metrics",label_metrics.shape)
+	return label_metrics,predictions, openModel
 def my_f1_score(label,prediction):
 	f1_values=f1_score(label,prediction,average=None)
 
@@ -348,9 +371,14 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 				model_dataset=args.model_dataset)
 
 		if paramsAnalysis.open_set==True:
-#			predictions_train, label_train, train_pred_proba, _ = predictionsLoaderTrain.loadPredictions(model_path, seq_date=args.seq_date, 
-#					model_dataset=args.model_dataset)
-			predictions_train, label_train, train_pred_proba = predictions.copy(), label_test.copy(), test_pred_proba.copy()
+			if paramsAnalysis.setTrainAsTest == False:
+				predictions_train, label_train, train_pred_proba, _ = predictionsLoaderTrain.loadPredictions(model_path, seq_date=args.seq_date, 
+						model_dataset=args.model_dataset)
+				print("1a")
+			else:
+				predictions_train, label_train, train_pred_proba = predictions.copy(), label_test.copy(), test_pred_proba.copy()
+			deb.prints(label_train.shape)
+			##pdb.set_trace()
 			deb.prints(np.unique(np.concatenate((predictions,label_test),axis=0)))
 		else:
 			predictions_train, label_train, train_pred_proba = None, None, None	
@@ -390,14 +418,22 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 #		for t in range(label_test.shape[1]):
 #		thresholds = [-200, -100, -50, 0, 50, 100, 200, 400]
 		#thresholds = [-100, -50, 0]
-		thresholds = np.linspace(-500, 500, 20)
+		thresholds = np.linspace(-500, 500, 10)
 #		thresholds = [131.57]
 #		thresholds = [400]
 		thresholds = [-5000]
 		thresholds = [-100, 0]
 		thresholds = [-250]
 #		thresholds = [550]
-		thresholds = [400]
+		thresholds = [300]
+		thresholds = [-500, -300, -100, 0, 100]
+#		thresholds = [0, 100, 200, 300, 400, 500]
+		thresholds = [200]
+
+#		thresholds = [0]
+
+		# softmax thresholding
+#		thresholds = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.92, 0.95]
 
 		
 
@@ -972,7 +1008,7 @@ elif dataset=='lm':
 
 #		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_loco8_lm_testlm_lessclass8_2.h5']]	
 
-#		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_dec_lm_testlm_fewknownclasses_valrand.h5']]	
+		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_dec_lm_testlm_fewknownclasses_valrand.h5']]	
 #		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_feb_lm_testlm_fewknownclasses_valrand.h5']]	
 
 #model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_loco8_lm_testlm_stratifiedval

@@ -1,3 +1,6 @@
 {
-    "open_set": true
+    "open_set": true,
+    "setTrainAsTest": false,
+    "findThresholdInTrain": true,
+    "loadPCA": true
 }

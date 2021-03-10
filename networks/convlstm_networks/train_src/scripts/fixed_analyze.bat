@@ -22,7 +22,7 @@ set seq_mode=fixed
 
 
 cd ../analysis/
-set seq_date=mar
+set seq_date=dec
 set id=fixed_label_%seq_mode%_%seq_date%_lm_firsttry
 python analysis_nto1_fixedseq_fixedlabel.py --dataset=%dataset% --model_dataset=%model_dataset% --seq_date=%seq_date%
 :: python analysis_nto1_fixedseq_fixedlabel_nounknown.py --dataset=%dataset% --model_dataset=%model_dataset% --seq_date=%seq_date%

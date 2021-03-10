@@ -9,6 +9,7 @@ import time
 import pdb 
 from sklearn.preprocessing import MinMaxScaler
 import deb
+import pickle
 
 class OpenSetMethod(): # abstract
     def __init__(self, loco_class):
@@ -16,7 +17,14 @@ class OpenSetMethod(): # abstract
     def setThreshold(self, threshold):
         self.threshold = threshold
 class SoftmaxThresholding(OpenSetMethod):
-    def postprocess(self, label_test, predictions_test, pred_proba_test):
+
+    def __init__(self, loco_class):
+        super().__init__(loco_class)
+
+        self.fittedFlag = True
+        self.name = 'SoftmaxThresholding'
+
+    def predict(self, label_test, predictions_test, pred_proba_test):
         # pred proba shape is (n_samples, h, w, classes)
         pred_proba_test = scipy.special.softmax(pred_proba_test, axis=-1)
 
@@ -35,11 +43,13 @@ class SoftmaxThresholding(OpenSetMethod):
 
 
 class OpenPCS(OpenSetMethod):
-    def __init__(self, loco_class, known_classes, n_components):
+    def __init__(self, loco_class, known_classes, n_components, load_model=False):
         super().__init__(loco_class)
         self.known_classes = known_classes
         self.n_components = n_components
         self.fittedFlag = False
+        self.name = 'OpenPCS'
+        self.load_model = load_model
         
     def fit(self, label_train, predictions_train, pred_proba_train):
         # pred proba shape is (n_samples, h, w, classes)
@@ -69,9 +79,22 @@ class OpenPCS(OpenSetMethod):
         deb.prints(predictions_train.shape)
         deb.prints(pred_proba_train.shape)
         #pdb.set_trace()
-
+        #if self.load_model == False:
         self.fit_pca_models(label_train, predictions_train, pred_proba_train)
+#            self.modelSave()
+#        else:
+#            self.modelLoad()
         deb.prints(np.unique(predictions_train, return_counts=True))
+        self.fittedFlag = True
+    def load(self):
+        self.model_list = []
+        with open("models.pckl", "rb") as f:
+            while True:
+                try:
+                    self.model_list.append(pickle.load(f))
+                except EOFError:
+                    break
+        print("*"*20, "model was loaded")
         self.fittedFlag = True
     def predict(self, label_test, predictions_test, pred_proba_test):
         deb.prints(self.threshold)
@@ -193,7 +216,13 @@ class OpenPCS(OpenSetMethod):
             toc = time.time()
             print('    Time spent fitting model %d: %.2f' % (c, toc - tic))
 
-
+        def save_models(models):
+            with open("models.pckl", "wb") as f:
+                for model in models:
+                    pickle.dump(model, f)
+            print("*"*30, "Model was saved")
+        save_models(self.model_list)
+            
         #predictions_test[pred_proba_max < self.threshold] = self.loco_class + 1
 
 

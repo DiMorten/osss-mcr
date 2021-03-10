@@ -251,7 +251,22 @@ def metrics_get(label_test,predictions,only_basics=False,debug=1, detailed_t=Non
 		print("OA",np.sum(confusion_matrix_.diagonal())/np.sum(confusion_matrix_))
 		print("AA",metrics['average_acc'])
 		print("OA",metrics['overall_acc'])
-
+	bcknd_group_classes = True
+	if bcknd_group_classes == True:
+		metrics['f1_score_known'] = np.average(metrics['f1_score_noavg'][:-1])
+		metrics['f1_score_unknown'] = metrics['f1_score_noavg'][-1]
+		
+		
+		precision = precision_score(label_test,predictions, average=None)
+		recall = recall_score(label_test,predictions, average=None)
+		
+		deb.prints(precision)
+		deb.prints(recall)
+		metrics['precision_known'] = np.average(precision[:-1])
+		metrics['recall_known'] = np.average(recall[:-1])
+		metrics['precision_unknown'] = precision[-1]
+		metrics['recall_unknown'] = recall[-1]
+	
 	if only_basics==False:
 
 		metrics['f1_score_weighted']=f1_score(label_test,predictions,average='weighted')
@@ -918,6 +933,7 @@ elif dataset=='lm':
 		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_'+args.seq_date+'_loco'+str(loco_class)+'_lm_testlm_fewknownclasses.h5']]	
 		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_'+args.seq_date+'_loco'+str(loco_class)+'_lm_testlm_fewknownclasses.h5']]
 		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_loco8_lm_testlm_fewknownclasses_bckndclass.h5']]	
+		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_'+args.seq_date+'_lm_testlm_fewknownclasses_groupclasses.h5']]	
 
 #model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_loco8_lm_testlm_stratifiedval
 elif dataset=='lm_optical':

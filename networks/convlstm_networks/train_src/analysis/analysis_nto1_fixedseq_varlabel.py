@@ -181,6 +181,22 @@ def metrics_get(label_test,predictions,only_basics=False,debug=1, detailed_t=Non
 		print("AA",metrics['average_acc'])
 		print("OA",metrics['overall_acc'])
 
+	bcknd_group_classes = True
+	if bcknd_group_classes == True:
+		metrics['f1_score_known'] = np.average(metrics['f1_score_noavg'][:-1])
+		metrics['f1_score_unknown'] = metrics['f1_score_noavg'][-1]
+		
+		
+		precision = precision_score(label_test,predictions, average=None)
+		recall = recall_score(label_test,predictions, average=None)
+		
+		deb.prints(precision)
+		deb.prints(recall)
+		metrics['precision_known'] = np.average(precision[:-1])
+		metrics['recall_known'] = np.average(recall[:-1])
+		metrics['precision_unknown'] = precision[-1]
+		metrics['recall_unknown'] = recall[-1]
+
 	if only_basics==False:
 
 		metrics['f1_score_weighted']=f1_score(label_test,predictions,average='weighted')
