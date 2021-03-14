@@ -177,7 +177,21 @@ class OpenPCS(OpenSetMethod):
                 deb.prints(feat_msk.shape)
 
                 deb.prints(open_features[feat_msk, :].shape)
-                scores[feat_msk] = self.model_list[idx].score_samples(open_features[feat_msk, :])
+                mahalanobis_threshold = True
+                if mahalanobis_threshold==False:
+                    scores[feat_msk] = self.model_list[idx].score_samples(open_features[feat_msk, :])
+                else:
+                    features_class = open_features[feat_msk, :]
+                    features_pca = self.model_list[idx].transform(features_class)
+                    covariance_matrix = self.model_list[idx].get_covariance()   
+                    VI = np.linalg.inv(covariance_matrix)
+                    print(np.diag(np.sqrt(np.dot(np.dot((features_pca),VI),(features_pca).T))))
+                    pdb.set_trace()
+                    scores_class = np.zeros(features_class.shape[0])
+                    for sample_id in range(features_class.shape[0]):
+                        scores_class[sample_id] = self.mahalanobis_distance(
+                            features_class[sample_id], covariance_matrix)
+                    scores[feat_msk] = scores_class
                 #except:
                 #    print("No samples in class",c,"score is 0")
                  #   scores[feat_msk] = 0
@@ -196,6 +210,17 @@ class OpenPCS(OpenSetMethod):
 
         return predictions_test, scores #scores in case you want to threshold them again
 
+    def mahalanobis_distance(self, feature, covariance_matrix):
+        feature = np.expand_dims(feature, axis=0)
+#        deb.prints(feature.shape)
+#        deb.prints(covariance_matrix.shape)
+#        deb.prints(np.matrix.transpose(feature).shape)
+        out = np.matmul(feature, covariance_matrix)
+#        deb.prints(out.shape)
+        out = np.squeeze(np.matmul(out, np.matrix.transpose(feature)))
+#        deb.prints(out.shape)
+
+        return out
     def fit_pca_models(self, label_test, predictions_test, open_features):
         self.model_list = []
         print('*'*20, 'fit_pca_models')

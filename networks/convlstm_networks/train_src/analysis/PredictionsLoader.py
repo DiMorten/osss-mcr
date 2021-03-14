@@ -29,7 +29,11 @@ from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_
 import deb
 from parameters.parameters_reader import ParamsTrain, ParamsAnalysis
 
+#paramsTrain = ParamsTrain('../parameters/')
+#paramsAnalysis = ParamsAnalysis('parameters_analysis/')
+
 paramsTrain = ParamsTrain('../parameters/')
+paramsAnalysis = ParamsAnalysis('parameters_analysis/')
 
 class PredictionsLoader():
 	def __init__(self):
@@ -223,7 +227,10 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 
 		#pdb.set_trace()
 		test_predictions=(model.predict(input_)).astype(prediction_dtype) 
-		load_decoder_features_flag = True
+		if paramsAnalysis.openSetMethod =='OpenPCS':
+			load_decoder_features_flag = True
+		else:
+			load_decoder_features_flag = False
 		if load_decoder_features_flag==True:
 			pred_proba = self.load_decoder_features(model, input_)
 		else:
@@ -396,6 +403,8 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 		print(3)
 
 		return test_predictions, test_label, pred_proba, model
+
+	#def preprocessSample():
 
 #class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModelNto1FixedSeqFixedLabel):
 

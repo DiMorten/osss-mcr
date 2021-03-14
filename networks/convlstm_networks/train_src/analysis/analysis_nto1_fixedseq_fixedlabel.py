@@ -112,10 +112,11 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 		deb.prints(known_classes)
 		
 		if openModel == None:
-
-			openModel = OpenPCS(loco_class = predictionsLoaderTest.loco_class,  known_classes = known_classes,
+			if paramsAnalysis.openSetMethod == 'OpenPCS':
+				openModel = OpenPCS(loco_class = predictionsLoaderTest.loco_class,  known_classes = known_classes,
 					n_components = 16)
-			#openModel = SoftmaxThresholding(loco_class = predictionsLoaderTest.loco_class)
+			elif paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
+				openModel = SoftmaxThresholding(loco_class = predictionsLoaderTest.loco_class)
 
 		#params.findThresholdInTrain=False
 
@@ -414,27 +415,30 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 		# 		if date<=7:
 		# 			date_important_classes=[0,6,8]
 
+		if paramsAnalysis.openSetMethod == 'OpenPCS':
+	#		for t in range(label_test.shape[1]):
+	#		thresholds = [-200, -100, -50, 0, 50, 100, 200, 400]
+			#thresholds = [-100, -50, 0]
+			thresholds = np.linspace(-500, 500, 10)
+	#		thresholds = [131.57]
+	#		thresholds = [400]
+			thresholds = [-5000]
+			thresholds = [-100, 0]
+			thresholds = [-250]
+	#		thresholds = [550]
+			thresholds = [300]
+			thresholds = [-500, -300, -100, 0, 100]
+	#		thresholds = [0, 100, 200, 300, 400, 500]
+			thresholds = [200]
+			thresholds = [-100, 0, 100, 200, 300, 400, 500, 600]
+			thresholds = [-50, -20, -10, 0, 10, 20, 50]
 
-#		for t in range(label_test.shape[1]):
-#		thresholds = [-200, -100, -50, 0, 50, 100, 200, 400]
-		#thresholds = [-100, -50, 0]
-		thresholds = np.linspace(-500, 500, 10)
-#		thresholds = [131.57]
-#		thresholds = [400]
-		thresholds = [-5000]
-		thresholds = [-100, 0]
-		thresholds = [-250]
-#		thresholds = [550]
-		thresholds = [300]
-		thresholds = [-500, -300, -100, 0, 100]
-#		thresholds = [0, 100, 200, 300, 400, 500]
-		thresholds = [200]
-		thresholds = [-100, 0, 100, 200, 300, 400, 500, 600]
+			thresholds = np.linspace(0.005, 0.9, 15)
 
-#		thresholds = [0]
-
-		# softmax thresholding
-#		thresholds = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.92, 0.95]
+	#		thresholds = [0]
+		elif paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
+			# softmax thresholding
+			thresholds = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.92, 0.95]
 
 		
 
@@ -1005,12 +1009,12 @@ elif dataset=='lm':
 			'model_best_UUnet4ConvLSTM_fixed_label_fixed_'+args.seq_date+'_loco'+str(loco_class)+'_lm_testlm.h5'
 		]]	
 
-#		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_'+args.seq_date+'_loco'+str(loco_class)+'_lm_testlm_fewknownclasses.h5']]	
+		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_'+args.seq_date+'_loco'+str(loco_class)+'_lm_testlm_fewknownclasses.h5']]	
 
 #		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_loco8_lm_testlm_lessclass8_2.h5']]	
 
 #		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_dec_lm_testlm_fewknownclasses_valrand.h5']]	
-		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_feb_lm_testlm_fewknownclasses_valrand.h5']]	
+#		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_feb_lm_testlm_fewknownclasses_valrand.h5']]	
 
 #model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_loco8_lm_testlm_stratifiedval
 elif dataset=='lm_optical':

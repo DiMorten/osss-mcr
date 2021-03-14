@@ -25,7 +25,7 @@ set seq_mode=fixed
 set loco_class=8
 :: pasture
 
-set seq_date=feb
+set seq_date=mar
 :: set id=fixed_label_%seq_mode%_%seq_date%_lm_testlm_fewknownclasses_valrand_dummy
 :: set id=fixed_label_%seq_mode%_%seq_date%_loco%loco_class%_lm_testlm_lessclass8_groupclasses
 :: set id=dummy
