@@ -10,6 +10,9 @@ import pdb
 from sklearn.preprocessing import MinMaxScaler
 import deb
 import pickle
+from icecream import ic 
+
+ic.configureOutput(includeContext=False, prefix='[@debug] ')
 
 class OpenSetMethod(): # abstract
     def __init__(self, loco_class):
@@ -183,14 +186,13 @@ class OpenPCS(OpenSetMethod):
                 else:
                     features_class = open_features[feat_msk, :]
                     features_pca = self.model_list[idx].transform(features_class)
-                    covariance_matrix = self.model_list[idx].get_covariance()   
-                    VI = np.linalg.inv(covariance_matrix)
-                    print(np.diag(np.sqrt(np.dot(np.dot((features_pca),VI),(features_pca).T))))
-                    pdb.set_trace()
+                    avg_features_pca = np.average(features_pca, axis = 0)
+                    ic(np.round(avg_features_pca, 2)) # average over all samples
+
                     scores_class = np.zeros(features_class.shape[0])
                     for sample_id in range(features_class.shape[0]):
                         scores_class[sample_id] = self.mahalanobis_distance(
-                            features_class[sample_id], covariance_matrix)
+                            features_pca[sample_id], self.covariance_matrix_list[idx])
                     scores[feat_msk] = scores_class
                 #except:
                 #    print("No samples in class",c,"score is 0")
@@ -210,19 +212,23 @@ class OpenPCS(OpenSetMethod):
 
         return predictions_test, scores #scores in case you want to threshold them again
 
-    def mahalanobis_distance(self, feature, covariance_matrix):
-        feature = np.expand_dims(feature, axis=0)
+    def mahalanobis_distance(self, feature, covariance_matrix): 
+        # covariance_matrix shape: (16, 16)
+        
+        feature = np.expand_dims(feature, axis=0) # shape: (1, 16)
 #        deb.prints(feature.shape)
 #        deb.prints(covariance_matrix.shape)
 #        deb.prints(np.matrix.transpose(feature).shape)
-        out = np.matmul(feature, covariance_matrix)
+        out = np.matmul(feature, np.linalg.inv(covariance_matrix)) # shape: (1, 16)
 #        deb.prints(out.shape)
-        out = np.squeeze(np.matmul(out, np.matrix.transpose(feature)))
+        out = np.squeeze(np.matmul(out, np.matrix.transpose(feature))) # shape: (1)
 #        deb.prints(out.shape)
+#        deb.prints(out)
 
         return out
     def fit_pca_models(self, label_test, predictions_test, open_features):
         self.model_list = []
+        self.covariance_matrix_list = []
         print('*'*20, 'fit_pca_models')
         for c in self.known_classes:
             
@@ -232,21 +238,26 @@ class OpenPCS(OpenSetMethod):
             tic = time.time()
             
             # Computing PCA models from features.
-            model = self.fit_pca_model_perclass(label_test, predictions_test, open_features, c)#feat_list, true_list, prds_list, c)
+            model, covariance_matrix = self.fit_pca_model_perclass(label_test, 
+                                        predictions_test, open_features, c)#feat_list, true_list, prds_list, c)
             #print("Model components",model.components_)
             #print("Model components",model.mean_)
             
             self.model_list.append(model)
-            
+            self.covariance_matrix_list.append(covariance_matrix)
+            #print(np.round(covariance_matrix,2))
+            #print(model.explained_variance_)
+            #pdb.set_trace()
             toc = time.time()
             print('    Time spent fitting model %d: %.2f' % (c, toc - tic))
 
-        def save_models(models):
-            with open("models.pckl", "wb") as f:
-                for model in models:
+        def save_list_in_pickle(list_, filename = "models.pckl"):
+            with open(filename, "wb") as f:
+                for model in list_:
                     pickle.dump(model, f)
             print("*"*30, "Model was saved")
-        save_models(self.model_list)
+        save_list_in_pickle(self.model_list, "models.pckl")
+        #save_list_in_pickle(self.covariance_matrix_list, "covariance_matrix_list.pckl")
             
         #predictions_test[pred_proba_max < self.threshold] = self.loco_class + 1
 
@@ -274,9 +285,20 @@ class OpenPCS(OpenSetMethod):
             #    cl_feat_flat = cl_feat_flat[perm[:32768], :]
             
             model.fit(cl_feat_flat)
-            return model
+            x_pca_train = model.transform(cl_feat_flat)
+            deb.prints(x_pca_train.shape)
+            ic(np.round(np.average(x_pca_train, axis = 0), 2)) # average over all samples
+
+            covariance_matrix = np.cov(x_pca_train, rowvar = False)
+            ic(np.round(covariance_matrix,2))
+            ic(np.round(model.explained_variance_, 2))
+#            ic(covariance_matrix.shape)
+#            deb.prints(covariance_matrix)
+
+#            pdb.set_trace()
+            return model, covariance_matrix
         else:
             print('!'*20, 'minimum samples not met for class',cl)
-            return None
+            return None, None
 
 

@@ -433,9 +433,13 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 			thresholds = [-100, 0, 100, 200, 300, 400, 500, 600]
 			thresholds = [-50, -20, -10, 0, 10, 20, 50]
 
-			thresholds = np.linspace(0.005, 0.9, 15)
+#			thresholds = np.linspace(0.03, 0.7, 15)
+#			thresholds = np.linspace(0.08, 0.16, 15)
 
-	#		thresholds = [0]
+			thresholds = [0.125]
+#			thresholds = np.linspace(2.6, 30, 10)
+			thresholds = np.linspace(2.6, 5.6, 10)
+
 		elif paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
 			# softmax thresholding
 			thresholds = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.92, 0.95]

@@ -22,6 +22,10 @@ import deb
 #sys.path.append('../../../train_src/analysis')
 #print(sys.path)
 from PredictionsLoader import PredictionsLoaderNPY, PredictionsLoaderModel, PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet
+from icecream import ic 
+
+
+ic.configureOutput(includeContext=False, prefix='[@debug] ')
 
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('-ds', '--dataset', dest='dataset',
@@ -265,7 +269,7 @@ print(full_ims_test.shape)
 print(full_label_test.shape)
 
 print("Full label test unique",np.unique(full_label_test,return_counts=True))
-pdb.set_trace()
+#pdb.set_trace()
 # add doty
 mim = MIMFixed()
 
@@ -283,7 +287,7 @@ dataSource = SARSource()
 ds.addDataSource(dataSource)
 
 time_delta = ds.getTimeDelta(delta=True,format='days')
-ds.setDotyFlag(True)
+ds.setDotyFlag(False)
 dotys, dotys_sin_cos = ds.getDayOfTheYear()
 ds.dotyReplicateSamples(sample_n = 1)
 
@@ -378,6 +382,16 @@ if mosaic_flag == True:
 	prediction_rebuilt=np.zeros((row,col)).astype(np.uint8)
 
 
+	# --================= open set
+
+	if paramsAnalysis.openSetMethod == 'OpenPCS':
+		openModel = OpenPCS(loco_class = predictionsLoaderTest.loco_class,  known_classes = known_classes,
+			n_components = 16)
+	elif paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
+		openModel = SoftmaxThresholding(loco_class = predictionsLoaderTest.loco_class)
+	openModel.setThreshold(threshold)
+	
+
 	print("stride", stride)
 	print(len(range(patch_size//2,row-patch_size//2,stride)))
 	print(len(range(patch_size//2,col-patch_size//2,stride)))
@@ -397,13 +411,21 @@ if mosaic_flag == True:
 
 				input_ = mim.batchTrainPreprocess(patch, ds,  
 							label_date_id = -1) # tstep is -12 to -1
+
+				
 				#print(input_[0].shape)
-				#pdb.set_trace()
+				#ic(len(input_))
+
+#				ic(input_.shape)
 				pred_cl = model.predict(input_).argmax(axis=-1)
-				deb.prints(pred_cl.shape)
-				pdb.set_trace()
+				#deb.prints(pred_cl.shape)
 				_, x, y = pred_cl.shape
 					
+				# ========================================== open set
+				# load the pca model / covariance matrix 
+				predictions = openModel.predictOneSample(label_test, predictions, test_pred_proba)
+
+
 				prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_cl[:,overlap//2:x-overlap//2,overlap//2:y-overlap//2]
 	del full_ims_test
 
@@ -417,7 +439,7 @@ if mosaic_flag == True:
 	print(np.unique(label_rebuilt, return_counts=True))
 	print(np.unique(prediction_rebuilt, return_counts=True))
 
-	prediction_rebuilt=np.reshape(prediction_rebuilt,-1)
+	#prediction_rebuilt=np.reshape(prediction_rebuilt,-1)
 
 	np.save('prediction_rebuilt_'+lm_date+'.npy',prediction_rebuilt)
 else:
@@ -425,89 +447,199 @@ else:
 	print(np.unique(prediction_rebuilt, return_counts=True))
 
 deb.prints(np.unique(prediction_rebuilt,return_counts=True))
-
-label_rebuilt=np.reshape(label_rebuilt,-1)
+deb.prints(label_rebuilt.shape)
+#label_rebuilt=np.reshape(label_rebuilt,-1)
 print("label_rebuilt.unique",np.unique(label_rebuilt,return_counts=True))
 
-pdb.set_trace()
+#pdb.set_trace()
 
-mask = np.reshape(mask,-1)
+#mask = np.reshape(mask,-1)
 translate_label_path = '../../../train_src/'
+deb.prints(prediction_rebuilt.shape)
+
 prediction_rebuilt = predictionsLoaderTest.newLabel2labelTranslate(prediction_rebuilt, 
 		translate_label_path + 'new_labels2labels_lm_'+lm_date+'_S1.pkl',
 		bcknd_flag=False)
+deb.prints(prediction_rebuilt.shape)
+#pdb.set_trace()
 deb.prints(np.unique(prediction_rebuilt,return_counts=True))
+metrics_flag=False
+if metrics_flag==True:
+	# ========== metrics get =======#
+	def my_f1_score(label,prediction):
+		f1_values=f1_score(label,prediction,average=None)
 
-# ========== metrics get =======#
-def my_f1_score(label,prediction):
-	f1_values=f1_score(label,prediction,average=None)
+		#label_unique=np.unique(label) # [0 1 2 3 5]
+		#prediction_unique=np.unique(prediction.argmax(axis-1)) # [0 1 2 3 4]
+		#[ 0.8 0.8 0.8 0 0.7 0.7]
 
-	#label_unique=np.unique(label) # [0 1 2 3 5]
-	#prediction_unique=np.unique(prediction.argmax(axis-1)) # [0 1 2 3 4]
-	#[ 0.8 0.8 0.8 0 0.7 0.7]
+		f1_value=np.sum(f1_values)/len(np.unique(label))
 
-	f1_value=np.sum(f1_values)/len(np.unique(label))
-
-	#print("f1_values",f1_values," f1_value:",f1_value)
-	return f1_value
-
-
-
-def metrics_get(label, predictions, mask, small_classes_ignore=True):
+		#print("f1_values",f1_values," f1_value:",f1_value)
+		return f1_value
 
 
 
-	class_n = 15
-	print("label predictions shape, beginning of metrics_get",label.shape,predictions.shape)
-	predictions=predictions[mask==2]
-	label=label[mask==2]
-	print("label predictions shape, test area",label.shape,predictions.shape)
-	print("Before small classes ignore")
-
-	print("Metrics get predictions",np.unique(predictions, return_counts=True))
-	print("Metrics get label",np.unique(label, return_counts=True))
-	predictions=predictions[label!=0]
-	label=label[label!=0]	
-
-	predictions = predictions - 1
-	label = label - 1
-	print("label predictions shape, no bcknd",label.shape,predictions.shape)
-	
-	print("Metrics get predictions",np.unique(predictions, return_counts=True))
-	print("Metrics get label",np.unique(label, return_counts=True))
-	if small_classes_ignore==True:
-			if dataset=='l2':
-			#important_classes_idx=[0,1,2,6,8,10,12]
-				important_classes_idx=[0,1,2,6,12] # only for bcknd final value
-				#important_classes_idx = [x+1 for x in important_classes_idx]
-				deb.prints(important_classes_idx)
-			for idx in range(class_n):
-				if idx not in important_classes_idx:
-					predictions[predictions==idx]=20
-					label[label==idx]=20	
-	print("After small classes ignore")
-	print("Metrics get predictions",np.unique(predictions, return_counts=True))
-	print("Metrics get label",np.unique(label, return_counts=True))							
-	metrics = {}
-	metrics['f1_score']=my_f1_score(label,predictions) # [0.9 0.9 0.4 0.5] [1 2 3 4 5]
-	metrics['f1_score_noavg']=f1_score(label,predictions,average=None) # [0.9 0.9 0.4 0.5] [1 2 3 4 5]
-	
-	metrics['overall_acc']=accuracy_score(label,predictions)
-	return metrics
+	def metrics_get(label, predictions, mask, small_classes_ignore=True):
 
 
+
+		class_n = 15
+		print("label predictions shape, beginning of metrics_get",label.shape,predictions.shape)
+		predictions=predictions[mask==2]
+		label=label[mask==2]
+		print("label predictions shape, test area",label.shape,predictions.shape)
+		print("Before small classes ignore")
+
+		print("Metrics get predictions",np.unique(predictions, return_counts=True))
+		print("Metrics get label",np.unique(label, return_counts=True))
+		predictions=predictions[label!=0]
+		label=label[label!=0]	
+
+		predictions = predictions - 1
+		label = label - 1
+		print("label predictions shape, no bcknd",label.shape,predictions.shape)
 		
-metrics = metrics_get(label_rebuilt, prediction_rebuilt, mask, small_classes_ignore=False)
-print(metrics)
-f = open("metrics_fixed_"+l2_date+".pkl", "wb")
-pickle.dump(metrics, f)
-f.close()
+		print("Metrics get predictions",np.unique(predictions, return_counts=True))
+		print("Metrics get label",np.unique(label, return_counts=True))
+		if small_classes_ignore==True:
+				if dataset=='l2':
+				#important_classes_idx=[0,1,2,6,8,10,12]
+					important_classes_idx=[0,1,2,6,12] # only for bcknd final value
+					#important_classes_idx = [x+1 for x in important_classes_idx]
+					deb.prints(important_classes_idx)
+				elif dataset=='lm':
+					important_classes_idx=[0, 1, 10, 12]
+				for idx in range(class_n):
+					if idx not in important_classes_idx:
+						predictions[predictions==idx]=20
+						label[label==idx]=20	
+		print("After small classes ignore")
+		print("Metrics get predictions",np.unique(predictions, return_counts=True))
+		print("Metrics get label",np.unique(label, return_counts=True))							
+		metrics = {}
+		metrics['f1_score']=my_f1_score(label,predictions) # [0.9 0.9 0.4 0.5] [1 2 3 4 5]
+		metrics['f1_score_noavg']=f1_score(label,predictions,average=None) # [0.9 0.9 0.4 0.5] [1 2 3 4 5]
+		
+		metrics['overall_acc']=accuracy_score(label,predictions)
+		return metrics
 
-metrics = metrics_get(label_rebuilt, prediction_rebuilt, mask, small_classes_ignore=True)
-print(metrics)
-f = open("metrics_fixed_"+l2_date+"_small_classes_ignore.pkl", "wb")
-pickle.dump(metrics, f)
-f.close()
+
+			
+	metrics = metrics_get(label_rebuilt, prediction_rebuilt, mask, small_classes_ignore=False)
+	print(metrics)
+	f = open("metrics_fixed_"+l2_date+".pkl", "wb")
+	pickle.dump(metrics, f)
+	f.close()
+
+	metrics = metrics_get(label_rebuilt, prediction_rebuilt, mask, small_classes_ignore=True)
+	print(metrics)
+	f = open("metrics_fixed_"+l2_date+"_small_classes_ignore.pkl", "wb")
+	pickle.dump(metrics, f)
+	f.close()
+
+# bcknd to 255
+label_rebuilt = label_rebuilt - 1
+prediction_rebuilt = prediction_rebuilt - 1
+
+if dataset=='lm':
+	important_classes_idx = [0, 1, 10, 12]
+
+
+def small_classes_ignore(label, predictions, important_classes_idx):
+	class_n = 15
+		
+	important_classes_idx.append(255) # bcknd
+	for idx in range(class_n):
+		if idx not in important_classes_idx:
+			predictions[predictions==idx]=20
+			label[label==idx]=20	
+	important_classes_idx = important_classes_idx[:-1]
+	deb.prints(important_classes_idx)
+	return label, predictions, important_classes_idx
+
+label_rebuilt, prediction_rebuilt, important_classes_idx = small_classes_ignore(
+			label_rebuilt, prediction_rebuilt,important_classes_idx)
+
+deb.prints(np.unique(label_rebuilt,return_counts=True))
+deb.prints(np.unique(prediction_rebuilt,return_counts=True))
+deb.prints(label_rebuilt.shape)
+deb.prints(prediction_rebuilt.shape)
+deb.prints(important_classes_idx)
+
+#custom_colormap = custom_colormap[important_classes_idx]
+
+def save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask, 
+		sequence_len, custom_colormap, small_classes_ignore=True, name_id=""):
+#	for t_step in range(sequence_len):
+	label_rebuilt[mask==0]=255
+	prediction_rebuilt[mask==0]=255	
+
+
+	print("everything outside mask is 255")
+	print(np.unique(label_rebuilt,return_counts=True))
+	print(np.unique(prediction_rebuilt,return_counts=True))
+
+
+	# Paint it!
+
+
+	print(custom_colormap.shape)
+	#class_n=custom_colormap.shape[0]
+	#=== change to rgb
+	print("Gray",prediction_rebuilt.dtype)
+	prediction_rgb=np.zeros((prediction_rebuilt.shape+(3,))).astype(np.uint8)
+	label_rgb=np.zeros_like(prediction_rgb)
+	print("Adding color...")
+
+
+	prediction_rgb=cv2.cvtColor(prediction_rebuilt,cv2.COLOR_GRAY2RGB)
+	label_rgb=cv2.cvtColor(label_rebuilt,cv2.COLOR_GRAY2RGB)
+
+	print("RGB",prediction_rgb.dtype,prediction_rgb.shape)
+
+#	for chan in [0,1,2]:
+#		prediction_rgb[...,chan][prediction_rgb[...,chan]==255]=custom_colormap[idx,chan]
+#		label_rgb[...,chan][label_rgb[...,chan]==255]=custom_colormap[idx,chan]
+
+
+	deb.prints(custom_colormap)
+	prediction_rgb_tmp = prediction_rgb.copy()
+	label_rgb_tmp = label_rgb.copy()
+	
+	for idx in range(custom_colormap.shape[0]):
+		print("Assigning color. class:",idx)
+
+		for chan in [0,1,2]:
+			deb.prints(np.unique(label_rgb[...,chan],return_counts=True))
+
+			prediction_rgb[...,chan][prediction_rgb_tmp[...,chan]==idx]=custom_colormap[idx,chan]
+			label_rgb[...,chan][label_rgb_tmp[...,chan]==idx]=custom_colormap[idx,chan]
+
+	# color the unknown
+	red_rgb = [255, 0, 0]
+	for chan in [0,1,2]:
+		prediction_rgb[...,chan][prediction_rgb[...,chan]==20]=red_rgb[chan]
+		label_rgb[...,chan][label_rgb[...,chan]==20]=red_rgb[chan]
+
+	print("RGB",prediction_rgb.dtype,prediction_rgb.shape)
+
+	print("Saving the resulting images...")
+
+	label_rgb=cv2.cvtColor(label_rgb,cv2.COLOR_BGR2RGB)
+	prediction_rgb=cv2.cvtColor(prediction_rgb,cv2.COLOR_BGR2RGB)
+	save_folder=dataset+"/"+model_type+"/"
+	pathlib.Path(save_folder).mkdir(parents=True, exist_ok=True)
+	ic(save_folder)
+	cv2.imwrite(save_folder+"prediction_t_"+a.seq_date+"_"+model_type+"_"+name_id+".png",prediction_rgb)
+	cv2.imwrite(save_folder+"label_t_"+a.seq_date+"_"+model_type+"_"+name_id+".png",label_rgb)
+	cv2.imwrite(save_folder+"mask.png",mask)
+
+
+
+save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask, 
+		sequence_len, custom_colormap, small_classes_ignore=True,
+		name_id = "closed_set")
 
 if False:
 	pdb.set_trace()
