@@ -11,7 +11,8 @@ from sklearn.preprocessing import MinMaxScaler
 import deb
 import pickle
 from icecream import ic 
-
+import os
+from scipy.spatial.distance import mahalanobis
 ic.configureOutput(includeContext=False, prefix='[@debug] ')
 
 class OpenSetMethod(): # abstract
@@ -27,7 +28,7 @@ class SoftmaxThresholding(OpenSetMethod):
         self.fittedFlag = True
         self.name = 'SoftmaxThresholding'
 
-    def predict(self, label_test, predictions_test, pred_proba_test):
+    def predict(self, predictions_test, pred_proba_test):
         # pred proba shape is (n_samples, h, w, classes)
         pred_proba_test = scipy.special.softmax(pred_proba_test, axis=-1)
 
@@ -89,40 +90,41 @@ class OpenPCS(OpenSetMethod):
 #            self.modelLoad()
         deb.prints(np.unique(predictions_train, return_counts=True))
         self.fittedFlag = True
-    def load(self):
-        self.model_list = []
-        with open("models.pckl", "rb") as f:
+    def listLoadFromPickle(self, pickle_name = "models.pckl"):
+        loaded_list = []
+        with open(pickle_name, "rb") as f:
             while True:
                 try:
-                    self.model_list.append(pickle.load(f))
+                    loaded_list.append(pickle.load(f))
                 except EOFError:
                     break
         print("*"*20, "model was loaded")
-        self.fittedFlag = True
-    def predict(self, label_test, predictions_test, pred_proba_test):
-        deb.prints(self.threshold)
-        deb.prints(predictions_test.shape)
+        #self.fittedFlag = True
+        return loaded_list
+    def predict(self, predictions_test, pred_proba_test, debug = 1):
+        if debug > 0:
+            deb.prints(self.threshold)
+            deb.prints(predictions_test.shape)
 
+            print("*"*20, " Flattening the results")
 
-        print("*"*20, " Flattening the results")
+            deb.prints(predictions_test.shape)
+            deb.prints(pred_proba_test.shape)
 
-        deb.prints(label_test.shape)
-        deb.prints(predictions_test.shape)
-        deb.prints(pred_proba_test.shape)
-
-        label_test = label_test.flatten()
         predictions_test = predictions_test.flatten()
         #pred_proba_test = pred_proba_test.reshape((pred_proba_test.shape[0], -1))
         #deb.prints(pred_proba_test.shape)
-        deb.prints(label_test.shape)
-        deb.prints(predictions_test.shape)
-        deb.prints(pred_proba_test.shape)
+        if debug > 0:
+            deb.prints(predictions_test.shape)
+            deb.prints(pred_proba_test.shape)
 
-        ##pred_proba_test = pred_proba_test.reshape((-1, pred_proba_test.shape[-1]))
-        print("*"*20, " Flattened the results")
+            ##pred_proba_test = pred_proba_test.reshape((-1, pred_proba_test.shape[-1]))
+            print("*"*20, " Flattened the results")
 
-        predictions_test, _ = self.predict_unknown_class(predictions_test, pred_proba_test)
-        deb.prints(np.unique(predictions_test, return_counts=True))
+        predictions_test, _ = self.predict_unknown_class(predictions_test, pred_proba_test,
+            debug = debug)
+        if debug > -1:
+            deb.prints(np.unique(predictions_test, return_counts=True))
         #pdb.set_trace()
         return predictions_test
 
@@ -162,24 +164,28 @@ class OpenPCS(OpenSetMethod):
         #pdb.set_trace()
         return predictions_test
 
-    def predict_unknown_class(self, predictions_test, open_features): # self.model_list, self.threshold
+    def predict_unknown_class(self, predictions_test, open_features, debug=1): # self.model_list, self.threshold
         scores = np.zeros_like(predictions_test, dtype=np.float)
-        print('*'*20, 'predict_unknown_class')
-        deb.prints(self.model_list)
+        if debug>0:
+            print('*'*20, 'predict_unknown_class')
+            deb.prints(self.model_list)
         for idx, c in enumerate(self.known_classes):
-            print('idx, class', idx, c)
-            deb.prints(predictions_test.shape)
+            if debug > 0:
+                print('idx, class', idx, c)
+                deb.prints(predictions_test.shape)
             feat_msk = (predictions_test == c)
-            deb.prints(np.unique(feat_msk,return_counts=True))
-            print("open_features stats",np.min(open_features),np.average(open_features),np.max(open_features))
+            if debug > 0:
+                deb.prints(np.unique(feat_msk,return_counts=True))
+                print("open_features stats",np.min(open_features),np.average(open_features),np.max(open_features))
             ##print("Model components",self.model_list[idx].components_)
 #            deb.stats_print(open_features)
             if np.any(feat_msk):
                 #try:
-                deb.prints(open_features.shape)
-                deb.prints(feat_msk.shape)
+                if debug > 0:
+                    deb.prints(open_features.shape)
+                    deb.prints(feat_msk.shape)
 
-                deb.prints(open_features[feat_msk, :].shape)
+                    deb.prints(open_features[feat_msk, :].shape)
                 mahalanobis_threshold = True
                 if mahalanobis_threshold==False:
                     scores[feat_msk] = self.model_list[idx].score_samples(open_features[feat_msk, :])
@@ -187,19 +193,34 @@ class OpenPCS(OpenSetMethod):
                     features_class = open_features[feat_msk, :]
                     features_pca = self.model_list[idx].transform(features_class)
                     avg_features_pca = np.average(features_pca, axis = 0)
-                    ic(np.round(avg_features_pca, 2)) # average over all samples
-
+                    if debug > 0:
+                        ic(np.round(avg_features_pca, 2)) # average over all samples
+                    myLogLikelihoodFlag = True
                     scores_class = np.zeros(features_class.shape[0])
-                    for sample_id in range(features_class.shape[0]):
-                        scores_class[sample_id] = self.mahalanobis_distance(
-                            features_pca[sample_id], self.covariance_matrix_list[idx])
+                    if myLogLikelihoodFlag == False:
+                        
+                        for sample_id in range(features_class.shape[0]):
+                            #scores_class[sample_id] = self.mahalanobis_distance(
+                            #    features_pca[sample_id], self.covariance_matrix_list[idx])
+#                            scores_class[sample_id] = mahalanobis(features_pca[sample_id],
+#                                        np.zeros_like(features_pca[sample_id]),
+#                                        self.covariance_matrix_list[idx])    
+                            scores_class[sample_id] = self.mahalanobis_distance2(
+                                features_pca[sample_id], self.covariance_matrix_list[idx])                    
+                    elif myLogLikelihoodFlag == True:
+                        for sample_id in range(features_class.shape[0]):
+                            scores_class[sample_id] = self.logLikelihoodGet(
+                                features_pca[sample_id], self.covariance_matrix_list[idx])
+
                     scores[feat_msk] = scores_class
+
                 #except:
                 #    print("No samples in class",c,"score is 0")
                  #   scores[feat_msk] = 0
-        
-        print("scores stats min, avg, max",np.min(scores),
-                np.average(scores),np.max(scores))
+        if debug > 0:            
+            print("scores stats min, avg, max",np.min(scores),
+                    np.average(scores),np.max(scores))
+            deb.prints(self.threshold)
 
 
         #scaler = MinMaxScaler()
@@ -226,6 +247,36 @@ class OpenPCS(OpenSetMethod):
 #        deb.prints(out)
 
         return out
+    def mahalanobis_distance2(self, feature, covariance_matrix): 
+        # covariance_matrix shape: (16, 16)
+        
+        feature = np.expand_dims(feature, axis=0) # shape: (1, 16)
+#        deb.prints(feature.shape)
+#        deb.prints(covariance_matrix.shape)
+#        deb.prints(np.transpose(feature).shape)
+        out = np.dot(feature, np.linalg.inv(covariance_matrix)) # shape: (1, 16)
+#        out1 = np.matmul(feature, np.linalg.inv(covariance_matrix))
+#        deb.prints(out.shape)
+        out = np.squeeze(np.dot(out, np.transpose(feature))) # shape: (1)
+#        out1 = np.squeeze(np.matmul(out1, np.matrix.transpose(feature))) # shape: (1)
+#        deb.prints(out.shape)
+#        deb.prints(out)
+#        deb.prints(out1)
+
+        return out
+    def logLikelihoodGet(self, feature, covariance_matrix):
+        n = feature.shape[0] # 16
+        #deb.prints(feature.shape)
+        #deb.prints(n)
+        distance = self.mahalanobis_distance(feature, covariance_matrix)
+#        distance = np.power(mahalanobis(feature,
+#                                        np.zeros_like(feature),
+#                                        covariance_matrix), 2)
+        out = ( 1 / ( np.power(2*np.pi, 16/2) * np.sqrt(np.linalg.det(covariance_matrix)) ) ) * np.exp(- distance / 2) 
+        out = np.log(out)
+        return out
+
+
     def fit_pca_models(self, label_test, predictions_test, open_features):
         self.model_list = []
         self.covariance_matrix_list = []
@@ -255,9 +306,9 @@ class OpenPCS(OpenSetMethod):
             with open(filename, "wb") as f:
                 for model in list_:
                     pickle.dump(model, f)
-            print("*"*30, "Model was saved")
+            print("*"*30, "List was saved in pickle")
         save_list_in_pickle(self.model_list, "models.pckl")
-        #save_list_in_pickle(self.covariance_matrix_list, "covariance_matrix_list.pckl")
+        save_list_in_pickle(self.covariance_matrix_list, "covariance_matrix_list.pckl")
             
         #predictions_test[pred_proba_max < self.threshold] = self.loco_class + 1
 
@@ -300,5 +351,16 @@ class OpenPCS(OpenSetMethod):
         else:
             print('!'*20, 'minimum samples not met for class',cl)
             return None, None
+    def loadFittedModel(self, path):
+        #
+        cwd = os.getcwd()
+        deb.prints(cwd)
+        #pdb.set_trace()
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        self.model_list = self.listLoadFromPickle(path + "models.pckl")
+        self.covariance_matrix_list = self.listLoadFromPickle(path + "covariance_matrix_list.pckl")
+        self.fittedFlag = True
+        
 
+     
 

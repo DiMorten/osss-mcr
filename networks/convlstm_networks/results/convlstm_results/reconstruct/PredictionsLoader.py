@@ -309,8 +309,8 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 		return test_predictions, batch['label'], pred_proba, model
 
 class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModelNto1FixedSeqFixedLabel):
-	def load_decoder_features(self, model, input_, prediction_dtype = np.float16):
-		print(model.summary())
+	def load_decoder_features(self, model, input_, prediction_dtype = np.float16, debug  = 1):
+		#print(model.summary())
 
 		layer_names = ['conv_lst_m2d_1', 'activation_6', 'activation_8', 'activation_10']
 		upsample_ratios = [8, 4, 2, 1]
@@ -341,10 +341,11 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 		'''
 
 
-
-		deb.prints(open_features[0].shape)
+		if debug > 0:
+			deb.prints(open_features[0].shape)
 		open_features = [x.reshape(-1, x.shape[-1]) for x in open_features]
-		[deb.prints(open_features[x].shape) for x in [0,1,2,3]]
+		if debug > 0:
+			[deb.prints(open_features[x].shape) for x in [0,1,2,3]]
 
 		open_features = np.concatenate(open_features, axis=1)# .astype(prediction_dtype)
 
@@ -356,8 +357,9 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 
 
 
-		deb.prints(open_features.shape)
-		print("open_features stats", np.min(open_features), np.average(open_features), np.max(open_features))
+		if debug > 0:
+			deb.prints(open_features.shape)
+			print("open_features stats", np.min(open_features), np.average(open_features), np.max(open_features))
 		return open_features
 	def npyLoadPredictions(self, seq_date):
 		batch = {}

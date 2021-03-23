@@ -23,6 +23,8 @@ import deb
 #print(sys.path)
 from PredictionsLoader import PredictionsLoaderNPY, PredictionsLoaderModel, PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet
 from icecream import ic 
+from parameters.parameters_reader import ParamsTrain, ParamsAnalysis
+from analysis.open_set import SoftmaxThresholding, OpenPCS
 
 
 ic.configureOutput(includeContext=False, prefix='[@debug] ')
@@ -40,6 +42,10 @@ parser.add_argument('--seq_date', dest='seq_date',
 parser.add_argument('--model_dataset', dest='model_dataset', 
                     default='lm',
                     help='model_dataset')
+
+paramsTrain = ParamsTrain('../../../train_src/parameters/')
+paramsAnalysis = ParamsAnalysis('../../../train_src/analysis/parameters_analysis/')
+
 
 a = parser.parse_args()
 
@@ -376,6 +382,7 @@ deb.prints(lm_date)
 deb.prints(l2_date)
 
 del full_label_test
+
 mosaic_flag = True
 if mosaic_flag == True:
 	#prediction_rebuilt=np.ones((row,col)).astype(np.uint8)*255
@@ -383,18 +390,23 @@ if mosaic_flag == True:
 
 
 	# --================= open set
-
+	threshold = -19
+	known_classes = [x + 1 for x in paramsTrain.known_classes]
+	deb.prints(known_classes)
 	if paramsAnalysis.openSetMethod == 'OpenPCS':
-		openModel = OpenPCS(loco_class = predictionsLoaderTest.loco_class,  known_classes = known_classes,
+		openModel = OpenPCS(loco_class = 8,  known_classes = known_classes,
 			n_components = 16)
 	elif paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
 		openModel = SoftmaxThresholding(loco_class = predictionsLoaderTest.loco_class)
 	openModel.setThreshold(threshold)
-	
+	openModel.loadFittedModel(path = '../../../train_src/analysis/')
 
 	print("stride", stride)
 	print(len(range(patch_size//2,row-patch_size//2,stride)))
 	print(len(range(patch_size//2,col-patch_size//2,stride)))
+
+	debug = -1
+	count = 0
 	for m in range(patch_size//2,row-patch_size//2,stride): 
 		for n in range(patch_size//2,col-patch_size//2,stride):
 			patch_mask = mask_pad[m-patch_size//2:m+patch_size//2 + patch_size%2,
@@ -411,7 +423,9 @@ if mosaic_flag == True:
 
 				input_ = mim.batchTrainPreprocess(patch, ds,  
 							label_date_id = -1) # tstep is -12 to -1
-
+				if debug>-1:
+					print('*'*20, "Load decoder features")
+				test_pred_proba = predictionsLoaderTest.load_decoder_features(model, input_, debug = debug)
 				
 				#print(input_[0].shape)
 				#ic(len(input_))
@@ -420,13 +434,28 @@ if mosaic_flag == True:
 				pred_cl = model.predict(input_).argmax(axis=-1)
 				#deb.prints(pred_cl.shape)
 				_, x, y = pred_cl.shape
-					
+				prediction_shape = pred_cl.shape
+				if debug>-1:
+					print('*'*20, "Starting openModel predict")
 				# ========================================== open set
 				# load the pca model / covariance matrix 
-				predictions = openModel.predictOneSample(label_test, predictions, test_pred_proba)
+				predictions_openmodel = openModel.predict(pred_cl, test_pred_proba, debug = debug)
+				predictions_openmodel = np.reshape(predictions_openmodel, prediction_shape)
+				if debug>-1:
+					print('*'*20, "Finished openModel predict")
+				##deb.prints(np.unique(predictions_openmodel, return_counts=True))
+				#deb.prints(predictions_openmodel.shape)
+				##deb.prints(np.unique(prediction_rebuilt, return_counts=True))
+#				prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_cl[:,overlap//2:x-overlap//2,overlap//2:y-overlap//2]
+				prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = predictions_openmodel[:,overlap//2:x-overlap//2,overlap//2:y-overlap//2]
 
-
-				prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_cl[:,overlap//2:x-overlap//2,overlap//2:y-overlap//2]
+				##deb.prints(np.unique(prediction_rebuilt, return_counts=True))
+				#pdb.set_trace()
+		count = count + 1
+		print(count)
+		if count == 40:
+			deb.prints(np.unique(prediction_rebuilt, return_counts=True))
+			break
 	del full_ims_test
 
 	if add_padding_flag==True:

@@ -141,9 +141,9 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 
 		if paramsAnalysis.metricsOnTrain == False:
 
-			predictions = openModel.predict(label_test, predictions, test_pred_proba)
+			predictions = openModel.predict(predictions, test_pred_proba) #label_test
 		else:
-			predictions = openModel.predict(label_train, predictions_train, train_pred_proba)
+			predictions = openModel.predict(predictions_train, train_pred_proba) #label_train
 
 	deb.prints(predictions.shape)
 
@@ -429,17 +429,27 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 			thresholds = [300]
 			thresholds = [-500, -300, -100, 0, 100]
 	#		thresholds = [0, 100, 200, 300, 400, 500]
-			thresholds = [200]
-			thresholds = [-100, 0, 100, 200, 300, 400, 500, 600]
-			thresholds = [-50, -20, -10, 0, 10, 20, 50]
+			thresholds = [100]
+##			thresholds = [-100, 0, 100, 200, 300, 400, 500, 600]
+##			thresholds = [-50, -20, -10, 0, 10, 20, 50]
 
 #			thresholds = np.linspace(0.03, 0.7, 15)
 #			thresholds = np.linspace(0.08, 0.16, 15)
 
-			thresholds = [0.125]
+##			thresholds = [0.125]
 #			thresholds = np.linspace(2.6, 30, 10)
-			thresholds = np.linspace(2.6, 5.6, 10)
+##			thresholds = np.linspace(2.6, 5.6, 10)
+##			thresholds = np.linspace(0.2, 4, 10)
 
+			# myloglikelihood, mymahalanobis
+			thresholds = np.linspace(-70, 0, 10)
+			thresholds = np.linspace(-30, -10, 10)
+			thresholds = np.linspace(-21, -16, 10)
+			
+			# myloglikelihood, scipy mahalanobis squared
+			
+			thresholds = np.linspace(-22, 3, 15)
+			thresholds = [-19]
 		elif paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
 			# softmax thresholding
 			thresholds = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.92, 0.95]
