@@ -137,8 +137,10 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 		deb.prints(label_test.shape)
 		deb.prints(paramsAnalysis.metricsOnTrain)
 		#pdb.set_trace()
-		print('************* predicting open set postprocessing')
+		deb.prints(np.unique(predictions,return_counts=True))
+		deb.prints(np.unique(label_test,return_counts=True))
 
+		print('************* predicting open set postprocessing')
 		if paramsAnalysis.metricsOnTrain == False:
 
 			predictions = openModel.predict(predictions, test_pred_proba) #label_test
@@ -450,6 +452,7 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 			
 			thresholds = np.linspace(-22, 3, 15)
 			thresholds = [-19]
+			thresholds = [100]
 		elif paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
 			# softmax thresholding
 			thresholds = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.92, 0.95]

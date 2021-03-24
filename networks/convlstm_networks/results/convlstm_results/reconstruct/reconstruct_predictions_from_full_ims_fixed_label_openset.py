@@ -382,6 +382,7 @@ deb.prints(lm_date)
 deb.prints(l2_date)
 
 del full_label_test
+translate_label_path = '../../../train_src/'
 
 mosaic_flag = False
 if mosaic_flag == True:
@@ -390,7 +391,9 @@ if mosaic_flag == True:
 
 
 	# --================= open set
-	threshold = -19
+#	threshold = -19
+	threshold = 100
+
 	known_classes = [x + 1 for x in paramsTrain.known_classes]
 	deb.prints(known_classes)
 	if paramsAnalysis.openSetMethod == 'OpenPCS':
@@ -437,7 +440,13 @@ if mosaic_flag == True:
 				prediction_shape = pred_cl.shape
 				if debug>-1:
 					print('*'*20, "Starting openModel predict")
+				
+				# translate the preddictions.
+				pred_cl = predictionsLoaderTest.newLabel2labelTranslate(pred_cl, 
+						translate_label_path + 'new_labels2labels_lm_'+lm_date+'_S1.pkl',
+						bcknd_flag=False, debug = debug)
 				# ========================================== open set
+				
 				# load the pca model / covariance matrix 
 				predictions_openmodel = openModel.predict(pred_cl, test_pred_proba, debug = debug)
 				predictions_openmodel = np.reshape(predictions_openmodel, prediction_shape)
@@ -485,12 +494,13 @@ print("label_rebuilt.unique",np.unique(label_rebuilt,return_counts=True))
 #pdb.set_trace()
 
 #mask = np.reshape(mask,-1)
-translate_label_path = '../../../train_src/'
 deb.prints(prediction_rebuilt.shape)
-
+# THIS NEEDS TO BE DONE BEFORE THE OPEN SET
+'''
 prediction_rebuilt = predictionsLoaderTest.newLabel2labelTranslate(prediction_rebuilt, 
 		translate_label_path + 'new_labels2labels_lm_'+lm_date+'_S1.pkl',
 		bcknd_flag=False)
+'''		
 deb.prints(prediction_rebuilt.shape)
 #pdb.set_trace()
 deb.prints(np.unique(prediction_rebuilt,return_counts=True))

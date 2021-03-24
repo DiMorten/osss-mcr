@@ -186,7 +186,7 @@ class OpenPCS(OpenSetMethod):
                     deb.prints(feat_msk.shape)
 
                     deb.prints(open_features[feat_msk, :].shape)
-                mahalanobis_threshold = True
+                mahalanobis_threshold = False
                 if mahalanobis_threshold==False:
                     scores[feat_msk] = self.model_list[idx].score_samples(open_features[feat_msk, :])
                 else:
