@@ -166,8 +166,12 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 		translated_label = label.copy()
 		for j in range(len(classes)):
 			print(classes[j])
-			print("Translated",new_labels2labels[classes[j]])
-			translated_label[label == classes[j]] = new_labels2labels[classes[j]]
+			
+			try:
+				print("Translated",new_labels2labels[classes[j]])
+				translated_label[label == classes[j]] = new_labels2labels[classes[j]]
+			except:
+				print("Translation of class {} failed. Not in dictionary. Continuing anyway...", classes[j])
 
 		# bcknd to last
 		##label = label - 1 # bcknd is 255

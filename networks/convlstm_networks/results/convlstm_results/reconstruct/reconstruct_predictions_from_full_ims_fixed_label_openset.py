@@ -383,7 +383,7 @@ deb.prints(l2_date)
 
 del full_label_test
 
-mosaic_flag = True
+mosaic_flag = False
 if mosaic_flag == True:
 	#prediction_rebuilt=np.ones((row,col)).astype(np.uint8)*255
 	prediction_rebuilt=np.zeros((row,col)).astype(np.uint8)
@@ -452,10 +452,12 @@ if mosaic_flag == True:
 				##deb.prints(np.unique(prediction_rebuilt, return_counts=True))
 				#pdb.set_trace()
 		count = count + 1
-		print(count)
-		if count == 40:
-			deb.prints(np.unique(prediction_rebuilt, return_counts=True))
-			break
+		if count % 500 == 0:
+			print(count)
+
+		#if count == 40:
+		#	deb.prints(np.unique(prediction_rebuilt, return_counts=True))
+		#	break
 	del full_ims_test
 
 	if add_padding_flag==True:
@@ -492,7 +494,7 @@ prediction_rebuilt = predictionsLoaderTest.newLabel2labelTranslate(prediction_re
 deb.prints(prediction_rebuilt.shape)
 #pdb.set_trace()
 deb.prints(np.unique(prediction_rebuilt,return_counts=True))
-metrics_flag=False
+metrics_flag=True
 if metrics_flag==True:
 	# ========== metrics get =======#
 	def my_f1_score(label,prediction):
@@ -532,17 +534,20 @@ if metrics_flag==True:
 		print("Metrics get predictions",np.unique(predictions, return_counts=True))
 		print("Metrics get label",np.unique(label, return_counts=True))
 		if small_classes_ignore==True:
-				if dataset=='l2':
-				#important_classes_idx=[0,1,2,6,8,10,12]
-					important_classes_idx=[0,1,2,6,12] # only for bcknd final value
-					#important_classes_idx = [x+1 for x in important_classes_idx]
-					deb.prints(important_classes_idx)
-				elif dataset=='lm':
-					important_classes_idx=[0, 1, 10, 12]
-				for idx in range(class_n):
-					if idx not in important_classes_idx:
-						predictions[predictions==idx]=20
-						label[label==idx]=20	
+			if dataset=='l2':
+			#important_classes_idx=[0,1,2,6,8,10,12]
+				important_classes_idx=[0,1,2,6,12] # only for bcknd final value
+				#important_classes_idx = [x+1 for x in important_classes_idx]
+				deb.prints(important_classes_idx)
+			elif dataset=='lm':
+				important_classes_idx=[0, 1, 10, 12]
+			for idx in range(class_n):
+				if idx not in important_classes_idx:
+					predictions[predictions==idx]=20
+					label[label==idx]=20	
+			predictions[predictions==40] = 20
+			label[label==40] = 20
+
 		print("After small classes ignore")
 		print("Metrics get predictions",np.unique(predictions, return_counts=True))
 		print("Metrics get label",np.unique(label, return_counts=True))							
@@ -585,13 +590,21 @@ def small_classes_ignore(label, predictions, important_classes_idx):
 			label[label==idx]=20	
 	important_classes_idx = important_classes_idx[:-1]
 	deb.prints(important_classes_idx)
+
+	deb.prints(np.unique(label,return_counts=True))
+	deb.prints(np.unique(predictions,return_counts=True))
+
 	return label, predictions, important_classes_idx
 
 label_rebuilt, prediction_rebuilt, important_classes_idx = small_classes_ignore(
 			label_rebuilt, prediction_rebuilt,important_classes_idx)
 
+prediction_rebuilt[prediction_rebuilt==40] = 20
+label_rebuilt[label_rebuilt==40] = 20
+
 deb.prints(np.unique(label_rebuilt,return_counts=True))
 deb.prints(np.unique(prediction_rebuilt,return_counts=True))
+#pdb.set_trace()
 deb.prints(label_rebuilt.shape)
 deb.prints(prediction_rebuilt.shape)
 deb.prints(important_classes_idx)
@@ -659,16 +672,16 @@ def save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask,
 	prediction_rgb=cv2.cvtColor(prediction_rgb,cv2.COLOR_BGR2RGB)
 	save_folder=dataset+"/"+model_type+"/"
 	pathlib.Path(save_folder).mkdir(parents=True, exist_ok=True)
-	ic(save_folder)
+	deb.prints(save_folder)
 	cv2.imwrite(save_folder+"prediction_t_"+a.seq_date+"_"+model_type+"_"+name_id+".png",prediction_rgb)
 	cv2.imwrite(save_folder+"label_t_"+a.seq_date+"_"+model_type+"_"+name_id+".png",label_rgb)
-	cv2.imwrite(save_folder+"mask.png",mask)
+	cv2.imwrite(save_folder+"mask.png",mask*200)
 
 
 
 save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask, 
 		sequence_len, custom_colormap, small_classes_ignore=True,
-		name_id = "closed_set")
+		name_id = "openmax")
 
 if False:
 	pdb.set_trace()
