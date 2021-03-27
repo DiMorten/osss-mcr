@@ -13,7 +13,25 @@ import pickle
 from icecream import ic 
 import os
 from scipy.spatial.distance import mahalanobis
+from scipy.linalg import fractional_matrix_power
+from scipy import linalg
+from math import log
 ic.configureOutput(includeContext=False, prefix='[@debug] ')
+
+
+def fast_logdet(A):
+    """Compute log(det(A)) for A symmetric.
+    Equivalent to : np.log(nl.det(A)) but more robust.
+    It returns -Inf if det(A) is non positive or is not defined.
+    Parameters
+    ----------
+    A : array-like
+        The matrix.
+    """
+    sign, ld = np.linalg.slogdet(A)
+    if not sign > 0:
+        return -np.inf
+    return ld
 
 class OpenSetMethod(): # abstract
     def __init__(self, loco_class):
@@ -169,6 +187,7 @@ class OpenPCS(OpenSetMethod):
         if debug>0:
             print('*'*20, 'predict_unknown_class')
             deb.prints(self.model_list)
+        covariance_matrix_list = self.covariance_matrix_list.copy()
         for idx, c in enumerate(self.known_classes):
             if debug > 0:
                 print('idx, class', idx, c)
@@ -186,9 +205,21 @@ class OpenPCS(OpenSetMethod):
                     deb.prints(feat_msk.shape)
 
                     deb.prints(open_features[feat_msk, :].shape)
-                mahalanobis_threshold = False
+                mahalanobis_threshold = True
                 if mahalanobis_threshold==False:
+#                    deb.prints(np.round(linalg.pinvh(self.model_list[idx].get_precision(), check_finite=False), 2))
+#                    deb.prints(self.model_list[idx].get_precision().shape)
+#                    pdb.set_trace()
+                    
                     scores[feat_msk] = self.model_list[idx].score_samples(open_features[feat_msk, :])
+                    deb.prints(self.model_list[idx].score(open_features[feat_msk, :]))
+                    # for comparison
+                    features_pca = self.model_list[idx].transform(open_features[feat_msk, :])
+                    deb.prints(self.avgLogLikelihoodGet(features_pca, 
+                            self.covariance_matrix_list[idx]))
+                    # mahalanobis threshold from framework loglikelihood
+                    #scores[feat_msk] = self.mahalanobisFromLogLikelihood(scores[feat_msk], 
+                    #            self.covariance_matrix_list[idx])
                 else:
                     features_class = open_features[feat_msk, :]
                     features_pca = self.model_list[idx].transform(features_class)
@@ -208,18 +239,37 @@ class OpenPCS(OpenSetMethod):
                             scores_class[sample_id] = self.mahalanobis_distance2(
                                 features_pca[sample_id], self.covariance_matrix_list[idx])                    
                     elif myLogLikelihoodFlag == True:
-                        for sample_id in range(features_class.shape[0]):
-                            scores_class[sample_id] = self.logLikelihoodGet(
-                                features_pca[sample_id], self.covariance_matrix_list[idx])
 
+                        makeCovMatrixIdentityFlag = True
+                        if makeCovMatrixIdentityFlag == True:
+                            features_pca, covariance_matrix_list[idx] = self.makeCovMatrixIdentity(
+                                    features_pca,
+                                    self.covariance_matrix_list[idx])
+                        else:
+                            covariance_matrix_list[idx] = self.covariance_matrix_list[idx].copy()
+
+                        #for sample_id in range(features_class.shape[0]):
+                            
+                        #scores_class = self.logLikelihoodGet(
+                        #    features_pca, covariance_matrix_list[idx])
+                        #scores_class = self.score_mahalanobis(features_pca, 
+                        #        covariance_matrix_list[idx])                            
+                        scores_class = self.score_loglike(features_pca, 
+                                covariance_matrix_list[idx])
                     scores[feat_msk] = scores_class
+
+                #print("scores stats min, avg, max",np.min(scores[feat_msk]),
+                #    np.average(scores[feat_msk]),np.max(scores[feat_msk]))
+                #deb.stats_print(scores[feat_msk])
+#                pdb.set_trace()
 
                 #except:
                 #    print("No samples in class",c,"score is 0")
                  #   scores[feat_msk] = 0
+        scores[np.isneginf(scores)] = -600
         if debug > 0:            
-            print("scores stats min, avg, max",np.min(scores),
-                    np.average(scores),np.max(scores))
+            print("scores stats min, avg, max, std",np.min(scores),
+                    np.average(scores),np.max(scores),np.std(scores))
             deb.prints(self.threshold)
 
 
@@ -264,18 +314,137 @@ class OpenPCS(OpenSetMethod):
 #        deb.prints(out1)
 
         return out
+    def mahalanobis_distance3(self, feature, covariance_matrix): 
+        # covariance_matrix shape: (16, 16)
+        
+#        feature = np.expand_dims(feature, axis=0) # shape: (1, 16)
+#        deb.prints(feature.shape)
+#        deb.prints(covariance_matrix.shape)
+#        deb.prints(np.transpose(feature).shape)
+        out = np.dot(feature, np.linalg.inv(covariance_matrix)) # shape: (n, 16)
+#        deb.prints(out.shape)
+        out = np.dot(out, np.transpose(feature)) # shape: (n, n)
+        deb.prints(out.shape)
+        out = np.squeeze(np.diag(out)) # shape: (1)
+        deb.prints(out.shape)
+
+#        deb.prints(out)
+#        deb.prints(out1)
+
+        return out
     def logLikelihoodGet(self, feature, covariance_matrix):
-        n = feature.shape[0] # 16
+        n = feature.shape[1] # 16
         #deb.prints(feature.shape)
-        #deb.prints(n)
-        distance = self.mahalanobis_distance(feature, covariance_matrix)
+        deb.prints(n)
+        distance = np.zeros((feature.shape[0]))
+        for sample_id in range(feature.shape[0]):
+            distance[sample_id] = self.mahalanobis_distance2(feature[sample_id], covariance_matrix)
+
+#        distance = self.mahalanobis_distance3(feature, covariance_matrix)
+
 #        distance = np.power(mahalanobis(feature,
 #                                        np.zeros_like(feature),
 #                                        covariance_matrix), 2)
-        out = ( 1 / ( np.power(2*np.pi, 16/2) * np.sqrt(np.linalg.det(covariance_matrix)) ) ) * np.exp(- distance / 2) 
+        out = ( 1 / ( np.power(2*np.pi, n/2) * np.sqrt(np.linalg.det(covariance_matrix)) ) ) * np.exp(- distance / 2) 
         out = np.log(out)
         return out
 
+    def score_loglike(self, Xr, covariance_matrix):
+        """Return the log-likelihood of each sample.
+        See. "Pattern Recognition and Machine Learning"
+        by C. Bishop, 12.2.1 p. 574
+        or http://www.miketipping.com/papers/met-mppca.pdf
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The data.
+        Returns
+        -------
+        ll : ndarray of shape (n_samples,)
+            Log-likelihood of each sample under the current model.
+        """
+
+        inv_covariance_matrix = linalg.pinvh(covariance_matrix, check_finite=False)
+#        X = self._validate_data(X, dtype=[np.float64, np.float32], reset=False)
+#        Xr = X - mean_ # data is predicted thus its mean should have been subtracted?
+        n_features = Xr.shape[1]
+        #precision = self.get_precision()
+        log_like = -.5 * (Xr * (np.dot(Xr, inv_covariance_matrix))).sum(axis=1)
+        log_like -= .5 * (n_features * log(2. * np.pi) -
+                          fast_logdet(inv_covariance_matrix))
+        return log_like
+    def score_mahalanobis(self, Xr, covariance_matrix, mean_):
+        """Return the log-likelihood of each sample.
+        See. "Pattern Recognition and Machine Learning"
+        by C. Bishop, 12.2.1 p. 574
+        or http://www.miketipping.com/papers/met-mppca.pdf
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The data.
+        Returns
+        -------
+        ll : ndarray of shape (n_samples,)
+            Log-likelihood of each sample under the current model.
+        """
+
+        inv_covariance_matrix = linalg.pinvh(covariance_matrix, check_finite=False)
+#        X = self._validate_data(X, dtype=[np.float64, np.float32], reset=False)
+#        Xr = X - mean_ # data is predicted thus its mean should have been subtracted?
+        n_features = X.shape[1]
+        #precision = self.get_precision()
+        mahalanobis = (Xr * (np.dot(Xr, inv_covariance_matrix))).sum(axis=1)
+        return mahalanobis
+
+    def mahalanobisFromLogLikelihood(self, log_likelihood_values, covariance_matrix):
+        n_components = covariance_matrix.shape[0]
+        c = np.log(np.linalg.det(covariance_matrix))/2 + n_components*np.log(2*np.pi)
+        x =-2*(log_likelihood_values + c)
+        print("before sqrt min, avg, max, std", np.min(x), np.average(x), np.max(x), np.std(x))
+        mahalanobis = np.sqrt(x) 
+        print("mahalanobis min, avg, max, std", np.min(mahalanobis), np.average(mahalanobis), np.max(mahalanobis), np.std(mahalanobis))
+        
+        return mahalanobis
+
+    def avgLogLikelihoodGet(self, features, covariance_matrix):
+        N = features.shape[0] # n. of samples
+        D = features.shape[1] # 16
+
+        mu = np.average(features, axis = 0) #1x16
+
+        distance = 0
+        inv_covariance_matrix = np.linalg.inv(covariance_matrix)
+        for idx in range(N):
+            a = (features[idx] - mu)
+            distance = distance + np.dot(np.dot(a, inv_covariance_matrix), np.transpose(a))
+        avgLogLikelihood = - N*D*np.log(2*np.pi)/2 - N*np.log(np.linalg.det(covariance_matrix))/2 - distance/2
+        
+        return avgLogLikelihood
+
+    def avgLogLikelihoodGet2(self, features, covariance_matrix):
+        N = features.shape[0] # n. of samples
+        D = features.shape[1] # 16
+
+        mu = np.average(features, axis = 0) #1x16
+
+        S = 0
+        inv_covariance_matrix = np.linalg.inv(covariance_matrix)
+        for idx in range(N):
+            a = (features[idx] - mu)
+            S = S + np.dot(a, np.transpose(a))
+
+            #distance = distance + np.dot(np.dot(a, inv_covariance_matrix), np.transpose(a))
+        avgLogLikelihood = - N*D*np.log(2*np.pi)/2 - N*np.log(np.linalg.det(covariance_matrix))/2 - distance/2
+        
+        return avgLogLikelihood
+
+    def makeCovMatrixIdentity(self, features, covariance_matrix):
+        #features = np.expand_dims(features, axis=0)
+        deb.prints(features.shape)
+        features = np.dot(features, fractional_matrix_power(covariance_matrix, -1/2)) # 1x16 * 16x16
+#        deb.prints(features.shape)
+#        pdb.set_trace()
+        return features, np.eye(covariance_matrix.shape[0])
 
     def fit_pca_models(self, label_test, predictions_test, open_features):
         self.model_list = []
@@ -343,6 +512,7 @@ class OpenPCS(OpenSetMethod):
             covariance_matrix = np.cov(x_pca_train, rowvar = False)
             ic(np.round(covariance_matrix,2))
             ic(np.round(model.explained_variance_, 2))
+            ic(np.round(model.explained_variance_ratio_.cumsum()*100, 2))
 #            ic(covariance_matrix.shape)
 #            deb.prints(covariance_matrix)
 

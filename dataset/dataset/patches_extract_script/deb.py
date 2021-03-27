@@ -15,6 +15,19 @@ class bcolors:
 	BLUE = '\033[34m'
 
 
+def stats_print(x, level_actual=1,level_constant=1):
+	#print("[@"+sys._getframe().f_code.co_name+"]")
+	if level_actual>=level_constant:
+		try:
+			frame = inspect.currentframe().f_back
+			s = inspect.getframeinfo(frame).code_context[0]
+			r = re.search(r"\((.*)\)", s).group(1)
+			if fname is not "debug":
+				r = r[0:-6]
+			print("{}[@stats_print] {} min = {}, avg = {}, max = {}{}".format(bcolors.OKGREEN,r,np.min(x),np.average(x),np.max(x),bcolors.ENDC))
+		except:
+			print("Deb prints error. Value:",x)
+
 def prints(x,fname="debug", level_actual=1,level_constant=1,color=bcolors.OKGREEN):
 	#print("[@"+sys._getframe().f_code.co_name+"]")
 	if level_actual>=level_constant:

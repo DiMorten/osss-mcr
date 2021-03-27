@@ -383,8 +383,9 @@ deb.prints(l2_date)
 
 del full_label_test
 translate_label_path = '../../../train_src/'
-
-mosaic_flag = False
+name_id = "closed_set"
+open_set_mode = False
+mosaic_flag = True
 if mosaic_flag == True:
 	#prediction_rebuilt=np.ones((row,col)).astype(np.uint8)*255
 	prediction_rebuilt=np.zeros((row,col)).astype(np.uint8)
@@ -426,9 +427,10 @@ if mosaic_flag == True:
 
 				input_ = mim.batchTrainPreprocess(patch, ds,  
 							label_date_id = -1) # tstep is -12 to -1
-				if debug>-1:
-					print('*'*20, "Load decoder features")
-				test_pred_proba = predictionsLoaderTest.load_decoder_features(model, input_, debug = debug)
+				if open_set_mode == True:
+					if debug>-1:
+						print('*'*20, "Load decoder features")
+					test_pred_proba = predictionsLoaderTest.load_decoder_features(model, input_, debug = debug)
 				
 				#print(input_[0].shape)
 				#ic(len(input_))
@@ -441,22 +443,23 @@ if mosaic_flag == True:
 				if debug>-1:
 					print('*'*20, "Starting openModel predict")
 				
-				# translate the preddictions.
-				pred_cl = predictionsLoaderTest.newLabel2labelTranslate(pred_cl, 
-						translate_label_path + 'new_labels2labels_lm_'+lm_date+'_S1.pkl',
-						bcknd_flag=False, debug = debug)
 				# ========================================== open set
-				
-				# load the pca model / covariance matrix 
-				predictions_openmodel = openModel.predict(pred_cl, test_pred_proba, debug = debug)
-				predictions_openmodel = np.reshape(predictions_openmodel, prediction_shape)
-				if debug>-1:
-					print('*'*20, "Finished openModel predict")
+				if open_set_mode == True:
+					# translate the preddictions.
+					pred_cl = predictionsLoaderTest.newLabel2labelTranslate(pred_cl, 
+							translate_label_path + 'new_labels2labels_lm_'+lm_date+'_S1.pkl',
+							bcknd_flag=False, debug = debug)
+
+					# load the pca model / covariance matrix 
+					pred_cl = openModel.predict(pred_cl, test_pred_proba, debug = debug)
+					pred_cl = np.reshape(pred_cl, prediction_shape)
+					if debug>-1:
+						print('*'*20, "Finished openModel predict")
 				##deb.prints(np.unique(predictions_openmodel, return_counts=True))
 				#deb.prints(predictions_openmodel.shape)
 				##deb.prints(np.unique(prediction_rebuilt, return_counts=True))
-#				prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_cl[:,overlap//2:x-overlap//2,overlap//2:y-overlap//2]
-				prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = predictions_openmodel[:,overlap//2:x-overlap//2,overlap//2:y-overlap//2]
+				prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_cl[:,overlap//2:x-overlap//2,overlap//2:y-overlap//2]
+#				prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = predictions_openmodel[:,overlap//2:x-overlap//2,overlap//2:y-overlap//2]
 
 				##deb.prints(np.unique(prediction_rebuilt, return_counts=True))
 				#pdb.set_trace()
@@ -481,9 +484,9 @@ if mosaic_flag == True:
 
 	#prediction_rebuilt=np.reshape(prediction_rebuilt,-1)
 
-	np.save('prediction_rebuilt_'+lm_date+'.npy',prediction_rebuilt)
+	np.save('prediction_rebuilt_'+lm_date+'_'+name_id+'.npy',prediction_rebuilt)
 else:
-	prediction_rebuilt = np.load('prediction_rebuilt_'+lm_date+'.npy')
+	prediction_rebuilt = np.load('prediction_rebuilt_'+lm_date+'_'+name_id+'.npy')
 	print(np.unique(prediction_rebuilt, return_counts=True))
 
 deb.prints(np.unique(prediction_rebuilt,return_counts=True))
@@ -496,11 +499,11 @@ print("label_rebuilt.unique",np.unique(label_rebuilt,return_counts=True))
 #mask = np.reshape(mask,-1)
 deb.prints(prediction_rebuilt.shape)
 # THIS NEEDS TO BE DONE BEFORE THE OPEN SET
-'''
-prediction_rebuilt = predictionsLoaderTest.newLabel2labelTranslate(prediction_rebuilt, 
-		translate_label_path + 'new_labels2labels_lm_'+lm_date+'_S1.pkl',
-		bcknd_flag=False)
-'''		
+if open_set_mode == False:
+	prediction_rebuilt = predictionsLoaderTest.newLabel2labelTranslate(prediction_rebuilt, 
+			translate_label_path + 'new_labels2labels_lm_'+lm_date+'_S1.pkl',
+			bcknd_flag=False)
+
 deb.prints(prediction_rebuilt.shape)
 #pdb.set_trace()
 deb.prints(np.unique(prediction_rebuilt,return_counts=True))
@@ -555,8 +558,8 @@ if metrics_flag==True:
 				if idx not in important_classes_idx:
 					predictions[predictions==idx]=20
 					label[label==idx]=20	
-			predictions[predictions==40] = 20
-			label[label==40] = 20
+			predictions[predictions==39] = 20
+			label[label==39] = 20
 
 		print("After small classes ignore")
 		print("Metrics get predictions",np.unique(predictions, return_counts=True))
@@ -609,8 +612,8 @@ def small_classes_ignore(label, predictions, important_classes_idx):
 label_rebuilt, prediction_rebuilt, important_classes_idx = small_classes_ignore(
 			label_rebuilt, prediction_rebuilt,important_classes_idx)
 
-prediction_rebuilt[prediction_rebuilt==40] = 20
-label_rebuilt[label_rebuilt==40] = 20
+prediction_rebuilt[prediction_rebuilt==39] = 20
+label_rebuilt[label_rebuilt==39] = 20
 
 deb.prints(np.unique(label_rebuilt,return_counts=True))
 deb.prints(np.unique(prediction_rebuilt,return_counts=True))
@@ -691,7 +694,7 @@ def save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask,
 
 save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask, 
 		sequence_len, custom_colormap, small_classes_ignore=True,
-		name_id = "openmax")
+		name_id = name_id)
 
 if False:
 	pdb.set_trace()

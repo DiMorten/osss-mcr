@@ -14,7 +14,7 @@ class bcolors:
 	GREENCLEAR = '\033[36m'
 	BLUE = '\033[34m'
 
-def stats_print(x):
+def stats_print(x, level_actual=1,level_constant=1):
 	#print("[@"+sys._getframe().f_code.co_name+"]")
 	if level_actual>=level_constant:
 		try:
@@ -23,7 +23,7 @@ def stats_print(x):
 			r = re.search(r"\((.*)\)", s).group(1)
 			if fname is not "debug":
 				r = r[0:-6]
-			print("{}[@stats_print] {} min, avg, max: {}{}".format(bcolors.OKGREEN,r,np.min(x),np.average(x),np.max(x),bcolors.ENDC))
+			print("{}[@stats_print] {} min = {}, avg = {}, max = {}{}".format(bcolors.OKGREEN,r,np.min(x),np.average(x),np.max(x),bcolors.ENDC))
 		except:
 			print("Deb prints error. Value:",x)
 

@@ -23,6 +23,7 @@ init()
 save_bar_flag=True
 sys.path.append('../')
 import deb
+deb.prints(deb.__file__)
 from open_set import SoftmaxThresholding, OpenPCS
 import argparse
 from parameters.parameters_reader import ParamsTrain, ParamsAnalysis
@@ -114,7 +115,13 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 		if openModel == None:
 			if paramsAnalysis.openSetMethod == 'OpenPCS':
 				openModel = OpenPCS(loco_class = predictionsLoaderTest.loco_class,  known_classes = known_classes,
-					n_components = 16)
+#					n_components = 16)
+#					n_components = 30)
+#					n_components = 90)
+					n_components = 45)
+#					n_components = 140)
+
+					
 			elif paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
 				openModel = SoftmaxThresholding(loco_class = predictionsLoaderTest.loco_class)
 
@@ -452,7 +459,28 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 			
 			thresholds = np.linspace(-22, 3, 15)
 			thresholds = [-19]
+			
+			thresholds = np.linspace(-60, -30, 3)
+			thresholds = [-28]
+			thresholds = [-59]
+			thresholds = [-92]
+			thresholds = np.linspace(-110, -80, 5)
+			thresholds = [-87.5]
+
+			thresholds = [-19]
+			thresholds = np.linspace(-35, -22, 10)
+#			FOR 45 components and cov_matrix to I
+#			thresholds = np.linspace(-93, -82, 5)
+
 			thresholds = [100]
+#			thresholds = np.linspace(45, 70, 2)
+#			thresholds = np.linspace(90, 120, 2)
+
+			thresholds = [-105]
+#			thresholds = np.linspace(-170, -230, 10)
+#			thresholds = np.linspace(-360, -300, 10)
+#			thresholds = np.linspace(-417, -398, 10)
+
 		elif paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
 			# softmax thresholding
 			thresholds = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.92, 0.95]
