@@ -383,8 +383,10 @@ deb.prints(l2_date)
 
 del full_label_test
 translate_label_path = '../../../train_src/'
-name_id = "closed_set"
-open_set_mode = False
+#name_id = "closed_set"
+name_id = "openpca_identitycovmatrix_90pcs"
+
+open_set_mode = True
 mosaic_flag = True
 if mosaic_flag == True:
 	#prediction_rebuilt=np.ones((row,col)).astype(np.uint8)*255
@@ -394,12 +396,15 @@ if mosaic_flag == True:
 	# --================= open set
 #	threshold = -19
 	threshold = 100
+	threshold = -210
 
 	known_classes = [x + 1 for x in paramsTrain.known_classes]
 	deb.prints(known_classes)
 	if paramsAnalysis.openSetMethod == 'OpenPCS':
 		openModel = OpenPCS(loco_class = 8,  known_classes = known_classes,
-			n_components = 16)
+#			n_components = 16)
+			n_components = 90)
+
 	elif paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
 		openModel = SoftmaxThresholding(loco_class = predictionsLoaderTest.loco_class)
 	openModel.setThreshold(threshold)

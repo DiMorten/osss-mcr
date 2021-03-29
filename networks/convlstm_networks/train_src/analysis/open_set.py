@@ -240,7 +240,7 @@ class OpenPCS(OpenSetMethod):
                                 features_pca[sample_id], self.covariance_matrix_list[idx])                    
                     elif myLogLikelihoodFlag == True:
 
-                        makeCovMatrixIdentityFlag = True
+                        makeCovMatrixIdentityFlag = False
                         if makeCovMatrixIdentityFlag == True:
                             features_pca, covariance_matrix_list[idx] = self.makeCovMatrixIdentity(
                                     features_pca,
@@ -440,7 +440,7 @@ class OpenPCS(OpenSetMethod):
 
     def makeCovMatrixIdentity(self, features, covariance_matrix):
         #features = np.expand_dims(features, axis=0)
-        deb.prints(features.shape)
+        #deb.prints(features.shape)
         features = np.dot(features, fractional_matrix_power(covariance_matrix, -1/2)) # 1x16 * 16x16
 #        deb.prints(features.shape)
 #        pdb.set_trace()

@@ -117,8 +117,8 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 				openModel = OpenPCS(loco_class = predictionsLoaderTest.loco_class,  known_classes = known_classes,
 #					n_components = 16)
 #					n_components = 30)
-#					n_components = 90)
-					n_components = 45)
+					n_components = 90)
+#					n_components = 45)
 #					n_components = 140)
 
 					
@@ -480,6 +480,7 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 #			thresholds = np.linspace(-170, -230, 10)
 #			thresholds = np.linspace(-360, -300, 10)
 #			thresholds = np.linspace(-417, -398, 10)
+			thresholds = np.linspace(-90, -30, 10)
 
 		elif paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
 			# softmax thresholding
