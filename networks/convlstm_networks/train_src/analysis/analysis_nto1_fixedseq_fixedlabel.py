@@ -376,7 +376,9 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 
 
 		deb.prints(predictionsLoaderTest)
-
+		deb.prints(model_path)
+		deb.prints(args.seq_date)
+		#pdb.set_trace()
 		predictions, label_test, test_pred_proba, model = predictionsLoaderTest.loadPredictions(model_path, seq_date=args.seq_date, 
 				model_dataset=args.model_dataset)
 
@@ -480,7 +482,29 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 #			thresholds = np.linspace(-170, -230, 10)
 #			thresholds = np.linspace(-360, -300, 10)
 #			thresholds = np.linspace(-417, -398, 10)
-			thresholds = np.linspace(-90, -30, 10)
+#			thresholds = np.linspace(-90, -30, 10)
+
+#			dec
+			thresholds = np.linspace(-250, -200, 5)
+#			feb
+#			thresholds = [-105]
+			thresholds = np.linspace(-250, -200, 5)
+			thresholds = np.linspace(-200, -150, 10)
+			if args.seq_date == 'dec':
+				thresholds = [-237.5]
+			elif args.seq_date == 'feb':
+				thresholds = [-188.89]
+			elif args.seq_date == 'mar':
+				thresholds = [-210]
+			elif args.seq_date == 'jan':
+				thresholds = [-210]
+				thresholds = np.linspace(100, 500, 10)
+
+
+			#thresholds = [-2000]
+#			thresholds = np.linspace(-250, -150, 10)
+#			thresholds = np.linspace(0, 500, 4)
+			#thresholds = np.linspace(0, 300, 10)
 
 		elif paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
 			# softmax thresholding
@@ -1055,13 +1079,18 @@ elif dataset=='lm':
 			'model_best_UUnet4ConvLSTM_fixed_label_fixed_'+args.seq_date+'_loco'+str(loco_class)+'_lm_testlm.h5'
 		]]	
 
-		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_'+args.seq_date+'_loco'+str(loco_class)+'_lm_testlm_fewknownclasses.h5']]	
-
+		if args.seq_date =='mar':
+			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_'+args.seq_date+'_loco'+str(loco_class)+'_lm_testlm_fewknownclasses.h5']]	
+		elif args.seq_date =='feb':
+#			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_feb_lm_testlm_fewknownclasses_groupclasses.h5']]	
+			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_feb_lm_testlm_fewknownclasses_valrand.h5']]	
+		elif args.seq_date =='jan':
+			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_jan_lm_testlm_fewknownclasses_groupclasses_check.h5']]
+			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_jan_lm_testlm_fewknownclasses_check.h5']]
+#		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_dec_lm_testlm_fewknownclasses_groupclasses.h5']]
 #		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_loco8_lm_testlm_lessclass8_2.h5']]	
-
+###		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_dec_lm_testlm_fewknownclasses_groupclasses_check.h5']]
 #		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_dec_lm_testlm_fewknownclasses_valrand.h5']]	
-#		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_feb_lm_testlm_fewknownclasses_valrand.h5']]	
-
 #model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_loco8_lm_testlm_stratifiedval
 elif dataset=='lm_optical':
 	exp_id=1

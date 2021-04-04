@@ -36,7 +36,7 @@ class Params():
 class ParamsTrain(Params):
     def __init__(self, folder_path):
         json_path = folder_path+'parameters_openset.json'
-#        json_path = folder_path+'parameters_closedset_groupclasses.json'
+        json_path = folder_path+'parameters_closedset_groupclasses.json'
         json_path = folder_path+'save_nonaugmented_train_patches.json'
 
 #        json_path = folder_path+'parameters_openset_specifyunknownclasses.json'

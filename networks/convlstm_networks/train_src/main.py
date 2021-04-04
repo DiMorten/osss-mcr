@@ -786,6 +786,22 @@ class Dataset(NetObject):
 		acc=acc[~np.isnan(acc)]
 		metrics['average_acc']=np.average(metrics['per_class_acc'][~np.isnan(metrics['per_class_acc'])])
 
+		# open set metrics
+		if paramsTrain.group_bcknd_classes == True:
+			metrics['f1_score_known'] = np.average(metrics['f1_score_noavg'][:-1])
+			metrics['f1_score_unknown'] = metrics['f1_score_noavg'][-1]
+			
+			
+			precision = precision_score(label,prediction, average=None)
+			recall = recall_score(label,prediction, average=None)
+			
+			deb.prints(precision)
+			deb.prints(recall)
+			metrics['precision_known'] = np.average(precision[:-1])
+			metrics['recall_known'] = np.average(recall[:-1])
+			metrics['precision_unknown'] = precision[-1]
+			metrics['recall_unknown'] = recall[-1]
+			
 #		metrics['precision_avg'] = np.average(precision[:-1])
 #		metrics['recall_avg'] = np.average(recall[:-1])
 		return metrics

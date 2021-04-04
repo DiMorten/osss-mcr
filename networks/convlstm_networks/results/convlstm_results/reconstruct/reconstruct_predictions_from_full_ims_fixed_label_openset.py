@@ -37,6 +37,7 @@ parser.add_argument('-mdl', '--model', dest='model_type',
 
 
 parser.add_argument('--seq_date', dest='seq_date', 
+#                    default='mar',
                     default='mar',
                     help='seq_date')
 parser.add_argument('--model_dataset', dest='model_dataset', 
@@ -86,6 +87,8 @@ if dataset=='lm':
 		#predictions_path=path+'prediction_BUnet4ConvLSTM_repeating2.npy'
 		#predictions_path=path+'prediction_BUnet4ConvLSTM_repeating4.npy'
 		predictions_path = path+'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+a.seq_date+'_700perclass.h5'			
+		predictions_path = path+'model_best_UUnet4ConvLSTM_fixed_label_fixed_'+a.seq_date+'_loco8_lm_testlm_fewknownclasses.h5'	
+
 		predictions_path = path+'model_best_UUnet4ConvLSTM_fixed_label_fixed_'+a.seq_date+'_loco8_lm_testlm_fewknownclasses.h5'	
 
 	elif model_type=='atrous':

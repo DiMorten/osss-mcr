@@ -2,5 +2,5 @@
     "open_set": true,
     "setTrainAsTest": false,
     "metricsOnTrain": false,
-    "openSetMethod": "OpenPCS"
+    "openSetMethod": "SoftmaxThresholding"
 }
