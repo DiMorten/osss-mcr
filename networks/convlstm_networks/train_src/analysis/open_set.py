@@ -41,7 +41,7 @@ class OpenSetMethod(): # abstract
         self.threshold = threshold
 class SoftmaxThresholding(OpenSetMethod):
 
-    def __init__(self, loco_class):
+    def __init__(self, loco_class=0):
         super().__init__(loco_class)
 
         self.fittedFlag = True
@@ -70,7 +70,7 @@ class SoftmaxThresholding(OpenSetMethod):
 
 
 class OpenPCS(OpenSetMethod):
-    def __init__(self, loco_class, known_classes, n_components):
+    def __init__(self, known_classes, n_components, loco_class=0):
         super().__init__(loco_class)
         self.known_classes = known_classes
         self.n_components = n_components
@@ -84,7 +84,6 @@ class OpenPCS(OpenSetMethod):
 
         ##print("pred_proba_max stats min, avg, max",np.min(pred_proba_test),
         ##        np.average(pred_proba_test),np.max(pred_proba_test))
-        deb.prints(self.threshold)
         deb.prints(predictions_train.shape)
 
 
@@ -188,6 +187,9 @@ class OpenPCS(OpenSetMethod):
         return predictions_test
     def makeCovMatrixIdentitySet(self, makeCovMatrixIdentityFlag):
         self.makeCovMatrixIdentityFlag = makeCovMatrixIdentityFlag
+    
+    def predictScores():
+        
     def predict_unknown_class(self, predictions_test, open_features, debug=1): # self.model_list, self.threshold
         if self.scoresNotCalculated == False:
             predictions_test[self.scores < self.threshold] = 40 #self.loco_class + 1
@@ -279,9 +281,10 @@ class OpenPCS(OpenSetMethod):
                  #   self.scores[feat_msk] = 0
         self.scores[np.isneginf(self.scores)] = -600
         if debug > 0:            
-            print("self.scores stats min, avg, max, std",np.min(self.scores),
+            print("scores stats min, avg, max, std",np.min(self.scores),
                     np.average(self.scores),np.max(self.scores),np.std(self.scores))
             deb.prints(self.threshold)
+            pdb.set_trace()
 
 
         #scaler = MinMaxScaler()
