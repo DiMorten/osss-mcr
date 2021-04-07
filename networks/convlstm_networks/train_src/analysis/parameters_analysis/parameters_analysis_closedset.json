@@ -2,5 +2,6 @@
     "open_set": true,
     "setTrainAsTest": false,
     "metricsOnTrain": false,
-    "openSetMethod": "SoftmaxThresholding"
+    "openSetMethod": "OpenPCS",
+    "makeCovMatrixIdentity": false
 }

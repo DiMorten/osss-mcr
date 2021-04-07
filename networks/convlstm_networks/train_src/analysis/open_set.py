@@ -36,6 +36,7 @@ def fast_logdet(A):
 class OpenSetMethod(): # abstract
     def __init__(self, loco_class):
         self.loco_class = loco_class
+        self.scoresNotCalculated = True
     def setThreshold(self, threshold):
         self.threshold = threshold
 class SoftmaxThresholding(OpenSetMethod):
@@ -47,6 +48,10 @@ class SoftmaxThresholding(OpenSetMethod):
         self.name = 'SoftmaxThresholding'
 
     def predict(self, predictions_test, pred_proba_test):
+        if self.scoresNotCalculated==False:
+            predictions_test[pred_proba_max < self.threshold] = 40 #self.loco_class + 1
+            return predictions_test
+
         # pred proba shape is (n_samples, h, w, classes)
         pred_proba_test = scipy.special.softmax(pred_proba_test, axis=-1)
 
@@ -60,7 +65,7 @@ class SoftmaxThresholding(OpenSetMethod):
         deb.prints(pred_proba_max.shape)
 
         predictions_test[pred_proba_max < self.threshold] = 40 #self.loco_class + 1
-
+        self.scoresNotCalculated=True
         return predictions_test
 
 
@@ -181,13 +186,19 @@ class OpenPCS(OpenSetMethod):
         deb.prints(np.unique(predictions_test, return_counts=True))
         #pdb.set_trace()
         return predictions_test
-
+    def makeCovMatrixIdentitySet(self, makeCovMatrixIdentityFlag):
+        self.makeCovMatrixIdentityFlag = makeCovMatrixIdentityFlag
     def predict_unknown_class(self, predictions_test, open_features, debug=1): # self.model_list, self.threshold
-        scores = np.zeros_like(predictions_test, dtype=np.float)
+        if self.scoresNotCalculated == False:
+            predictions_test[self.scores < self.threshold] = 40 #self.loco_class + 1
+            return predictions_test, self.scores
+        else:
+            self.scores = np.zeros_like(predictions_test, dtype=np.float)
         if debug>0:
             print('*'*20, 'predict_unknown_class')
             deb.prints(self.model_list)
         covariance_matrix_list = self.covariance_matrix_list.copy()
+
         for idx, c in enumerate(self.known_classes):
             if debug > 0:
                 print('idx, class', idx, c)
@@ -211,14 +222,14 @@ class OpenPCS(OpenSetMethod):
 #                    deb.prints(self.model_list[idx].get_precision().shape)
 #                    pdb.set_trace()
                     
-                    scores[feat_msk] = self.model_list[idx].score_samples(open_features[feat_msk, :])
+                    self.scores[feat_msk] = self.model_list[idx].score_samples(open_features[feat_msk, :])
                     deb.prints(self.model_list[idx].score(open_features[feat_msk, :]))
                     # for comparison
                     features_pca = self.model_list[idx].transform(open_features[feat_msk, :])
                     deb.prints(self.avgLogLikelihoodGet(features_pca, 
                             self.covariance_matrix_list[idx]))
                     # mahalanobis threshold from framework loglikelihood
-                    #scores[feat_msk] = self.mahalanobisFromLogLikelihood(scores[feat_msk], 
+                    #self.scores[feat_msk] = self.mahalanobisFromLogLikelihood(self.scores[feat_msk], 
                     #            self.covariance_matrix_list[idx])
                 else:
                     features_class = open_features[feat_msk, :]
@@ -240,8 +251,8 @@ class OpenPCS(OpenSetMethod):
                                 features_pca[sample_id], self.covariance_matrix_list[idx])                    
                     elif myLogLikelihoodFlag == True:
 
-                        makeCovMatrixIdentityFlag = False
-                        if makeCovMatrixIdentityFlag == True:
+                        #makeCovMatrixIdentityFlag = True
+                        if self.makeCovMatrixIdentityFlag == True:
                             features_pca, covariance_matrix_list[idx] = self.makeCovMatrixIdentity(
                                     features_pca,
                                     self.covariance_matrix_list[idx])
@@ -256,32 +267,32 @@ class OpenPCS(OpenSetMethod):
                         #        covariance_matrix_list[idx])                            
                         scores_class = self.score_loglike(features_pca, 
                                 covariance_matrix_list[idx])
-                    scores[feat_msk] = scores_class
+                    self.scores[feat_msk] = scores_class
 
-                #print("scores stats min, avg, max",np.min(scores[feat_msk]),
-                #    np.average(scores[feat_msk]),np.max(scores[feat_msk]))
-                #deb.stats_print(scores[feat_msk])
+                #print("self.scores stats min, avg, max",np.min(self.scores[feat_msk]),
+                #    np.average(self.scores[feat_msk]),np.max(self.scores[feat_msk]))
+                #deb.stats_print(self.scores[feat_msk])
 #                pdb.set_trace()
 
                 #except:
                 #    print("No samples in class",c,"score is 0")
-                 #   scores[feat_msk] = 0
-        scores[np.isneginf(scores)] = -600
+                 #   self.scores[feat_msk] = 0
+        self.scores[np.isneginf(self.scores)] = -600
         if debug > 0:            
-            print("scores stats min, avg, max, std",np.min(scores),
-                    np.average(scores),np.max(scores),np.std(scores))
+            print("self.scores stats min, avg, max, std",np.min(self.scores),
+                    np.average(self.scores),np.max(self.scores),np.std(self.scores))
             deb.prints(self.threshold)
 
 
         #scaler = MinMaxScaler()
-        #scores = np.squeeze(scaler.fit_transform(scores.reshape(1, -1)))
+        #self.scores = np.squeeze(scaler.fit_transform(self.scores.reshape(1, -1)))
 
-        #print("scores stats min, avg, max",np.min(scores),
-        #        np.average(scores),np.max(scores))
-        #deb.prints(scores.shape)
-        predictions_test[scores < self.threshold] = 40 #self.loco_class + 1
-
-        return predictions_test, scores #scores in case you want to threshold them again
+        #print("self.scores stats min, avg, max",np.min(self.scores),
+        #        np.average(self.scores),np.max(self.scores))
+        #deb.prints(self.scores.shape)
+        predictions_test[self.scores < self.threshold] = 40 #self.loco_class + 1
+        self.scoresNotCalculated = False
+        return predictions_test, self.scores #scores in case you want to threshold them again
 
     def mahalanobis_distance(self, feature, covariance_matrix): 
         # covariance_matrix shape: (16, 16)
@@ -493,11 +504,18 @@ class OpenPCS(OpenSetMethod):
         #deb.prints(np.unique(predictions_test == cl))
  #       deb.prints(np.unique(predictions_test == cl))
         deb.prints(open_features.shape)
+        print("==== debugging")
+        deb.prints(np.unique(label_test, return_counts=True))
+        deb.prints(np.unique(predictions_test, return_counts=True))
+        deb.prints(np.unique((label_test == cl), return_counts=True))
+        deb.prints(np.unique((predictions_test == cl), return_counts=True))
+        deb.prints(np.unique((label_test == cl) & (predictions_test == cl), return_counts=True))
+        
         cl_feat_flat = open_features[(label_test == cl) & (predictions_test == cl), :]
         min_samples = 50
         deb.prints(cl_feat_flat.shape)
-        print("cl_feat_flat stats",np.min(cl_feat_flat),np.average(cl_feat_flat),np.max(cl_feat_flat))
         if cl_feat_flat.shape[0]>min_samples:
+            print("cl_feat_flat stats",np.min(cl_feat_flat),np.average(cl_feat_flat),np.max(cl_feat_flat))
             
             perm = np.random.permutation(cl_feat_flat.shape[0])
             

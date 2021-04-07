@@ -120,7 +120,7 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 					n_components = 90)
 #					n_components = 45)
 #					n_components = 140)
-
+				openModel.makeCovMatrixIdentitySet(paramsAnalysis.makeCovMatrixIdentity)
 					
 			elif paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
 				openModel = SoftmaxThresholding(loco_class = predictionsLoaderTest.loco_class)
@@ -139,7 +139,8 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 #		if paramsAnalysis.findThresholdInTrain == False:
 
 		deb.prints(predictions_train.shape)
-		deb.prints(label_train.shape)
+		if paramsAnalysis.open_set == True:
+			deb.prints(label_train.shape)
 		deb.prints(predictions.shape)
 		deb.prints(label_test.shape)
 		deb.prints(paramsAnalysis.metricsOnTrain)
@@ -161,7 +162,8 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 	#label_test=label_test.argmax(axis=-1)
 	label_metrics = label_test if paramsAnalysis.metricsOnTrain == False else label_train
 	deb.prints(label_metrics.shape)
-	deb.prints(label_train.shape)
+	if paramsAnalysis.open_set == True:
+		deb.prints(label_train.shape)
 	#pdb.set_trace()
 	label_metrics=np.reshape(label_metrics,-1)
 
@@ -485,17 +487,36 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 #			thresholds = np.linspace(-90, -30, 10)
 
 #			dec
-			thresholds = np.linspace(-250, -200, 5)
-#			feb
-#			thresholds = [-105]
-			thresholds = np.linspace(-250, -200, 5)
-			thresholds = np.linspace(-200, -150, 10)
+
+
+
+#			thresholds = np.linspace(-250, -200, 5)
+			thresholds = np.linspace(-250, -150, 10)
 			if args.seq_date == 'dec':
 				thresholds = [-237.5]
 			elif args.seq_date == 'feb':
 				thresholds = [-188.89]
 			elif args.seq_date == 'mar':
 				thresholds = [-210]
+#			2 kkc mar
+				thresholds = [-600]
+				thresholds = np.linspace(-200, -50, 10)
+				thresholds = np.linspace(-166, -133, 10)
+#				thresholds = [-147.7]
+#				thresholds = [-147.7]
+#				thresholds = [-24]
+#				thresholds = np.linspace(300, 450, 10)
+#				thresholds = [400]
+				thresholds = np.linspace(300, 700, 10)
+				thresholds = [566.66666667]
+				thresholds = np.linspace(-225, -150, 10)
+				thresholds = [-183.33333]
+				thresholds = np.linspace(-25, 250, 10)
+#				thresholds = np.linspace(250, 500, 10)
+#				thresholds = [305.6]
+				thresholds = np.linspace(-50, 0, 10)
+				thresholds = [-16.66666]
+
 			elif args.seq_date == 'jan':
 				thresholds = [-210]
 				thresholds = np.linspace(100, 500, 10)
@@ -509,6 +530,8 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 		elif paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
 			# softmax thresholding
 			thresholds = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.92, 0.95]
+			thresholds = [0.6, 0.7, 0.8, 0.9, 0.91, 0.92, 0.93, 0.94, 0.95]
+#			thresholds = [0.94]
 
 		
 
@@ -1081,6 +1104,10 @@ elif dataset=='lm':
 
 		if args.seq_date =='mar':
 			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_'+args.seq_date+'_loco'+str(loco_class)+'_lm_testlm_fewknownclasses.h5']]	
+#			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_lm_testlm_2kkc.h5']]	
+#			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_lm_testlm_allkkc.h5']]
+
+
 		elif args.seq_date =='feb':
 #			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_feb_lm_testlm_fewknownclasses_groupclasses.h5']]	
 			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_feb_lm_testlm_fewknownclasses_valrand.h5']]	
