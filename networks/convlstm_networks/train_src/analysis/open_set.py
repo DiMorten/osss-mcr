@@ -269,9 +269,10 @@ class OpenPCS(OpenSetMethod):
                 #    print("No samples in class",c,"score is 0")
                  #   self.scores[feat_msk] = 0
         self.scores[np.isneginf(self.scores)] = -600
-        if debug > 0:            
-            print("scores stats min, avg, max, std",np.min(self.scores),
-                    np.average(self.scores),np.max(self.scores),np.std(self.scores))
+                 
+        print("scores stats min, avg, max, std",np.min(self.scores),
+                np.average(self.scores),np.max(self.scores),np.std(self.scores))
+        pdb.set_trace()
         self.scoresNotCalculated = False
             
     def predict_unknown_class(self, predictions_test, open_features, debug=1): # self.model_list, self.threshold
