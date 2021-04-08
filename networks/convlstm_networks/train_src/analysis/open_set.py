@@ -123,7 +123,7 @@ class OpenPCS(OpenSetMethod):
         print("*"*20, "model was loaded")
         #self.fittedFlag = True
         return loaded_list
-    def predict(self, predictions_test, pred_proba_test, debug = 1):
+    def predict(self, predictions_test, debug = 1):
         if debug > 0:
             deb.prints(self.threshold)
             deb.prints(predictions_test.shape)
@@ -131,20 +131,15 @@ class OpenPCS(OpenSetMethod):
             print("*"*20, " Flattening the results")
 
             deb.prints(predictions_test.shape)
-            deb.prints(pred_proba_test.shape)
 
         predictions_test = predictions_test.flatten()
-        #pred_proba_test = pred_proba_test.reshape((pred_proba_test.shape[0], -1))
-        #deb.prints(pred_proba_test.shape)
         if debug > 0:
             deb.prints(predictions_test.shape)
-            deb.prints(pred_proba_test.shape)
 
-            ##pred_proba_test = pred_proba_test.reshape((-1, pred_proba_test.shape[-1]))
             print("*"*20, " Flattened the results")
 
-        predictions_test, _ = self.predict_unknown_class(predictions_test, pred_proba_test,
-            debug = debug)
+        predictions_test[self.scores < self.threshold] = 40 #self.loco_class + 1
+        
         if debug > -1:
             deb.prints(np.unique(predictions_test, return_counts=True))
         #pdb.set_trace()
@@ -188,14 +183,8 @@ class OpenPCS(OpenSetMethod):
     def makeCovMatrixIdentitySet(self, makeCovMatrixIdentityFlag):
         self.makeCovMatrixIdentityFlag = makeCovMatrixIdentityFlag
     
-    def predictScores():
-        
-    def predict_unknown_class(self, predictions_test, open_features, debug=1): # self.model_list, self.threshold
-        if self.scoresNotCalculated == False:
-            predictions_test[self.scores < self.threshold] = 40 #self.loco_class + 1
-            return predictions_test, self.scores
-        else:
-            self.scores = np.zeros_like(predictions_test, dtype=np.float)
+    def predictScores(self, predictions_test, open_features, debug=1):
+        self.scores = np.zeros_like(predictions_test, dtype=np.float)
         if debug>0:
             print('*'*20, 'predict_unknown_class')
             deb.prints(self.model_list)
@@ -283,19 +272,14 @@ class OpenPCS(OpenSetMethod):
         if debug > 0:            
             print("scores stats min, avg, max, std",np.min(self.scores),
                     np.average(self.scores),np.max(self.scores),np.std(self.scores))
-            deb.prints(self.threshold)
-            pdb.set_trace()
-
-
-        #scaler = MinMaxScaler()
-        #self.scores = np.squeeze(scaler.fit_transform(self.scores.reshape(1, -1)))
-
-        #print("self.scores stats min, avg, max",np.min(self.scores),
-        #        np.average(self.scores),np.max(self.scores))
-        #deb.prints(self.scores.shape)
-        predictions_test[self.scores < self.threshold] = 40 #self.loco_class + 1
         self.scoresNotCalculated = False
-        return predictions_test, self.scores #scores in case you want to threshold them again
+            
+    def predict_unknown_class(self, predictions_test, open_features, debug=1): # self.model_list, self.threshold
+        deb.prints(self.threshold)
+
+        predictions_test[self.scores < self.threshold] = 40 #self.loco_class + 1
+#        
+        return predictions_test, _ 
 
     def mahalanobis_distance(self, feature, covariance_matrix): 
         # covariance_matrix shape: (16, 16)

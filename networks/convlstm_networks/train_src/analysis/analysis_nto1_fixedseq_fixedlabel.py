@@ -211,9 +211,9 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 		print('************* predicting open set postprocessing')
 		if paramsAnalysis.metricsOnTrain == False:
 
-			predictions = openModel.predict(predictions, test_pred_proba) #label_test
+			predictions = openModel.predict(predictions) #label_test
 		else:
-			predictions = openModel.predict(predictions_train, train_pred_proba) #label_train
+			predictions = openModel.predict(predictions_train) #label_train
 
 	deb.prints(predictions.shape)
 
@@ -321,7 +321,7 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 	if debug>0:
 		print("Predictions",predictions.shape)
 		print("label_metrics",label_metrics.shape)
-	return label_metrics,predictions, openModel
+	return label_metrics,predictions
 def my_f1_score(label,prediction):
 	f1_values=f1_score(label,prediction,average=None)
 
@@ -570,7 +570,7 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 				thresholds = np.linspace(300, 700, 10)
 				thresholds = [566.66666667]
 				thresholds = np.linspace(-225, -150, 10)
-				thresholds = [-183.33333]
+#				thresholds = [-183.33333]
 ##				thresholds = np.linspace(-25, 250, 10)
 #				thresholds = np.linspace(250, 500, 10)
 #				thresholds = [305.6]
@@ -599,16 +599,24 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 		t=0
 		openModel = None
 		
+	
 		openModel = openSetFit(
 			label_test, predictions, test_pred_proba,
 			debug=debug,
 			dataset=dataset,
-#				predictionsLoaderTest = predictionsLoaderTest, label_train=label_train,
-#				predictions_train=predictions_train, train_pred_proba=train_pred_proba)
+	#				predictionsLoaderTest = predictionsLoaderTest, label_train=label_train,
+	#				predictions_train=predictions_train, train_pred_proba=train_pred_proba)
 			label_train=label_train,
 			predictions_train=predictions_train, train_pred_proba=train_pred_proba,
-			threshold = 0)
-		
+				threshold = 0)
+
+		if paramsAnalysis.metricsOnTrain == False:
+			
+			openModel.predictScores(predictions.flatten(), test_pred_proba,
+						debug = debug)
+		else:
+			openModel.predictScores(predictions_train.flatten(), train_pred_proba,
+						debug = debug)
 
 		for threshold in thresholds:
 			predictions_t = predictions.copy()
@@ -619,7 +627,7 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 			print(prediction_filename)
 		
 			openModel.setThreshold(threshold)
-			label_test_t,predictions_t, openModel = labels_predictions_filter_transform(
+			label_test_t,predictions_t = labels_predictions_filter_transform(
 				label_test_t, predictions_t, test_pred_proba, class_n=class_n,
 				debug=debug,small_classes_ignore=small_classes_ignore,
 				important_classes=None, dataset=dataset, skip_crf=skip_crf, t=t,
