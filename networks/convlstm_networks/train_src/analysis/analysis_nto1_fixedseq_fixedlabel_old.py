@@ -24,7 +24,7 @@ save_bar_flag=True
 sys.path.append('../')
 import deb
 deb.prints(deb.__file__)
-from open_set import SoftmaxThresholding, OpenPCS, OpenGMMS
+from open_set import SoftmaxThresholding, OpenPCS
 import argparse
 from parameters.parameters_reader import ParamsTrain, ParamsAnalysis
 
@@ -107,11 +107,6 @@ def openSetFit(label_test,predictions,test_pred_proba,
 #					n_components = 45)
 #					n_components = 140)
 			openModel.makeCovMatrixIdentitySet(paramsAnalysis.makeCovMatrixIdentity)
-		elif paramsAnalysis.openSetMethod == 'OpenGMMS':
-			openModel = OpenGMMS(known_classes = known_classes,
-				n_components = 8)
-				
-			#openModel.makeCovMatrixIdentitySet(paramsAnalysis.makeCovMatrixIdentity)
 				
 		elif paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
 			openModel = SoftmaxThresholding()
@@ -141,7 +136,8 @@ def openSetFit(label_test,predictions,test_pred_proba,
 def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, class_n,
 		debug=1,small_classes_ignore=True,
 		important_classes=None,dataset='cv',skip_crf=False,t=None, predictionsLoaderTest=None,
-		label_train=None, predictions_train=None, train_pred_proba=None, openModel = None):
+		label_train=None, predictions_train=None, train_pred_proba=None,
+		threshold = None, openModel = None):
 
 	if not skip_crf:
 		# CRF
@@ -152,24 +148,40 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 			v = scipy.special.softmax(v, axis=-1)
 			v = np.expand_dims(v, axis=0)
 			predictions[i] = dense_crf(v,img=img_in,n_iters=10,sxy_gaussian=(3, 3), compat_gaussian=3,n_classes=class_n)
-	
+
+
+#			openModel = OpenPCS(loco_class = predictionsLoader.loco_class)
+#	openModel = SoftmaxThresholding(loco_class = predictionsLoader.loco_class)
+	#open_set_flag = False
+	specify_unknown_classes = False
+	if paramsAnalysis.open_set == True:
+
+		known_classes = [x + 1 for x in paramsTrain.known_classes]
+		deb.prints(known_classes)
+
+		deb.prints(predictions_train.shape)
+		if paramsAnalysis.open_set == True:
+			deb.prints(label_train.shape)
+		deb.prints(predictions.shape)
+		deb.prints(label_test.shape)
+		deb.prints(paramsAnalysis.metricsOnTrain)
+		#pdb.set_trace()
+		deb.prints(np.unique(predictions,return_counts=True))
+		deb.prints(np.unique(label_test,return_counts=True))
+
+		print('************* predicting open set postprocessing')
+		if paramsAnalysis.metricsOnTrain == False:
+
+			predictions = openModel.predict(predictions) #label_test
+		else:
+			predictions = openModel.predict(predictions_train) #label_train
+
+	deb.prints(predictions.shape)
+
+	#predictions=predictions.argmax(axis=-1)
+	predictions=np.reshape(predictions,-1)
+	#label_test=label_test.argmax(axis=-1)
 	label_metrics = label_test if paramsAnalysis.metricsOnTrain == False else label_train
-
-	# flatten!
-	print('*'*20, 'flattening labels and predictions')
-	deb.prints(label_metrics.shape)
-	deb.prints(predictions.shape)
-
-	label_metrics = label_metrics.flatten()
-	label_test = label_test.flatten()
-	label_train = label_train.flatten()
-	predictions = predictions.flatten()
-	predictions_train = predictions_train.flatten()
-
-	deb.prints(label_metrics.shape)
-	deb.prints(predictions.shape)
-
-
 	deb.prints(label_metrics.shape)
 	if paramsAnalysis.open_set == True:
 		deb.prints(label_train.shape)
@@ -188,15 +200,9 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 		predictions=predictions[label_metrics<bcknd_id]
 		label_metrics=label_metrics[label_metrics<bcknd_id]
 	else:
-		predictions=predictions[label_test!=0]
-		predictions_train=predictions_train[label_train!=0]
-		test_pred_proba=test_pred_proba[label_test!=0]	
-		train_pred_proba=train_pred_proba[label_train!=0]	
-			
+		predictions=predictions[label_metrics!=0]
 		label_metrics=label_metrics[label_metrics!=0]	
-
 		predictions = predictions - 1
-		predictions_train = predictions_train - 1
 		label_metrics = label_metrics - 1
 
 	deb.prints(np.unique(predictions,return_counts=True))
@@ -241,7 +247,6 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 						label_metrics[label_metrics==idx]=20
 				else:
 					predictions[predictions==idx]=20
-					predictions_train[predictions_train==idx]=20
 					label_metrics[label_metrics==idx]=20
 		elif mode==2:
 			class_count_min=100000
@@ -257,17 +262,14 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 					#print("b",index)
 					if class_count[index]<class_count_min_idx:
 						predictions[predictions==idx]=20
-						predictions_train[predictions_train==idx]=20
 						label_metrics[label_metrics==idx]=20
 				else:
 					predictions[predictions==idx]=20
-					predictions_train[predictions_train==idx]=20
 					label_metrics[label_metrics==idx]=20
 		elif mode==3: # Just take the important classes, no per-date analysis
 			for idx in range(class_n):
 				if idx not in important_classes_idx:
 					predictions[predictions==idx]=20
-					predictions_train[predictions_train==idx]=20
 					label_metrics[label_metrics==idx]=20
 
 
@@ -277,60 +279,10 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 		print("Pred unique after eliminating non important classes:",np.unique(predictions,return_counts=True))
 
 
-
-
-	return label_metrics,predictions, test_pred_proba, predictions_train, train_pred_proba
-
-
-
-
-
-def openSetPredict(label_test,predictions,test_pred_proba, class_n,
-		debug=1,small_classes_ignore=True,
-		important_classes=None,dataset='cv',skip_crf=False,t=None, predictionsLoaderTest=None,
-		label_train=None, predictions_train=None, train_pred_proba=None,
-		threshold = None, openModel = None):
-
-
-#			openModel = OpenPCS(loco_class = predictionsLoader.loco_class)
-#	openModel = SoftmaxThresholding(loco_class = predictionsLoader.loco_class)
-	#open_set_flag = False
-	specify_unknown_classes = False
-	if paramsAnalysis.open_set == True:
-
-		known_classes = [x + 1 for x in paramsTrain.known_classes]
-		deb.prints(known_classes)
-
-		deb.prints(predictions_train.shape)
-		if paramsAnalysis.open_set == True:
-			deb.prints(label_train.shape)
-		deb.prints(predictions.shape)
-		deb.prints(label_test.shape)
-		deb.prints(paramsAnalysis.metricsOnTrain)
-		#pdb.set_trace()
-		deb.prints(np.unique(predictions,return_counts=True))
-		deb.prints(np.unique(label_test,return_counts=True))
-
-		print('************* predicting open set postprocessing')
-		if paramsAnalysis.metricsOnTrain == False:
-
-			predictions = openModel.predict(predictions) #label_test
-		else:
-			predictions = openModel.predict(predictions_train) #label_train
-		predictions[predictions == 40] = 39
-	deb.prints(predictions.shape)
-
-	#predictions=predictions.argmax(axis=-1)
-	predictions=np.reshape(predictions,-1)
-	#label_test=label_test.argmax(axis=-1)
-
-
 	if debug>0:
 		print("Predictions",predictions.shape)
 		print("label_metrics",label_metrics.shape)
-	return predictions
-
-
+	return label_metrics,predictions
 def my_f1_score(label,prediction):
 	f1_values=f1_score(label,prediction,average=None)
 
@@ -579,7 +531,7 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 				thresholds = np.linspace(300, 700, 10)
 				thresholds = [566.66666667]
 				thresholds = np.linspace(-225, -150, 10)
-###				thresholds = [-183.33333]
+				thresholds = [-183.33333]
 ##				thresholds = np.linspace(-25, 250, 10)
 #				thresholds = np.linspace(250, 500, 10)
 #				thresholds = [305.6]
@@ -601,11 +553,6 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 			thresholds = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.92, 0.95]
 			thresholds = [0.6, 0.7, 0.8, 0.9, 0.91, 0.92, 0.93, 0.94, 0.95]
 #			thresholds = [0.94]
-		elif paramsAnalysis.openSetMethod == 'OpenGMMS':
-			if args.seq_date == 'mar':
-				thresholds = [-210]
-				thresholds = np.linspace(-180, 1500, 30)
-
 
 		
 
@@ -624,47 +571,34 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 			predictions_train=predictions_train, train_pred_proba=train_pred_proba,
 				threshold = 0)
 
-
-
-		predictions_t = predictions.copy()
-		label_test_t = label_test.copy()
-		#skip_crf = model_n<2 #prediction_filename.startswith('model_best_BUnet4ConvLSTM_128fl_')
-		print("###skip_crf###")
-		print(skip_crf)
-		print(prediction_filename)
-	
-		
-		label_test_t,predictions_t, test_pred_proba, predictions_train, train_pred_proba = labels_predictions_filter_transform(
-			label_test_t, predictions_t, test_pred_proba, class_n=class_n,
-			debug=debug,small_classes_ignore=small_classes_ignore,
-			important_classes=None, dataset=dataset, skip_crf=skip_crf, t=t,
-#				predictionsLoaderTest = predictionsLoaderTest, label_train=label_train,
-#				predictions_train=predictions_train, train_pred_proba=train_pred_proba)
-			predictionsLoaderTest = predictionsLoaderTest, label_train=label_train,
-			predictions_train=predictions_train, train_pred_proba=train_pred_proba, openModel = openModel)
-
-		deb.prints(predictions_t.shape)
-		deb.prints(test_pred_proba.shape)
-		#pdb.set_trace()
-
 		if paramsAnalysis.metricsOnTrain == False:
 			
-			openModel.predictScores(predictions_t.flatten(), test_pred_proba,
+			openModel.predictScores(predictions.flatten(), test_pred_proba,
 						debug = debug)
 		else:
 			openModel.predictScores(predictions_train.flatten(), train_pred_proba,
 						debug = debug)
 
 		for threshold in thresholds:
+			predictions_t = predictions.copy()
+			label_test_t = label_test.copy()
+			#skip_crf = model_n<2 #prediction_filename.startswith('model_best_BUnet4ConvLSTM_128fl_')
+			print("###skip_crf###")
+			print(skip_crf)
+			print(prediction_filename)
+		
 			openModel.setThreshold(threshold)
-			predictions_t = openSetPredict(
+			label_test_t,predictions_t = labels_predictions_filter_transform(
 				label_test_t, predictions_t, test_pred_proba, class_n=class_n,
 				debug=debug,small_classes_ignore=small_classes_ignore,
 				important_classes=None, dataset=dataset, skip_crf=skip_crf, t=t,
+#				predictionsLoaderTest = predictionsLoaderTest, label_train=label_train,
+#				predictions_train=predictions_train, train_pred_proba=train_pred_proba)
 				predictionsLoaderTest = predictionsLoaderTest, label_train=label_train,
 				predictions_train=predictions_train, train_pred_proba=train_pred_proba,
 				threshold = threshold, openModel = openModel)
 
+		for threshold in thresholds:
 			metrics = metrics_get(label_test_t, predictions_t,
 				only_basics=True, debug=debug, detailed_t = t)	
 			print(metrics)

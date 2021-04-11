@@ -4,7 +4,7 @@ import sys
 sys.path.append('../')
 import matplotlib
 import scipy
-from sklearn import decomposition
+from sklearn import decomposition, mixture
 import time
 import pdb 
 from sklearn.preprocessing import MinMaxScaler
@@ -69,13 +69,14 @@ class SoftmaxThresholding(OpenSetMethod):
         return predictions_test
 
 
-class OpenPCS(OpenSetMethod):
+class OpenSetMethodGaussian(OpenSetMethod):
     def __init__(self, known_classes, n_components, loco_class=0):
         super().__init__(loco_class)
         self.known_classes = known_classes
         self.n_components = n_components
         self.fittedFlag = False
-        self.name = 'OpenPCS'
+#        self.name = 'OpenPCS'
+#        self.model_type = decomposition.PCA(n_components=self.n_components, random_state=12345)
 
         
     def fit(self, label_train, predictions_train, pred_proba_train):
@@ -185,40 +186,45 @@ class OpenPCS(OpenSetMethod):
     
     def predictScores(self, predictions_test, open_features, debug=1):
         self.scores = np.zeros_like(predictions_test, dtype=np.float)
-        if debug>0:
-            print('*'*20, 'predict_unknown_class')
-            deb.prints(self.model_list)
-        covariance_matrix_list = self.covariance_matrix_list.copy()
 
+        print('*'*20, 'predict_unknown_class')
+        deb.prints(self.model_list)
+        covariance_matrix_list = self.covariance_matrix_list.copy()
+        deb.prints(np.unique(predictions_test, return_counts=True))
+        deb.prints(self.known_classes)
         for idx, c in enumerate(self.known_classes):
-            if debug > 0:
-                print('idx, class', idx, c)
-                deb.prints(predictions_test.shape)
+            c = c - 1
+            print('idx, class', idx, c)
+            
+            deb.prints(predictions_test.shape)
             feat_msk = (predictions_test == c)
-            if debug > 0:
-                deb.prints(np.unique(feat_msk,return_counts=True))
-                print("open_features stats",np.min(open_features),np.average(open_features),np.max(open_features))
+            
+            deb.prints(np.unique(feat_msk,return_counts=True))
+            print("open_features stats",np.min(open_features),np.average(open_features),np.max(open_features))
             ##print("Model components",self.model_list[idx].components_)
 #            deb.stats_print(open_features)
             if np.any(feat_msk):
                 #try:
-                if debug > 0:
-                    deb.prints(open_features.shape)
-                    deb.prints(feat_msk.shape)
+                
+                deb.prints(open_features.shape)
+                deb.prints(feat_msk.shape)
 
-                    deb.prints(open_features[feat_msk, :].shape)
-                mahalanobis_threshold = True
-                if mahalanobis_threshold==False:
+                deb.prints(open_features[feat_msk, :].shape)
+                #mahalanobis_threshold = True
+                if self.mahalanobis_threshold==False:
 #                    deb.prints(np.round(linalg.pinvh(self.model_list[idx].get_precision(), check_finite=False), 2))
 #                    deb.prints(self.model_list[idx].get_precision().shape)
 #                    pdb.set_trace()
                     
                     self.scores[feat_msk] = self.model_list[idx].score_samples(open_features[feat_msk, :])
                     deb.prints(self.model_list[idx].score(open_features[feat_msk, :]))
+                    
+                    '''
                     # for comparison
                     features_pca = self.model_list[idx].transform(open_features[feat_msk, :])
                     deb.prints(self.avgLogLikelihoodGet(features_pca, 
                             self.covariance_matrix_list[idx]))
+                    '''
                     # mahalanobis threshold from framework loglikelihood
                     #self.scores[feat_msk] = self.mahalanobisFromLogLikelihood(self.scores[feat_msk], 
                     #            self.covariance_matrix_list[idx])
@@ -259,7 +265,9 @@ class OpenPCS(OpenSetMethod):
                         scores_class = self.score_loglike(features_pca, 
                                 covariance_matrix_list[idx])
                     self.scores[feat_msk] = scores_class
-
+                    print("scores_class stats min, avg, max, std",np.min(self.scores[feat_msk]),
+                        np.average(self.scores[feat_msk]),np.max(self.scores[feat_msk]),np.std(self.scores[feat_msk]))
+                    deb.prints(self.scores.shape)
                 #print("self.scores stats min, avg, max",np.min(self.scores[feat_msk]),
                 #    np.average(self.scores[feat_msk]),np.max(self.scores[feat_msk]))
                 #deb.stats_print(self.scores[feat_msk])
@@ -272,7 +280,6 @@ class OpenPCS(OpenSetMethod):
                  
         print("scores stats min, avg, max, std",np.min(self.scores),
                 np.average(self.scores),np.max(self.scores),np.std(self.scores))
-        pdb.set_trace()
         self.scoresNotCalculated = False
             
     def predict_unknown_class(self, predictions_test, open_features, debug=1): # self.model_list, self.threshold
@@ -482,7 +489,10 @@ class OpenPCS(OpenSetMethod):
 
 
     def fit_pca_model_perclass(self, label_test, predictions_test, open_features, cl):
-        model = decomposition.PCA(n_components=self.n_components, random_state=12345)
+#        model = self.model_type(n_components=self.n_components, covariance_type='diag', random_state=12345)
+        model = self.model_type(**self.model_type_args)
+
+#        model = decomposition.PCA(n_components=self.n_components, random_state=12345)
         
         #deb.prints(np.unique(label_test,return_counts=True))
         #deb.prints(np.unique(predictions_test,return_counts=True))
@@ -506,10 +516,13 @@ class OpenPCS(OpenSetMethod):
             print("cl_feat_flat stats",np.min(cl_feat_flat),np.average(cl_feat_flat),np.max(cl_feat_flat))
             
             perm = np.random.permutation(cl_feat_flat.shape[0])
-            
-            #if perm.shape[0] > 32768:
-            #    cl_feat_flat = cl_feat_flat[perm[:32768], :]
-            
+            deb.prints(cl_feat_flat.shape)
+            deb.prints(perm.shape[0])
+          
+            if perm.shape[0] > 32768:
+                cl_feat_flat = cl_feat_flat[perm[:32768], :]
+            deb.prints(cl_feat_flat.shape)
+#            pdb.set_trace()
             model.fit(cl_feat_flat)
             x_pca_train = model.transform(cl_feat_flat)
             deb.prints(x_pca_train.shape)
@@ -537,6 +550,134 @@ class OpenPCS(OpenSetMethod):
         self.covariance_matrix_list = self.listLoadFromPickle(path + "covariance_matrix_list.pckl")
         self.fittedFlag = True
         
+class OpenPCS(OpenSetMethodGaussian):
+    def __init__(self, known_classes, n_components, loco_class=0):
+        super().__init__(known_classes, n_components)
+        self.name = 'OpenPCS'
+        self.model_type = decomposition.PCA
+        self.model_type_args = dict(n_components=self.n_components, random_state=12345)
+        self.mahalanobis_threshold = True
+        
+class OpenGMMS(OpenSetMethodGaussian):
+    def __init__(self, known_classes, n_components, loco_class=0):
+        super().__init__(known_classes, n_components)
+        self.name = 'OpenGMMS'
+        self.model_type = mixture.GaussianMixture
+        self.model_type_args = dict(n_components=self.n_components, 
+            covariance_type='diag', random_state=12345)
+        self.mahalanobis_threshold = False
 
-     
+    def fit_pca_model_perclass(self, label_test, predictions_test, open_features, cl):
+        model = self.model_type(n_components=self.n_components, random_state=12345)
+#        model = decomposition.PCA(n_components=self.n_components, random_state=12345)
+        
+        #deb.prints(np.unique(label_test,return_counts=True))
+        #deb.prints(np.unique(predictions_test,return_counts=True))
 
+        deb.prints(cl)
+        #deb.prints(np.unique(label_test == cl))
+        #deb.prints(np.unique(predictions_test == cl))
+ #       deb.prints(np.unique(predictions_test == cl))
+        deb.prints(open_features.shape)
+        print("==== debugging")
+        deb.prints(np.unique(label_test, return_counts=True))
+        deb.prints(np.unique(predictions_test, return_counts=True))
+        deb.prints(np.unique((label_test == cl), return_counts=True))
+        deb.prints(np.unique((predictions_test == cl), return_counts=True))
+        deb.prints(np.unique((label_test == cl) & (predictions_test == cl), return_counts=True))
+        
+        cl_feat_flat = open_features[(label_test == cl) & (predictions_test == cl), :]
+        min_samples = 50
+        deb.prints(cl_feat_flat.shape)
+        if cl_feat_flat.shape[0]>min_samples:
+            print("cl_feat_flat stats",np.min(cl_feat_flat),np.average(cl_feat_flat),np.max(cl_feat_flat))
+            
+            perm = np.random.permutation(cl_feat_flat.shape[0])
+            
+            if perm.shape[0] > 32768:
+                cl_feat_flat = cl_feat_flat[perm[:32768], :]
+            deb.prints(cl_feat_flat.shape)
+            model.fit(cl_feat_flat)
+ 
+
+##            ic(np.round(model.explained_variance_, 2))
+##            ic(np.round(model.explained_variance_ratio_.cumsum()*100, 2))
+#            ic(covariance_matrix.shape)
+#            deb.prints(covariance_matrix)
+
+#            pdb.set_trace()
+            return model, None
+        else:
+            print('!'*20, 'minimum samples not met for class',cl)
+            return None, None
+
+    def fit_pca_models(self, label_test, predictions_test, open_features):
+        self.model_list = []
+
+        print('*'*20, 'fit_pca_models')
+        for c in self.known_classes:
+            
+            print('Fitting model for class %d...' % (c))
+            sys.stdout.flush()
+            
+            tic = time.time()
+            
+            # Computing PCA models from features.
+            model, _ = self.fit_pca_model_perclass(label_test, 
+                                        predictions_test, open_features, c)#feat_list, true_list, prds_list, c)
+            #print("Model components",model.components_)
+            #print("Model components",model.mean_)
+            
+            self.model_list.append(model)
+            #print(np.round(covariance_matrix,2))
+            #print(model.explained_variance_)
+            #pdb.set_trace()
+            toc = time.time()
+            print('    Time spent fitting model %d: %.2f' % (c, toc - tic))
+
+        def save_list_in_pickle(list_, filename = "models.pckl"):
+            with open(filename, "wb") as f:
+                for model in list_:
+                    pickle.dump(model, f)
+            print("*"*30, "List was saved in pickle")
+        save_list_in_pickle(self.model_list, "models_gmm.pckl")
+            
+        #predictions_test[pred_proba_max < self.threshold] = self.loco_class + 1
+    def predictScores(self, predictions_test, open_features, debug=1):
+        self.scores = np.zeros_like(predictions_test, dtype=np.float)
+
+        print('*'*20, 'predict_unknown_class')
+        deb.prints(self.model_list)
+        deb.prints(np.unique(predictions_test, return_counts=True))
+        deb.prints(self.known_classes)
+        for idx, c in enumerate(self.known_classes):
+            c = c - 1
+            print('idx, class', idx, c)
+            
+            deb.prints(predictions_test.shape)
+            feat_msk = (predictions_test == c)
+            
+            deb.prints(np.unique(feat_msk,return_counts=True))
+            print("open_features stats",np.min(open_features),np.average(open_features),np.max(open_features))
+            ##print("Model components",self.model_list[idx].components_)
+#            deb.stats_print(open_features)
+            if np.any(feat_msk):
+                #try:
+                
+                deb.prints(open_features.shape)
+                deb.prints(feat_msk.shape)
+
+                deb.prints(open_features[feat_msk, :].shape)
+                
+                self.scores[feat_msk] = self.model_list[idx].score_samples(open_features[feat_msk, :])
+                deb.prints(self.model_list[idx].score(open_features[feat_msk, :]))
+
+                print("scores_class stats min, avg, max, std",np.min(self.scores[feat_msk]),
+                    np.average(self.scores[feat_msk]),np.max(self.scores[feat_msk]),np.std(self.scores[feat_msk]))
+                deb.prints(self.scores.shape)
+
+        self.scores[np.isneginf(self.scores)] = -600
+                 
+        print("scores stats min, avg, max, std",np.min(self.scores),
+                np.average(self.scores),np.max(self.scores),np.std(self.scores))
+        self.scoresNotCalculated = False

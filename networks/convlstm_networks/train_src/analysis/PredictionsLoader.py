@@ -227,7 +227,7 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 
 		#pdb.set_trace()
 		test_predictions=(model.predict(input_)).astype(prediction_dtype) 
-		if paramsAnalysis.openSetMethod =='OpenPCS':
+		if paramsAnalysis.openSetMethod =='OpenPCS' or paramsAnalysis.openSetMethod =='OpenGMMS':
 			load_decoder_features_flag = True
 		else:
 			load_decoder_features_flag = False
