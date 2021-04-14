@@ -1,7 +1,9 @@
 {
     "open_set": true,
     "setTrainAsTest": false,
-    "metricsOnTrain": false,
-    "openSetMethod": "OpenGMMS",
-    "makeCovMatrixIdentity": true
+    "metricsOnTrain": true,
+    "openSetMethod": "OpenPCS",
+    "makeCovMatrixIdentity": true,
+    "loadOpenResults": false
+
 }

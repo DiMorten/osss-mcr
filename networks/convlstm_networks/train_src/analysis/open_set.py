@@ -39,8 +39,10 @@ class OpenSetMethod(): # abstract
         self.scoresNotCalculated = True
     def setThreshold(self, threshold):
         self.threshold = threshold
-    def storeScores(self):
-        np.save('scores_'+self.name+'.npy',self.scores)
+    def storeScores(self, name_id=''):
+        np.save('scores_'+self.name+'_'+name_id+'.npy',self.scores)
+    def loadScores(self, name_id=''):
+        self.scores = np.load('scores_'+self.name+'_'+name_id+'.npy')
 
 class SoftmaxThresholding(OpenSetMethod):
 
@@ -460,7 +462,7 @@ class OpenSetMethodGaussian(OpenSetMethod):
         self.covariance_matrix_list = []
         print('*'*20, 'fit_pca_models')
         for c in self.known_classes:
-            
+            c = c - 1
             print('Fitting model for class %d...' % (c))
             sys.stdout.flush()
             
@@ -621,7 +623,7 @@ class OpenGMMS(OpenSetMethodGaussian):
 
         print('*'*20, 'fit_pca_models')
         for c in self.known_classes:
-            
+            c = c - 1
             print('Fitting model for class %d...' % (c))
             sys.stdout.flush()
             
