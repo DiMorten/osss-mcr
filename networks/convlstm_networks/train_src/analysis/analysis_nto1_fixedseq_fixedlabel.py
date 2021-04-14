@@ -27,6 +27,7 @@ deb.prints(deb.__file__)
 from open_set import SoftmaxThresholding, OpenPCS, OpenGMMS
 import argparse
 from parameters.parameters_reader import ParamsTrain, ParamsAnalysis
+import time
 
 paramsTrain = ParamsTrain('../parameters/')
 paramsAnalysis = ParamsAnalysis('parameters_analysis/')
@@ -46,6 +47,8 @@ parser.add_argument('--model_dataset', dest='model_dataset',
 args = parser.parse_args()
 
 np.random.seed(0)
+
+t0 = time.time()
 #====================================
 def dense_crf(probs, img=None, n_iters=10, n_classes=19,
 			  sxy_gaussian=(1, 1), compat_gaussian=4,
@@ -109,8 +112,9 @@ def openSetFit(label_test,predictions,test_pred_proba,
 			openModel.makeCovMatrixIdentitySet(paramsAnalysis.makeCovMatrixIdentity)
 		elif paramsAnalysis.openSetMethod == 'OpenGMMS':
 			openModel = OpenGMMS(known_classes = known_classes,
+#				n_components = 40)
 				n_components = 8)
-				
+
 			#openModel.makeCovMatrixIdentitySet(paramsAnalysis.makeCovMatrixIdentity)
 				
 		elif paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
@@ -623,6 +627,7 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 			label_train=label_train,
 			predictions_train=predictions_train, train_pred_proba=train_pred_proba,
 				threshold = 0)
+		print("After openSetFit, ", time.time() - t0)	
 
 
 
@@ -654,8 +659,14 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 		else:
 			openModel.predictScores(predictions_train.flatten(), train_pred_proba,
 						debug = debug)
+		print("After predictScores, ", time.time() - t0)	
+
+		openModel.storeScores()
+		openModel.storeModel()
+		
 
 		for threshold in thresholds:
+			print("Time, ", t0 - time.time())
 			openModel.setThreshold(threshold)
 			predictions_t = openSetPredict(
 				label_test_t, predictions_t, test_pred_proba, class_n=class_n,
@@ -1280,3 +1291,4 @@ if mode=='each_date':
 #metrics['per_class_acc'][~np.isnan(metrics['per_class_acc'])]
 
 
+print("Time, ", t0 - time.time())

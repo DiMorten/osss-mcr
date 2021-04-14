@@ -39,6 +39,9 @@ class OpenSetMethod(): # abstract
         self.scoresNotCalculated = True
     def setThreshold(self, threshold):
         self.threshold = threshold
+    def storeScores(self):
+        np.save('scores_'+self.name+'.npy',self.scores)
+
 class SoftmaxThresholding(OpenSetMethod):
 
     def __init__(self, loco_class=0):
@@ -47,10 +50,7 @@ class SoftmaxThresholding(OpenSetMethod):
         self.fittedFlag = True
         self.name = 'SoftmaxThresholding'
 
-    def predict(self, predictions_test, pred_proba_test):
-        if self.scoresNotCalculated==False:
-            predictions_test[pred_proba_max < self.threshold] = 40 #self.loco_class + 1
-            return predictions_test
+    def predictScores(self, predictions_test, pred_proba_test):
 
         # pred proba shape is (n_samples, h, w, classes)
         pred_proba_test = scipy.special.softmax(pred_proba_test, axis=-1)
@@ -64,8 +64,11 @@ class SoftmaxThresholding(OpenSetMethod):
         deb.prints(predictions_test.shape)
         deb.prints(pred_proba_max.shape)
 
-        predictions_test[pred_proba_max < self.threshold] = 40 #self.loco_class + 1
-        self.scoresNotCalculated=True
+        self.scores = pred_proba_max
+
+    def predict(self, predictions_test, pred_proba_test):
+
+        predictions_test[self.scores < self.threshold] = 40 #self.loco_class + 1
         return predictions_test
 
 
@@ -565,6 +568,8 @@ class OpenGMMS(OpenSetMethodGaussian):
         self.model_type = mixture.GaussianMixture
         self.model_type_args = dict(n_components=self.n_components, 
             covariance_type='diag', random_state=12345)
+#        self.model_type_args = dict(n_components=self.n_components,random_state=12345)
+
         self.mahalanobis_threshold = False
 
     def fit_pca_model_perclass(self, label_test, predictions_test, open_features, cl):
