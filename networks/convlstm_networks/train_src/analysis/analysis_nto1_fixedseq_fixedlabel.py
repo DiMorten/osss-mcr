@@ -29,6 +29,7 @@ import argparse
 from parameters.parameters_reader import ParamsTrain, ParamsAnalysis
 import time
 from metrics import Metrics
+from scipy import optimize
 
 paramsTrain = ParamsTrain('../parameters/')
 paramsAnalysis = ParamsAnalysis('parameters_analysis/')
@@ -297,11 +298,8 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 
 
 
-def openSetPredict(label_test,predictions,test_pred_proba, class_n,
-		debug=1,small_classes_ignore=True,
-		important_classes=None,dataset='cv',skip_crf=False,t=None, predictionsLoaderTest=None,
-		label_train=None, predictions_train=None, train_pred_proba=None,
-		threshold = None, openModel = None):
+def openSetPredict(predictions, predictions_train=None,
+		openModel = None):
 
 
 #			openModel = OpenPCS(loco_class = predictionsLoader.loco_class)
@@ -314,14 +312,11 @@ def openSetPredict(label_test,predictions,test_pred_proba, class_n,
 		deb.prints(known_classes)
 
 		deb.prints(predictions_train.shape)
-		if paramsAnalysis.open_set == True:
-			deb.prints(label_train.shape)
 		deb.prints(predictions.shape)
-		deb.prints(label_test.shape)
+
 		deb.prints(paramsAnalysis.metricsOnTrain)
 		#pdb.set_trace()
 		deb.prints(np.unique(predictions,return_counts=True))
-		deb.prints(np.unique(label_test,return_counts=True))
 
 		print('************* predicting open set postprocessing')
 		if paramsAnalysis.metricsOnTrain == False:
@@ -334,12 +329,8 @@ def openSetPredict(label_test,predictions,test_pred_proba, class_n,
 
 	#predictions=predictions.argmax(axis=-1)
 	predictions=np.reshape(predictions,-1)
-	#label_test=label_test.argmax(axis=-1)
 
 
-	if debug>0:
-		print("Predictions",predictions.shape)
-		print("label_metrics",label_metrics.shape)
 	return predictions
 
 
@@ -687,35 +678,55 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 		metrics.plotROCCurve(label_test_t, openModel.scores, 
 			modelId=openModel.name, nameId=openModel.saveNameId)
 
-		for threshold in thresholds:
-			print("Time, ", t0 - time.time())
+		def thresholdMetricGet(threshold, predictions_t,
+				predictions_train, 
+				openModel):
+			deb.prints(threshold)
 			openModel.setThreshold(threshold)
-			predictions_t = openSetPredict(
-				label_test_t, predictions_t, test_pred_proba, class_n=class_n,
-				debug=debug,small_classes_ignore=small_classes_ignore,
-				important_classes=None, dataset=dataset, skip_crf=skip_crf, t=t,
-				predictionsLoaderTest = predictionsLoaderTest, label_train=label_train,
-				predictions_train=predictions_train, train_pred_proba=train_pred_proba,
-				threshold = threshold, openModel = openModel)
-
+			predictions_t = openSetPredict(predictions_t,
+				predictions_train, 
+				openModel)
 			metrics = metrics_get(label_test_t, predictions_t,
-				only_basics=True, debug=debug, detailed_t = t)	
-			print(metrics)
-	#		pdb.set_trace()
-			metrics_t['f1_score'].append(round(metrics['f1_score']*100,2))
-			metrics_t['overall_acc'].append(round(metrics['overall_acc']*100,2))
-			metrics_t['average_acc'].append(round(metrics['average_acc']*100,2))
-			if paramsTrain.open_set==True:
-				#pdb.set_trace()
-				metrics_t['precision_known'].append(round(metrics['precision_known']*100,2))
-				metrics_t['recall_known'].append(round(metrics['recall_known']*100,2))
-				metrics_t['f1_score_known'].append(round(metrics['f1_score_known']*100,2))
+				only_basics=True, debug=0, detailed_t = 0)
+			return -metrics['f1_score_known']
 
-				metrics_t['precision_unknown'].append(round(metrics['precision_unknown']*100,2))
-				metrics_t['recall_unknown'].append(round(metrics['recall_unknown']*100,2))
-				metrics_t['f1_score_unknown'].append(round(metrics['f1_score_unknown']*100,2))
+		if paramsAnalysis.metricsOnTrain==True:
 
-			print(args.seq_date)
+			best_threshold = optimize.golden(thresholdMetricGet, 
+					brack=(-500, 200), tol=0.1, maxiter=20,
+					args=(predictions_t,
+					predictions_train, 
+					openModel))
+			
+		else:
+			best_threshold = -17.7	
+		deb.prints(best_threshold)		
+#		pdb.set_trace()
+#		for threshold in thresholds:
+		print("Time, ", t0 - time.time())
+		openModel.setThreshold(best_threshold)
+		predictions_t = openSetPredict(predictions_t,
+			predictions_train, 
+			openModel)
+
+		metrics = metrics_get(label_test_t, predictions_t,
+			only_basics=True, debug=debug, detailed_t = t)	
+		print(metrics)
+#		pdb.set_trace()
+		metrics_t['f1_score'].append(round(metrics['f1_score']*100,2))
+		metrics_t['overall_acc'].append(round(metrics['overall_acc']*100,2))
+		metrics_t['average_acc'].append(round(metrics['average_acc']*100,2))
+		if paramsTrain.open_set==True:
+			#pdb.set_trace()
+			metrics_t['precision_known'].append(round(metrics['precision_known']*100,2))
+			metrics_t['recall_known'].append(round(metrics['recall_known']*100,2))
+			metrics_t['f1_score_known'].append(round(metrics['f1_score_known']*100,2))
+
+			metrics_t['precision_unknown'].append(round(metrics['precision_unknown']*100,2))
+			metrics_t['recall_unknown'].append(round(metrics['recall_unknown']*100,2))
+			metrics_t['f1_score_unknown'].append(round(metrics['f1_score_unknown']*100,2))
+
+		print(args.seq_date)
 		deb.prints(thresholds)
 		print(metrics_t)
 		sys.exit("fixed label analysis finished")

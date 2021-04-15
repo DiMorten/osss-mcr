@@ -3,7 +3,7 @@
     "setTrainAsTest": false,
     "metricsOnTrain": true,
     "openSetMethod": "OpenPCS",
-    "makeCovMatrixIdentity": false,
-    "loadOpenResults": false
+    "makeCovMatrixIdentity": true,
+    "loadOpenResults": true
 
 }
