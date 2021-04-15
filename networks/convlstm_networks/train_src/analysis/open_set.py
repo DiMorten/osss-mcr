@@ -37,13 +37,15 @@ class OpenSetMethod(): # abstract
     def __init__(self, loco_class):
         self.loco_class = loco_class
         self.scoresNotCalculated = True
+        self.saveNameId = ''
     def setThreshold(self, threshold):
         self.threshold = threshold
-    def storeScores(self, name_id=''):
-        np.save('scores_'+self.name+'_'+name_id+'.npy',self.scores)
-    def loadScores(self, name_id=''):
-        self.scores = np.load('scores_'+self.name+'_'+name_id+'.npy')
-
+    def storeScores(self):
+        np.save('scores_'+self.name+'_'+self.saveNameId+'.npy',self.scores)
+    def loadScores(self):
+        self.scores = np.load('scores_'+self.name+'_'+self.saveNameId+'.npy')
+    def appendToSaveNameId(self, saveNameId):
+        self.saveNameId = self.saveNameId + saveNameId
 class SoftmaxThresholding(OpenSetMethod):
 
     def __init__(self, loco_class=0):
@@ -52,7 +54,10 @@ class SoftmaxThresholding(OpenSetMethod):
         self.fittedFlag = True
         self.name = 'SoftmaxThresholding'
 
-    def predictScores(self, predictions_test, pred_proba_test):
+    def fit(self, label_train, predictions_train, pred_proba_train):
+        pass
+
+    def predictScores(self, predictions_test, pred_proba_test, debug=1):
 
         # pred proba shape is (n_samples, h, w, classes)
         pred_proba_test = scipy.special.softmax(pred_proba_test, axis=-1)
@@ -68,7 +73,7 @@ class SoftmaxThresholding(OpenSetMethod):
 
         self.scores = pred_proba_max
 
-    def predict(self, predictions_test, pred_proba_test):
+    def predict(self, predictions_test, debug = 1):
 
         predictions_test[self.scores < self.threshold] = 40 #self.loco_class + 1
         return predictions_test
@@ -568,8 +573,11 @@ class OpenGMMS(OpenSetMethodGaussian):
         super().__init__(known_classes, n_components)
         self.name = 'OpenGMMS'
         self.model_type = mixture.GaussianMixture
+        self.covariance_type = 'diag'
+        #self.covariance_type = 'full'
+        
         self.model_type_args = dict(n_components=self.n_components, 
-            covariance_type='diag', random_state=12345)
+            covariance_type=self.covariance_type, random_state=12345)
 #        self.model_type_args = dict(n_components=self.n_components,random_state=12345)
 
         self.mahalanobis_threshold = False

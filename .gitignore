@@ -137,3 +137,5 @@ dmypy.json
 *metadata.txt
 *summary*
 *.rar
+*.npz
+*.pckl

@@ -28,6 +28,7 @@ from open_set import SoftmaxThresholding, OpenPCS, OpenGMMS
 import argparse
 from parameters.parameters_reader import ParamsTrain, ParamsAnalysis
 import time
+from metrics import Metrics
 
 paramsTrain = ParamsTrain('../parameters/')
 paramsAnalysis = ParamsAnalysis('parameters_analysis/')
@@ -100,22 +101,31 @@ def openSetDefine(label_test,
 		deb.prints(known_classes)
 
 		if paramsAnalysis.openSetMethod == 'OpenPCS':
+			n_components = 90
 			openModel = OpenPCS(known_classes = known_classes,
 #					n_components = 16)
 #					n_components = 30)
-				n_components = 90)
+				n_components = n_components)
 #					n_components = 45)
 #					n_components = 140)
 			openModel.makeCovMatrixIdentitySet(paramsAnalysis.makeCovMatrixIdentity)
+			openModel.appendToSaveNameId('comp'+str(n_components))
+			if paramsAnalysis.makeCovMatrixIdentity == False:
+				openModel.appendToSaveNameId('_nocovidentity')
+
 		elif paramsAnalysis.openSetMethod == 'OpenGMMS':
+			n_components = 4
 			openModel = OpenGMMS(known_classes = known_classes,
 #				n_components = 40)
-				n_components = 8)
+				n_components = n_components)
+			openModel.appendToSaveNameId('comp'+str(n_components))
+			openModel.appendToSaveNameId('_'+openModel.covariance_type)
 
 			#openModel.makeCovMatrixIdentitySet(paramsAnalysis.makeCovMatrixIdentity)
 				
 		elif paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
 			openModel = SoftmaxThresholding()
+
 
 		#params.findThresholdInTrain=False
 
@@ -157,6 +167,13 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 	deb.prints(label_metrics.shape)
 	deb.prints(predictions.shape)
 
+	# predict proba reshape
+
+	test_pred_proba = np.reshape(test_pred_proba,(-1, test_pred_proba.shape[-1]))
+	train_pred_proba = np.reshape(train_pred_proba,(-1, train_pred_proba.shape[-1]))
+
+	deb.prints(test_pred_proba.shape)
+
 
 	deb.prints(label_metrics.shape)
 	if paramsAnalysis.open_set == True:
@@ -176,6 +193,11 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 		predictions=predictions[label_metrics<bcknd_id]
 		label_metrics=label_metrics[label_metrics<bcknd_id]
 	else:
+		deb.prints(label_test.shape)
+		deb.prints(test_pred_proba.shape)
+		deb.prints(predictions.shape)
+
+		#pdb.set_trace()
 		predictions=predictions[label_test!=0]
 		predictions_train=predictions_train[label_train!=0]
 		test_pred_proba=test_pred_proba[label_test!=0]	
@@ -575,6 +597,7 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 #				thresholds = [305.6]
 ##				thresholds = np.linspace(-50, 0, 10)
 ##				thresholds = [-16.66666]
+				thresholds = np.linspace(-150, 150, 15)
 
 			elif args.seq_date == 'jan':
 				thresholds = [-210]
@@ -622,9 +645,10 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 		deb.prints(test_pred_proba.shape)
 
 		if paramsAnalysis.metricsOnTrain == True:
-			name_id = 'train'
+			openModel.appendToSaveNameId('_train')
 		else:
-			name_id = ''
+			openModel.appendToSaveNameId('_test')
+
 
 		if paramsAnalysis.loadOpenResults == False:
 
@@ -653,12 +677,15 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 							debug = debug)
 			print("After predictScores, ", time.time() - t0)	
 
-			openModel.storeScores(name_id)
+			openModel.storeScores()
 #		openModel.storeModel()
 		else:
 			
-			openModel.loadScores(name_id)
+			openModel.loadScores()
 		
+		metrics = Metrics()
+		metrics.plotROCCurve(label_test_t, openModel.scores, 
+			modelId=openModel.name, nameId=openModel.saveNameId)
 
 		for threshold in thresholds:
 			print("Time, ", t0 - time.time())
