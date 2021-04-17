@@ -573,8 +573,8 @@ class OpenGMMS(OpenSetMethodGaussian):
         super().__init__(known_classes, n_components)
         self.name = 'OpenGMMS'
         self.model_type = mixture.GaussianMixture
-        self.covariance_type = 'diag'
-        #self.covariance_type = 'full'
+        #self.covariance_type = 'diag'
+        self.covariance_type = 'full'
         
         self.model_type_args = dict(n_components=self.n_components, 
             covariance_type=self.covariance_type, random_state=12345)

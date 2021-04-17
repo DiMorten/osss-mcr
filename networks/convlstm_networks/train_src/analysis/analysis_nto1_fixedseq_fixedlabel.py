@@ -589,6 +589,9 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 ##				thresholds = np.linspace(-50, 0, 10)
 ##				thresholds = [-16.66666]
 				thresholds = np.linspace(-150, 150, 15)
+				threshold_range = (-500, 200)
+				best_threshold = -17.7	
+				best_threshold = -184.4 # mar pca identity 90	
 
 			elif args.seq_date == 'jan':
 				thresholds = [-210]
@@ -609,9 +612,11 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 			if args.seq_date == 'mar':
 				thresholds = [-210]
 				thresholds = np.linspace(-180, 1500, 30)
-
-
-		
+				threshold_range = (200, 1000)
+				best_threshold = 838.7
+				best_threshold = 855.7
+				best_threshold = 550.2
+		 
 
 
 		t=0
@@ -693,13 +698,14 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 		if paramsAnalysis.metricsOnTrain==True:
 
 			best_threshold = optimize.golden(thresholdMetricGet, 
-					brack=(-500, 200), tol=0.1, maxiter=20,
+					brack=threshold_range, tol=0.1, maxiter=20,
 					args=(predictions_t,
 					predictions_train, 
 					openModel))
 			
 		else:
-			best_threshold = -17.7	
+			pass
+
 		deb.prints(best_threshold)		
 #		pdb.set_trace()
 #		for threshold in thresholds:
@@ -725,10 +731,10 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 			metrics_t['precision_unknown'].append(round(metrics['precision_unknown']*100,2))
 			metrics_t['recall_unknown'].append(round(metrics['recall_unknown']*100,2))
 			metrics_t['f1_score_unknown'].append(round(metrics['f1_score_unknown']*100,2))
-
+		deb.prints(best_threshold)
 		print(args.seq_date)
-		deb.prints(thresholds)
 		print(metrics_t)
+		deb.prints(openModel.covariance_type)
 		sys.exit("fixed label analysis finished")
 		#pdb.set_trace()
 		return metrics_t
