@@ -640,11 +640,15 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 		deb.prints(predictions_t.shape)
 		deb.prints(test_pred_proba.shape)
 
+		if openModel.myLogLikelihoodFlag == False:
+			openModel.appendToSaveNameId('_mahalanobis')
+
 		if paramsAnalysis.metricsOnTrain == True:
 			openModel.appendToSaveNameId('_train')
 		else:
 			openModel.appendToSaveNameId('_test')
 
+		openModel.appendToSaveNameId('_'+paramsTrain.seq_date)
 
 		if paramsAnalysis.loadOpenResults == False:
 
@@ -1271,6 +1275,8 @@ elif dataset=='lm':
 		elif args.seq_date =='jan':
 			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_jan_lm_testlm_fewknownclasses_groupclasses_check.h5']]
 			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_jan_lm_testlm_fewknownclasses_check.h5']]
+		if args.seq_date =='jun':
+			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_jun_lm_fewknownclasses.h5']]	
 #		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_dec_lm_testlm_fewknownclasses_groupclasses.h5']]
 #		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_loco8_lm_testlm_lessclass8_2.h5']]	
 ###		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_dec_lm_testlm_fewknownclasses_groupclasses_check.h5']]

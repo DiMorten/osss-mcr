@@ -244,9 +244,9 @@ class OpenSetMethodGaussian(OpenSetMethod):
                     avg_features_pca = np.average(features_pca, axis = 0)
                     if debug > 0:
                         ic(np.round(avg_features_pca, 2)) # average over all samples
-                    myLogLikelihoodFlag = True
+                    #self.myLogLikelihoodFlag = True
                     scores_class = np.zeros(features_class.shape[0])
-                    if myLogLikelihoodFlag == False:
+                    if self.myLogLikelihoodFlag == False:
                         
                         for sample_id in range(features_class.shape[0]):
                             #scores_class[sample_id] = self.mahalanobis_distance(
@@ -256,7 +256,7 @@ class OpenSetMethodGaussian(OpenSetMethod):
 #                                        self.covariance_matrix_list[idx])    
                             scores_class[sample_id] = self.mahalanobis_distance2(
                                 features_pca[sample_id], self.covariance_matrix_list[idx])                    
-                    elif myLogLikelihoodFlag == True:
+                    elif self.myLogLikelihoodFlag == True:
 
                         #makeCovMatrixIdentityFlag = True
                         if self.makeCovMatrixIdentityFlag == True:
@@ -567,7 +567,11 @@ class OpenPCS(OpenSetMethodGaussian):
         self.model_type = decomposition.PCA
         self.model_type_args = dict(n_components=self.n_components, random_state=12345)
         self.mahalanobis_threshold = True
-        
+        self.myLogLikelihoodFlag = False
+
+#class OpenPCS_Mahalanobis(OpenPCS):
+#    pass
+
 class OpenGMMS(OpenSetMethodGaussian):
     def __init__(self, known_classes, n_components, loco_class=0):
         super().__init__(known_classes, n_components)

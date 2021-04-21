@@ -37,7 +37,7 @@ class ParamsTrain(Params):
     def __init__(self, folder_path):
         # 4 known classes
         json_path = folder_path+'parameters_openset.json'
-        json_path = folder_path+'parameters_closedset_groupclasses.json'
+#        json_path = folder_path+'parameters_closedset_groupclasses.json'
         json_path = folder_path+'save_nonaugmented_train_patches.json'
 
         # 2 known classes
@@ -61,6 +61,9 @@ class ParamsTrain(Params):
         print(os.listdir(folder_path))
         super().__init__(json_path)
 
+        #if self.seq_date == 'jun':
+        #self.known_classes = [1, 6, 10, 12]
+        print("self.known_classes", self.known_classes)
 class ParamsAnalysis(Params):
     def __init__(self, folder_path):
 

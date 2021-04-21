@@ -28,5 +28,6 @@ def plotMultipleRocCurves(rocCurvesNames):
 if __name__=='__main__':
     rocCurvesNames = ['roc_curve_SoftmaxThresholding__test.npz',
             'roc_curve_OpenGMMS_comp8_test.npz',
-            'roc_curve_OpenPCS_comp90_test.npz']
+            'roc_curve_OpenPCS_comp90_test.npz',
+            'roc_curve_OpenPCS_comp90_nocovidentity_test.npz']
     plotMultipleRocCurves(rocCurvesNames)
