@@ -8,8 +8,8 @@
 :: set id=int16_adagrad_crossentropy
 
 
-::dataset=cv
-set dataset=lm
+set dataset=cv
+::set dataset=cv
 :: set dataset=lm
 
 ::::dataSource='OpticalWithClouds'
@@ -25,14 +25,14 @@ set seq_mode=fixed
 set loco_class=8
 :: pasture
 
-set seq_date=mar
+set seq_date=jun
 :: set seq_date=jun
 
 :: set seq_date=feb
 
 :: set id=fixed_label_%seq_mode%_%seq_date%_lm_testlm_fewknownclasses_valrand_dummy
 :: set id=fixed_label_%seq_mode%_%seq_date%_loco%loco_class%_lm_testlm_lessclass8_groupclasses
-:: set id=fixed_label_%seq_mode%_%seq_date%_lm_fewknownclasses
+:: set id=fixed_label_%seq_mode%_%seq_date%_lm_fewknownclasses2
 set id=dummy
 :: set id=fixed_label_%seq_mode%_%seq_date%_lm_testlm_2kkc
 :: set id=fixed_label_%seq_mode%_%seq_date%_lm_testlm_2kkc_groupclasses

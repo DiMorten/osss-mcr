@@ -7,5 +7,6 @@
     "known_classes": [0, 1, 10, 12],
     "group_bcknd_classes": true,
     "samples_per_class": 2000,
-    "val_set_mode": "random"
+    "val_set_mode": "random",
+    "dataset": "cv"     
 }

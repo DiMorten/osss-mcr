@@ -82,7 +82,7 @@ deb.prints(args.patches_save)
 deb.prints(args.dataset_name)
 #deb.prints('cv')
 if args.dataset_name=='cv':
-    dataset=CampoVerde()
+    dataset=CampoVerde(args.seq_mode, args.seq_date)
 elif args.dataset_name=='lm':
     dataset=LEM(args.seq_mode, args.seq_date)
 elif args.dataset_name=='l2':

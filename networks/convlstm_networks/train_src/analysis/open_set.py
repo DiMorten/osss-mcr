@@ -567,7 +567,7 @@ class OpenPCS(OpenSetMethodGaussian):
         self.model_type = decomposition.PCA
         self.model_type_args = dict(n_components=self.n_components, random_state=12345)
         self.mahalanobis_threshold = True
-        self.myLogLikelihoodFlag = False
+        self.myLogLikelihoodFlag = True
 
 #class OpenPCS_Mahalanobis(OpenPCS):
 #    pass

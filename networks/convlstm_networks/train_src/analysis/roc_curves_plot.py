@@ -6,7 +6,7 @@ import deb
 import numpy as np
 
 
-def plotMultipleRocCurves(rocCurvesNames):
+def plotMultipleRocCurves(rocCurvesNames, nameID):
     for name in rocCurvesNames:
         data = np.load(name)
         tpr = data['fpr']
@@ -18,7 +18,7 @@ def plotMultipleRocCurves(rocCurvesNames):
     plt.legend(loc='best')
     plt.xlabel('False positive rate')
     plt.ylabel('True positive rate')
-    plt.savefig('roc_curves.png')
+    plt.savefig('roc_curves' + nameID + '.png')
     plt.show()
         
 
@@ -26,8 +26,16 @@ def plotMultipleRocCurves(rocCurvesNames):
 
 
 if __name__=='__main__':
-    rocCurvesNames = ['roc_curve_SoftmaxThresholding__test.npz',
-            'roc_curve_OpenGMMS_comp8_test.npz',
-            'roc_curve_OpenPCS_comp90_test.npz',
-            'roc_curve_OpenPCS_comp90_nocovidentity_test.npz']
-    plotMultipleRocCurves(rocCurvesNames)
+    date = 'jun'
+    if date == 'mar':
+        rocCurvesNames = ['roc_curve_SoftmaxThresholding__test.npz',
+                'roc_curve_OpenGMMS_comp8_test.npz',
+                'roc_curve_OpenPCS_comp90_test.npz',
+                'roc_curve_OpenPCS_comp90_nocovidentity_test.npz']
+    elif date == 'jun':
+        rocCurvesNames = ['roc_curve_SoftmaxThresholding__test_jun.npz',
+                'roc_curve_OpenGMMS_comp4_full_test_jun.npz',
+#                'roc_curve_OpenGMMS_comp8_full_test_jun.npz',
+                'roc_curve_OpenPCS_comp90_test_jun.npz',
+                'roc_curve_OpenPCS_comp90_nocovidentity_test_jun.npz']
+    plotMultipleRocCurves(rocCurvesNames, date)

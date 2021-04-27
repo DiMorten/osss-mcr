@@ -9,6 +9,6 @@
     "unknown_classes": [],
     "samples_per_class": 2000,
     "val_set_mode": "random",
-    "seq_date": "jun" 
-    
+    "seq_date": "jun", 
+    "dataset": "cv"     
 }

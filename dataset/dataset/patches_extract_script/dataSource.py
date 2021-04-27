@@ -381,8 +381,11 @@ class CampoVerde(Dataset):
 		im_h=8492
 		im_w=7995
 		class_list = ['Background','Soybean','Maize','Cotton','Sorghum','Beans','NCC','Pasture','Eucaplyptus','Soil','Turfgrass','Cerrado']
-		super().__init__(path,im_h,im_w,class_n,class_list,name)
-
+		padded_dates = [-14, -13, -12, -11]
+#		super().__init__(path,im_h,im_w,class_n,class_list,name)
+		scaler_load=False
+		scaler_name=name
+		super().__init__(path,im_h,im_w,class_n,class_list,name,padded_dates,seq_mode,seq_date,scaler_load,scaler_name)
 	def addDataSource(self,dataSource):
 		self.dataSource = dataSource
 		if self.dataSource.name == 'SARSource':

@@ -115,7 +115,7 @@ def openSetDefine(label_test,
 				openModel.appendToSaveNameId('_nocovidentity')
 
 		elif paramsAnalysis.openSetMethod == 'OpenGMMS':
-			n_components = 4
+			n_components = 8
 			openModel = OpenGMMS(known_classes = known_classes,
 #				n_components = 40)
 				n_components = n_components)
@@ -460,6 +460,8 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 			if paramsAnalysis.setTrainAsTest == False:
 				predictions_train, label_train, train_pred_proba, _ = predictionsLoaderTrain.loadPredictions(model_path, seq_date=args.seq_date, 
 						model_dataset=args.model_dataset)
+				
+				
 				print("1a")
 			else:
 				predictions_train, label_train, train_pred_proba = predictions.copy(), label_test.copy(), test_pred_proba.copy()
@@ -471,7 +473,7 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 	#predictions=np.load(prediction_path, allow_pickle=True)
 	#label_test=np.load(path+'labels.npy', allow_pickle=True)
 
-	
+
 	print("Loaded predictions unique: ",np.unique(predictions,return_counts=True))
 	print("Loaded label test unique: ",np.unique(label_test,return_counts=True))
 	
@@ -639,16 +641,18 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 
 		deb.prints(predictions_t.shape)
 		deb.prints(test_pred_proba.shape)
-
-		if openModel.myLogLikelihoodFlag == False:
-			openModel.appendToSaveNameId('_mahalanobis')
-
+		try:
+			if openModel.myLogLikelihoodFlag == False:
+				openModel.appendToSaveNameId('_mahalanobis')
+		except:
+			print("No mahalanobis flag")
 		if paramsAnalysis.metricsOnTrain == True:
 			openModel.appendToSaveNameId('_train')
 		else:
 			openModel.appendToSaveNameId('_test')
 
 		openModel.appendToSaveNameId('_'+paramsTrain.seq_date)
+		openModel.appendToSaveNameId('_'+paramsTrain.dataset)
 
 		if paramsAnalysis.loadOpenResults == False:
 
@@ -1276,7 +1280,9 @@ elif dataset=='lm':
 			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_jan_lm_testlm_fewknownclasses_groupclasses_check.h5']]
 			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_jan_lm_testlm_fewknownclasses_check.h5']]
 		if args.seq_date =='jun':
-			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_jun_lm_fewknownclasses.h5']]	
+#			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_jun_lm_fewknownclasses.h5']]	
+			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_jun_lm_fewknownclasses2.h5']]	
+
 #		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_dec_lm_testlm_fewknownclasses_groupclasses.h5']]
 #		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_loco8_lm_testlm_lessclass8_2.h5']]	
 ###		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_dec_lm_testlm_fewknownclasses_groupclasses_check.h5']]
