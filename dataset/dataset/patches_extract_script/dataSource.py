@@ -374,7 +374,7 @@ class Dataset(object):
 	def getChannelsToMask(self):
 		return self.dataSource.channelsToMask
 class CampoVerde(Dataset):
-	def __init__(self):
+	def __init__(self, seq_mode=None, seq_date=None):
 		name='cv'
 		path="../cv_data/"
 		class_n=13
@@ -389,12 +389,30 @@ class CampoVerde(Dataset):
 	def addDataSource(self,dataSource):
 		self.dataSource = dataSource
 		if self.dataSource.name == 'SARSource':
-			self.im_list=['20151029_S1', '20151110_S1', '20151122_S1', '20151204_S1', '20151216_S1', '20160121_S1', '20160214_S1', '20160309_S1', '20160321_S1', '20160508_S1', '20160520_S1', '20160613_S1', '20160707_S1', '20160731_S1']
-			self.label_list=self.im_list.copy()
+#			self.im_list=['20151029_S1', '20151110_S1', '20151122_S1', '20151204_S1', '20151216_S1', '20160121_S1', '20160214_S1', '20160309_S1', '20160321_S1', '20160508_S1', '20160520_S1', '20160613_S1', '20160707_S1', '20160731_S1']
+#			self.label_list=self.im_list.copy()
+
+			mode='var'
+			mode='fixed'
+			im_list_full = ['20151029_S1', '20151110_S1', '20151122_S1', '20151204_S1', 
+				'20151216_S1', '20160121_S1', '20160214_S1', '20160309_S1', '20160321_S1', 
+				'20160508_S1', '20160520_S1', '20160613_S1', '20160707_S1', '20160731_S1']
+			if self.seq_mode=='var':
+				self.im_list=im_list_full.copy()
+			elif self.seq_mode=='fixed':
+				# 12 len fixed. label -5
+				if self.seq_date=='jun':
+					date_id = 3
+					self.im_list=im_list_full[-date_id-12+1:-date_id+1]
+					assert len(self.im_list)==12
+					assert self.im_list[-1]=='20160613_S1'
+
+
 		elif self.dataSource.name == 'OpticalSource':
 			self.im_list=[]
 			self.label_list=self.im_list.copy()
 		self.t_len=len(self.im_list)
+		self.label_list=self.im_list.copy()
 class LEM(Dataset):
 	def __init__(self, seq_mode=None, seq_date=None):
 		name='lm'

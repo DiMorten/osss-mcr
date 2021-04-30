@@ -1,5 +1,8 @@
 import os
 import json
+from icecream import ic
+import pdb
+
 class Params():
     """Class that loads hyperparameters from a json file.
 
@@ -38,7 +41,7 @@ class ParamsTrain(Params):
         # 4 known classes
         json_path = folder_path+'parameters_openset.json'
 #        json_path = folder_path+'parameters_closedset_groupclasses.json'
-#        json_path = folder_path+'save_nonaugmented_train_patches.json'
+        json_path = folder_path+'save_nonaugmented_train_patches.json'
 
         # 2 known classes
 #        json_path = folder_path+'twokkc_parameters_openset.json'
@@ -57,13 +60,26 @@ class ParamsTrain(Params):
 #        json_path = folder_path+'save_nonaugmented_train_patches_lessclass8.json'
 #        json_path = folder_path+'parameters_closedset_groupclasses_lessclass8.json'
 
+        # 3 known classes campo verde
+#        json_path = folder_path+'cv/'+'parameters_openset.json'
+#        json_path = folder_path+'parameters_closedset_groupclasses.json'
+#        json_path = folder_path+'cv/'+'save_nonaugmented_train_patches.json'
 
         print(os.listdir(folder_path))
         super().__init__(json_path)
+        ic(self.seq_date)
+#        pdb.set_trace()
+        if self.dataset == 'lm':
+            if self.seq_date == 'mar':
+                self.known_classes = [0, 1, 10, 12]
+            elif self.seq_date == 'jun':
+                self.known_classes = [1, 6, 10, 12]
+        elif self.dataset == 'cv':
+            if self.seq_date == 'jun':
+                self.known_classes = [1, 2, 8]
 
-        #if self.seq_date == 'jun':
-        self.known_classes = [1, 6, 10, 12]
         print("self.known_classes", self.known_classes)
+#        pdb.set_trace()
 class ParamsAnalysis(Params):
     def __init__(self, folder_path):
 

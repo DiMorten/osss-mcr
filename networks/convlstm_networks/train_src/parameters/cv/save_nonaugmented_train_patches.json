@@ -4,11 +4,11 @@
     "val_set": false,
     "store_patches": true,
     "select_kept_classes_flag": true,
-    "known_classes": [0, 1, 10, 12],
+    "known_classes": [1, 2, 8],
     "group_bcknd_classes": false,
     "unknown_classes": [],
     "samples_per_class": 2000,
     "val_set_mode": "random",
-    "seq_date": "mar", 
-    "dataset": "lm"     
+    "seq_date": "jun", 
+    "dataset": "cv"     
 }

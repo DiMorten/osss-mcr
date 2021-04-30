@@ -10,8 +10,8 @@
 
 ::dataset=cv
 :: set dataset=l2
-set dataset=lm
-set model_dataset=lm
+set dataset=cv
+set model_dataset=cv
 ::::dataSource='OpticalWithClouds'
 ::dataSource='SAR'
 set dataSource=SAR

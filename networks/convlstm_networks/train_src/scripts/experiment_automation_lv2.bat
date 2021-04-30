@@ -8,7 +8,7 @@
 :: set id=int16_adagrad_crossentropy
 
 
-set dataset=cv
+set dataset=lm
 ::set dataset=cv
 :: set dataset=lm
 

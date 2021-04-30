@@ -102,7 +102,9 @@ def openSetDefine(label_test,
 		deb.prints(known_classes)
 
 		if paramsAnalysis.openSetMethod == 'OpenPCS':
-			n_components = 90
+#			n_components = 90
+			n_components = 20
+
 			openModel = OpenPCS(known_classes = known_classes,
 #					n_components = 16)
 #					n_components = 30)
@@ -115,7 +117,7 @@ def openSetDefine(label_test,
 				openModel.appendToSaveNameId('_nocovidentity')
 
 		elif paramsAnalysis.openSetMethod == 'OpenGMMS':
-			n_components = 8
+			n_components = 4
 			openModel = OpenGMMS(known_classes = known_classes,
 #				n_components = 40)
 				n_components = n_components)
@@ -469,7 +471,7 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 			##pdb.set_trace()
 			deb.prints(np.unique(np.concatenate((predictions,label_test),axis=0)))
 		else:
-			predictions_train, label_train, train_pred_proba = None, None, None	
+			predictions_train, label_train, train_pred_proba = predictions.copy(), label_test.copy(), test_pred_proba.copy()
 	#predictions=np.load(prediction_path, allow_pickle=True)
 	#label_test=np.load(path+'labels.npy', allow_pickle=True)
 
@@ -501,125 +503,165 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 		# 	for date in range(14):
 		# 		if date<=7:
 		# 			date_important_classes=[0,6,8]
+		if paramsTrain.dataset == 'lm':
+			if paramsAnalysis.openSetMethod == 'OpenPCS':
+		#		for t in range(label_test.shape[1]):
+		#		thresholds = [-200, -100, -50, 0, 50, 100, 200, 400]
+				#thresholds = [-100, -50, 0]
+				thresholds = np.linspace(-500, 500, 10)
+		#		thresholds = [131.57]
+		#		thresholds = [400]
+				thresholds = [-5000]
+				thresholds = [-100, 0]
+				thresholds = [-250]
+		#		thresholds = [550]
+				thresholds = [300]
+				thresholds = [-500, -300, -100, 0, 100]
+		#		thresholds = [0, 100, 200, 300, 400, 500]
+				thresholds = [100]
+	##			thresholds = [-100, 0, 100, 200, 300, 400, 500, 600]
+	##			thresholds = [-50, -20, -10, 0, 10, 20, 50]
 
-		if paramsAnalysis.openSetMethod == 'OpenPCS':
-	#		for t in range(label_test.shape[1]):
-	#		thresholds = [-200, -100, -50, 0, 50, 100, 200, 400]
-			#thresholds = [-100, -50, 0]
-			thresholds = np.linspace(-500, 500, 10)
-	#		thresholds = [131.57]
-	#		thresholds = [400]
-			thresholds = [-5000]
-			thresholds = [-100, 0]
-			thresholds = [-250]
-	#		thresholds = [550]
-			thresholds = [300]
-			thresholds = [-500, -300, -100, 0, 100]
-	#		thresholds = [0, 100, 200, 300, 400, 500]
-			thresholds = [100]
-##			thresholds = [-100, 0, 100, 200, 300, 400, 500, 600]
-##			thresholds = [-50, -20, -10, 0, 10, 20, 50]
+	#			thresholds = np.linspace(0.03, 0.7, 15)
+	#			thresholds = np.linspace(0.08, 0.16, 15)
 
-#			thresholds = np.linspace(0.03, 0.7, 15)
-#			thresholds = np.linspace(0.08, 0.16, 15)
+	##			thresholds = [0.125]
+	#			thresholds = np.linspace(2.6, 30, 10)
+	##			thresholds = np.linspace(2.6, 5.6, 10)
+	##			thresholds = np.linspace(0.2, 4, 10)
 
-##			thresholds = [0.125]
-#			thresholds = np.linspace(2.6, 30, 10)
-##			thresholds = np.linspace(2.6, 5.6, 10)
-##			thresholds = np.linspace(0.2, 4, 10)
+				# myloglikelihood, mymahalanobis
+				thresholds = np.linspace(-70, 0, 10)
+				thresholds = np.linspace(-30, -10, 10)
+				thresholds = np.linspace(-21, -16, 10)
+				
+				# myloglikelihood, scipy mahalanobis squared
+				
+				thresholds = np.linspace(-22, 3, 15)
+				thresholds = [-19]
+				
+				thresholds = np.linspace(-60, -30, 3)
+				thresholds = [-28]
+				thresholds = [-59]
+				thresholds = [-92]
+				thresholds = np.linspace(-110, -80, 5)
+				thresholds = [-87.5]
 
-			# myloglikelihood, mymahalanobis
-			thresholds = np.linspace(-70, 0, 10)
-			thresholds = np.linspace(-30, -10, 10)
-			thresholds = np.linspace(-21, -16, 10)
-			
-			# myloglikelihood, scipy mahalanobis squared
-			
-			thresholds = np.linspace(-22, 3, 15)
-			thresholds = [-19]
-			
-			thresholds = np.linspace(-60, -30, 3)
-			thresholds = [-28]
-			thresholds = [-59]
-			thresholds = [-92]
-			thresholds = np.linspace(-110, -80, 5)
-			thresholds = [-87.5]
+				thresholds = [-19]
+				thresholds = np.linspace(-35, -22, 10)
+	#			FOR 45 components and cov_matrix to I
+	#			thresholds = np.linspace(-93, -82, 5)
 
-			thresholds = [-19]
-			thresholds = np.linspace(-35, -22, 10)
-#			FOR 45 components and cov_matrix to I
-#			thresholds = np.linspace(-93, -82, 5)
+				thresholds = [100]
+	#			thresholds = np.linspace(45, 70, 2)
+	#			thresholds = np.linspace(90, 120, 2)
 
-			thresholds = [100]
-#			thresholds = np.linspace(45, 70, 2)
-#			thresholds = np.linspace(90, 120, 2)
+				thresholds = [-105]
+	#			thresholds = np.linspace(-170, -230, 10)
+	#			thresholds = np.linspace(-360, -300, 10)
+	#			thresholds = np.linspace(-417, -398, 10)
+	#			thresholds = np.linspace(-90, -30, 10)
 
-			thresholds = [-105]
-#			thresholds = np.linspace(-170, -230, 10)
-#			thresholds = np.linspace(-360, -300, 10)
-#			thresholds = np.linspace(-417, -398, 10)
-#			thresholds = np.linspace(-90, -30, 10)
-
-#			dec
+	#			dec
 
 
 
-#			thresholds = np.linspace(-250, -200, 5)
-			thresholds = np.linspace(-250, -150, 10)
-			if args.seq_date == 'dec':
-				thresholds = [-237.5]
-			elif args.seq_date == 'feb':
-				thresholds = [-188.89]
-			elif args.seq_date == 'mar':
-				thresholds = [-210]
-#			2 kkc mar
-				thresholds = [-600]
-				thresholds = np.linspace(-200, -50, 10)
-				thresholds = np.linspace(-166, -133, 10)
-#				thresholds = [-147.7]
-#				thresholds = [-147.7]
-#				thresholds = [-24]
-#				thresholds = np.linspace(300, 450, 10)
-#				thresholds = [400]
-				thresholds = np.linspace(300, 700, 10)
-				thresholds = [566.66666667]
-				thresholds = np.linspace(-225, -150, 10)
-###				thresholds = [-183.33333]
-##				thresholds = np.linspace(-25, 250, 10)
-#				thresholds = np.linspace(250, 500, 10)
-#				thresholds = [305.6]
-##				thresholds = np.linspace(-50, 0, 10)
-##				thresholds = [-16.66666]
-				thresholds = np.linspace(-150, 150, 15)
+	#			thresholds = np.linspace(-250, -200, 5)
+				thresholds = np.linspace(-250, -150, 10)
+				if args.seq_date == 'dec':
+					thresholds = [-237.5]
+				elif args.seq_date == 'feb':
+					thresholds = [-188.89]
+				elif args.seq_date == 'mar':
+					thresholds = [-210]
+	#			2 kkc mar
+					thresholds = [-600]
+					thresholds = np.linspace(-200, -50, 10)
+					thresholds = np.linspace(-166, -133, 10)
+	#				thresholds = [-147.7]
+	#				thresholds = [-147.7]
+	#				thresholds = [-24]
+	#				thresholds = np.linspace(300, 450, 10)
+	#				thresholds = [400]
+					thresholds = np.linspace(300, 700, 10)
+					thresholds = [566.66666667]
+					thresholds = np.linspace(-225, -150, 10)
+	###				thresholds = [-183.33333]
+	##				thresholds = np.linspace(-25, 250, 10)
+	#				thresholds = np.linspace(250, 500, 10)
+	#				thresholds = [305.6]
+	##				thresholds = np.linspace(-50, 0, 10)
+	##				thresholds = [-16.66666]
+					thresholds = np.linspace(-150, 150, 15)
+					threshold_range = (-500, 200)
+					best_threshold = -17.7	
+					best_threshold = -184.4 # mar pca identity 90	
+
+				elif args.seq_date == 'jan':
+					thresholds = [-210]
+					thresholds = np.linspace(100, 500, 10)
+				elif args.seq_date == 'jun':
+					threshold_range = (-500, 200)
+					best_threshold = -28.366	
+					#best_threshold = -193.6 # jun pca identity 90	
+
+				#thresholds = [-2000]
+	#			thresholds = np.linspace(-250, -150, 10)
+	#			thresholds = np.linspace(0, 500, 4)
+				#thresholds = np.linspace(0, 300, 10)
+
+			elif paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
+				# softmax thresholding
+				thresholds = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.92, 0.95]
+				thresholds = [0.6, 0.7, 0.8, 0.9, 0.91, 0.92, 0.93, 0.94, 0.95]
+	#			thresholds = [0.94]
+				threshold_range = (0, 1)
+				best_threshold = 0.7
+
+				if args.seq_date == 'jun':
+					best_threshold = 0.76393
+					best_threshold = -100
+					
+			elif paramsAnalysis.openSetMethod == 'OpenGMMS':
+				if args.seq_date == 'mar':
+					thresholds = [-210]
+					thresholds = np.linspace(-180, 1500, 30)
+					threshold_range = (200, 1000)
+					best_threshold = 838.7
+					best_threshold = 855.7
+					best_threshold = 550.2
+				elif args.seq_date == 'jun':
+					threshold_range = (200, 1000)
+					best_threshold = 811.1
+		elif paramsTrain.dataset == 'cv':
+			if paramsAnalysis.openSetMethod == 'SoftmaxThresholding':	 
+#				threshold_range = (0.5, 0.99)
+				threshold_range = (0., 0.99)
+
+#				threshold_range = (0., 1.)
+
+				best_threshold = 0.918
+				best_threshold = -100
+				
+			if paramsAnalysis.openSetMethod == 'OpenPCS':	 
 				threshold_range = (-500, 200)
-				best_threshold = -17.7	
-				best_threshold = -184.4 # mar pca identity 90	
-
-			elif args.seq_date == 'jan':
-				thresholds = [-210]
-				thresholds = np.linspace(100, 500, 10)
+				best_threshold = 200
+				best_threshold = -2981.7
 
 
-			#thresholds = [-2000]
-#			thresholds = np.linspace(-250, -150, 10)
-#			thresholds = np.linspace(0, 500, 4)
-			#thresholds = np.linspace(0, 300, 10)
+				# no cov identity
+				best_threshold = -187.4
+				threshold_range = (-5000, 200)
+				best_threshold = -2665.3
+#				best_threshold = 192
+				threshold_range = (-500, 500)
+				best_threshold = 133.6
 
-		elif paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
-			# softmax thresholding
-			thresholds = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.92, 0.95]
-			thresholds = [0.6, 0.7, 0.8, 0.9, 0.91, 0.92, 0.93, 0.94, 0.95]
-#			thresholds = [0.94]
-		elif paramsAnalysis.openSetMethod == 'OpenGMMS':
-			if args.seq_date == 'mar':
-				thresholds = [-210]
-				thresholds = np.linspace(-180, 1500, 30)
+				# cov identity unbounded
+				best_threshold = -4736
+
+			if paramsAnalysis.openSetMethod == 'OpenGMMS':	 
 				threshold_range = (200, 1000)
-				best_threshold = 838.7
-				best_threshold = 855.7
-				best_threshold = 550.2
-		 
-
 
 		t=0
 		
@@ -688,8 +730,9 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 			openModel.loadScores()
 		
 		metrics = Metrics()
-		metrics.plotROCCurve(label_test_t, openModel.scores, 
-			modelId=openModel.name, nameId=openModel.saveNameId)
+		if paramsAnalysis.plotROCCurve == True:
+			metrics.plotROCCurve(label_test_t, openModel.scores, 
+				modelId=openModel.name, nameId=openModel.saveNameId)
 
 		def thresholdMetricGet(threshold, predictions_t,
 				predictions_train, 
@@ -701,16 +744,30 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 				openModel)
 			metrics = metrics_get(label_test_t, predictions_t,
 				only_basics=True, debug=0, detailed_t = 0)
+			deb.prints(metrics['f1_score_known'])
 			return -metrics['f1_score_known']
 
 		if paramsAnalysis.metricsOnTrain==True:
+#		if True:
 
-			best_threshold = optimize.golden(thresholdMetricGet, 
-					brack=threshold_range, tol=0.1, maxiter=20,
+#			best_threshold = optimize.golden(thresholdMetricGet, 
+#					brack=threshold_range, tol=0.1, maxiter=20,
+#					args=(predictions_t,
+#					predictions_train, 
+#					openModel))
+
+#			best_threshold = optimize.brent(thresholdMetricGet, 
+#					brack=threshold_range, tol=0.1, maxiter=20,
+#					args=(predictions_t,
+#					predictions_train, 
+#					openModel))
+
+			best_threshold = optimize.fminbound(thresholdMetricGet, 
+					threshold_range[0], threshold_range[1], xtol=0.1, maxfun=20,
 					args=(predictions_t,
 					predictions_train, 
 					openModel))
-			
+
 		else:
 			pass
 
@@ -742,7 +799,10 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 		deb.prints(best_threshold)
 		print(args.seq_date)
 		print(metrics_t)
-		deb.prints(openModel.covariance_type)
+		try:
+			deb.prints(openModel.covariance_type)
+		except:
+			print("Exception: No covariance in model")
 		sys.exit("fixed label analysis finished")
 		#pdb.set_trace()
 		return metrics_t
@@ -1052,8 +1112,9 @@ dataset=args.dataset
 #dataset='lm_sarh'
 
 #load images
-path_img="../../../../dataset/dataset/"+dataset+"_data/patches_bckndfixed/test/patches_in.npy"
-imgs_in = np.load(path_img,mmap_mode='r')
+# This is for the CRF
+##path_img="../../../../dataset/dataset/"+dataset+"_data/patches_bckndfixed/test/patches_in.npy"
+##imgs_in = np.load(path_img,mmap_mode='r')
 
 load_metrics=False
 small_classes_ignore=False
@@ -1079,44 +1140,10 @@ if dataset=='cv':
 		'prediction_ConvLSTM_seq2seq_bi_redoing3.npy',
 		'prediction_DenseNetTimeDistributed_128x2_redoing3.npy']]
 	exp_id=5
-
-	if exp_id==1:
-		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
-			'prediction.npy',
-			'prediction.npy']]
-	# 		[#'prediction_deeplabv3plus_v3plus2.npy',
-	# 		'prediction_deeplab_rs_multiscale_v3plus.npy',
-	# 		'prediction_deeplab_rs_nowifi.npy',
-	# 		'prediction_deeplabv3_lauras3.npy',
-	# 		'prediction_pyramid_dilated_bconvlstm_lauras2.npy',
-	# 		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
-	# ##		'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
-	# 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
-	if exp_id==2:
-		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
-			'model_best_BUnet4ConvLSTM.h5',
-			'model_best_UNet3D.h5',
-			'model_best_BUnet4ConvLSTM_SkipLSTM.h5']]
-	elif exp_id==3:
-		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
-			#'prediction_BUnet4ConvLSTM_repeating1.npy',
-			'model_best_BUnet4ConvLSTM_focal_test.h5',
-			'model_best_focal_loss_bunetconvlstm_cv.h5', #focal loss, adagrad
-			'model_best_BUnet4ConvLSTM_adam_crossentropy.h5',
-			'model_best_BUnet4ConvLSTM_adam_focal.h5',
-			'model_best_BUnet4ConvLSTM_adam_weighted_focal.h5']]
-	elif exp_id==4:
-		experiment_groups=[['model_best_BUnet4ConvLSTM_adam_focal.h5',
-			'model_best_BUnet4ConvLSTM_64_adam_focal.h5',
-			'model_best_BUnet4ConvLSTM_SkipLSTM_adam_focal.h5',
-			'model_best_Unet3D_16_adam_focal.h5',
-			'model_best_Unet3D_adam_focal3.h5',
-			'model_best_Unet3D_adam_focal4.h5']]
-	elif exp_id==5:
-		#experiment_groups=[['model_best_BUnet4ConvLSTM_windows_test.h5']]
-		experiment_groups=[['model_best_BUnet4ConvLSTM_float32.h5',
-			'model_best_BUnet4ConvLSTM_int16.h5',
-			'model_best_BUnet4ConvLSTM_windows_test.h5']]
+	if args.seq_date =='jun':
+		experiment_groups=[[
+			'model_best_UUnet4ConvLSTM_jun.h5'
+		]]	
 
 elif dataset=='l2':
 		exp_id=1

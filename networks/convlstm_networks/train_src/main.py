@@ -3220,6 +3220,9 @@ if __name__ == '__main__':
 		ds=LEM(args.seq_mode, args.seq_date)
 	elif dataset=='l2':
 		ds=LEM2(args.seq_mode, args.seq_date)
+	elif dataset=='cv':
+		ds=CampoVerde(args.seq_mode, args.seq_date)
+
 	deb.prints(ds)
 	dataSource = SARSource()
 	ds.addDataSource(dataSource)

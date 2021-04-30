@@ -189,6 +189,9 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 			ds=LEM('fixed', seq_date)
 		elif self.dataset=='l2':
 			ds=LEM2('fixed', seq_date)
+		elif self.dataset=='cv':
+			ds=CampoVerde('fixed', seq_date)
+
 		dataSource = SARSource()
 		ds.addDataSource(dataSource)
 	
@@ -208,6 +211,8 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 			train_ds=LEM('fixed',seq_date)
 		elif model_dataset=='l2':
 			train_ds=LEM2('fixed', seq_date)
+		elif model_dataset=='cv':
+			train_ds=CampoVerde('fixed', seq_date)
 		train_ds.addDataSource(SARSource())
 		# get model class n
 		model_shape = model.layers[-1].output_shape
