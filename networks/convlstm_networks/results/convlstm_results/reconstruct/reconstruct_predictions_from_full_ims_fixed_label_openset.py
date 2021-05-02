@@ -291,6 +291,8 @@ if dataset=='lm':
 	ds=LEM(seq_mode, a.seq_date)
 elif dataset=='l2':
 	ds=LEM2(seq_mode, a.seq_date)
+elif dataset=='cv':
+	ds=CampoVerde(seq_mode, a.seq_date)
 deb.prints(ds)
 dataSource = SARSource()
 ds.addDataSource(dataSource)
@@ -404,20 +406,24 @@ if mosaic_flag == True:
 	known_classes = [x + 1 for x in paramsTrain.known_classes]
 	deb.prints(known_classes)
 	if paramsAnalysis.openSetMethod == 'OpenPCS':
-		openModel = OpenPCS(loco_class = 8,  known_classes = known_classes,
+		openModel = OpenPCS(known_classes = known_classes,
 #			n_components = 16)
 			n_components = 90)
-
+		openModel.makeCovMatrixIdentitySet(paramsAnalysis.makeCovMatrixIdentity)
 	elif paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
-		openModel = SoftmaxThresholding(loco_class = predictionsLoaderTest.loco_class)
+		openModel = SoftmaxThresholding()
 	openModel.setThreshold(threshold)
-	openModel.loadFittedModel(path = '../../../train_src/analysis/')
-
+	try:
+		openModel.loadFittedModel(path = '../../../train_src/analysis/')
+	except:
+		print("Exception: No fitted model method")
 	print("stride", stride)
 	print(len(range(patch_size//2,row-patch_size//2,stride)))
 	print(len(range(patch_size//2,col-patch_size//2,stride)))
 
 	debug = -1
+#	debug = 1
+	
 	count = 0
 	for m in range(patch_size//2,row-patch_size//2,stride): 
 		for n in range(patch_size//2,col-patch_size//2,stride):
@@ -439,7 +445,7 @@ if mosaic_flag == True:
 					if debug>-1:
 						print('*'*20, "Load decoder features")
 					test_pred_proba = predictionsLoaderTest.load_decoder_features(model, input_, debug = debug)
-				
+
 				#print(input_[0].shape)
 				#ic(len(input_))
 
@@ -458,8 +464,12 @@ if mosaic_flag == True:
 							translate_label_path + 'new_labels2labels_lm_'+lm_date+'_S1.pkl',
 							bcknd_flag=False, debug = debug)
 
+					openModel.predictScores(pred_cl.flatten(), test_pred_proba,
+								debug = debug)
+
 					# load the pca model / covariance matrix 
-					pred_cl = openModel.predict(pred_cl, test_pred_proba, debug = debug)
+					#ic(pred_cl.shape)
+					pred_cl = openModel.predict(pred_cl.flatten(), debug = debug)
 					pred_cl = np.reshape(pred_cl, prediction_shape)
 					if debug>-1:
 						print('*'*20, "Finished openModel predict")
@@ -555,13 +565,14 @@ if metrics_flag==True:
 		print("Metrics get predictions",np.unique(predictions, return_counts=True))
 		print("Metrics get label",np.unique(label, return_counts=True))
 		if small_classes_ignore==True:
-			if dataset=='l2':
+			important_classes_idx = paramsTrain.known_classes
+##			if dataset=='l2':
 			#important_classes_idx=[0,1,2,6,8,10,12]
-				important_classes_idx=[0,1,2,6,12] # only for bcknd final value
+##				important_classes_idx=[0,1,2,6,12] # only for bcknd final value
 				#important_classes_idx = [x+1 for x in important_classes_idx]
-				deb.prints(important_classes_idx)
-			elif dataset=='lm':
-				important_classes_idx=[0, 1, 10, 12]
+##				deb.prints(important_classes_idx)
+##			elif dataset=='lm':
+##				important_classes_idx=[0, 1, 10, 12]
 			for idx in range(class_n):
 				if idx not in important_classes_idx:
 					predictions[predictions==idx]=20
@@ -583,13 +594,13 @@ if metrics_flag==True:
 			
 	metrics = metrics_get(label_rebuilt, prediction_rebuilt, mask, small_classes_ignore=False)
 	print(metrics)
-	f = open("metrics_fixed_"+l2_date+".pkl", "wb")
+	f = open("metrics_fixed_"+lm_date+".pkl", "wb")
 	pickle.dump(metrics, f)
 	f.close()
 
 	metrics = metrics_get(label_rebuilt, prediction_rebuilt, mask, small_classes_ignore=True)
 	print(metrics)
-	f = open("metrics_fixed_"+l2_date+"_small_classes_ignore.pkl", "wb")
+	f = open("metrics_fixed_"+lm_date+"_small_classes_ignore.pkl", "wb")
 	pickle.dump(metrics, f)
 	f.close()
 
@@ -597,9 +608,9 @@ if metrics_flag==True:
 label_rebuilt = label_rebuilt - 1
 prediction_rebuilt = prediction_rebuilt - 1
 
-if dataset=='lm':
-	important_classes_idx = [0, 1, 10, 12]
-
+#if dataset=='lm':
+#	important_classes_idx = [0, 1, 10, 12]
+important_classes_idx = paramsTrain.known_classes
 
 def small_classes_ignore(label, predictions, important_classes_idx):
 	class_n = 15

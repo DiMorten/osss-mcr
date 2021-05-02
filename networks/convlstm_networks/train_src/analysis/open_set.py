@@ -61,15 +61,16 @@ class SoftmaxThresholding(OpenSetMethod):
 
         # pred proba shape is (n_samples, h, w, classes)
         pred_proba_test = scipy.special.softmax(pred_proba_test, axis=-1)
-
-        print("pred_proba_max stats min, avg, max",np.min(pred_proba_test),
-                np.average(pred_proba_test),np.max(pred_proba_test))
+        if debug>0:
+            print("pred_proba_max stats min, avg, max",np.min(pred_proba_test),
+                    np.average(pred_proba_test),np.max(pred_proba_test))
         pred_proba_max = np.amax(pred_proba_test, axis=-1) # shape (n_samples, h, w)
 
-        print("pred_proba_max stats min, avg, max",np.min(pred_proba_max),
-                np.average(pred_proba_max),np.max(pred_proba_max))
-        deb.prints(predictions_test.shape)
-        deb.prints(pred_proba_max.shape)
+        if debug>0:
+            print("pred_proba_max stats min, avg, max",np.min(pred_proba_max),
+                    np.average(pred_proba_max),np.max(pred_proba_max))
+            deb.prints(predictions_test.shape)
+            deb.prints(pred_proba_max.shape)
 
         self.scores = pred_proba_max
 
@@ -141,8 +142,6 @@ class OpenSetMethodGaussian(OpenSetMethod):
 
             print("*"*20, " Flattening the results")
 
-            deb.prints(predictions_test.shape)
-
         predictions_test = predictions_test.flatten()
         if debug > 0:
             deb.prints(predictions_test.shape)
@@ -196,30 +195,30 @@ class OpenSetMethodGaussian(OpenSetMethod):
     
     def predictScores(self, predictions_test, open_features, debug=1):
         self.scores = np.zeros_like(predictions_test, dtype=np.float)
-
-        print('*'*20, 'predict_unknown_class')
-        deb.prints(self.model_list)
+        if debug>0:
+            print('*'*20, 'predict_unknown_class')
+            deb.prints(self.model_list)
         covariance_matrix_list = self.covariance_matrix_list.copy()
-        deb.prints(np.unique(predictions_test, return_counts=True))
-        deb.prints(self.known_classes)
+        if debug>0:          
+            deb.prints(np.unique(predictions_test, return_counts=True))
+            deb.prints(self.known_classes)
         for idx, c in enumerate(self.known_classes):
             c = c - 1
-            print('idx, class', idx, c)
-            
-            deb.prints(predictions_test.shape)
+            if debug>0:
+                print('idx, class', idx, c)            
+                deb.prints(predictions_test.shape)
             feat_msk = (predictions_test == c)
-            
-            deb.prints(np.unique(feat_msk,return_counts=True))
-            print("open_features stats",np.min(open_features),np.average(open_features),np.max(open_features))
+            if debug>0:            
+                deb.prints(np.unique(feat_msk,return_counts=True))
+                print("open_features stats",np.min(open_features),np.average(open_features),np.max(open_features))
             ##print("Model components",self.model_list[idx].components_)
 #            deb.stats_print(open_features)
             if np.any(feat_msk):
                 #try:
-                
-                deb.prints(open_features.shape)
-                deb.prints(feat_msk.shape)
-
-                deb.prints(open_features[feat_msk, :].shape)
+                if debug>0:                
+                    deb.prints(open_features.shape)
+                    deb.prints(feat_msk.shape)
+                    deb.prints(open_features[feat_msk, :].shape)
                 #mahalanobis_threshold = True
                 if self.mahalanobis_threshold==False:
 #                    deb.prints(np.round(linalg.pinvh(self.model_list[idx].get_precision(), check_finite=False), 2))
@@ -227,7 +226,8 @@ class OpenSetMethodGaussian(OpenSetMethod):
 #                    pdb.set_trace()
                     
                     self.scores[feat_msk] = self.model_list[idx].score_samples(open_features[feat_msk, :])
-                    deb.prints(self.model_list[idx].score(open_features[feat_msk, :]))
+                    if debug>0:
+                        deb.prints(self.model_list[idx].score(open_features[feat_msk, :]))
                     
                     '''
                     # for comparison
@@ -275,9 +275,10 @@ class OpenSetMethodGaussian(OpenSetMethod):
                         scores_class = self.score_loglike(features_pca, 
                                 covariance_matrix_list[idx])
                     self.scores[feat_msk] = scores_class
-                    print("scores_class stats min, avg, max, std",np.min(self.scores[feat_msk]),
-                        np.average(self.scores[feat_msk]),np.max(self.scores[feat_msk]),np.std(self.scores[feat_msk]))
-                    deb.prints(self.scores.shape)
+                    if debug>0:
+                        print("scores_class stats min, avg, max, std",np.min(self.scores[feat_msk]),
+                            np.average(self.scores[feat_msk]),np.max(self.scores[feat_msk]),np.std(self.scores[feat_msk]))
+                        deb.prints(self.scores.shape)
                 #print("self.scores stats min, avg, max",np.min(self.scores[feat_msk]),
                 #    np.average(self.scores[feat_msk]),np.max(self.scores[feat_msk]))
                 #deb.stats_print(self.scores[feat_msk])
@@ -287,9 +288,9 @@ class OpenSetMethodGaussian(OpenSetMethod):
                 #    print("No samples in class",c,"score is 0")
                  #   self.scores[feat_msk] = 0
         self.scores[np.isneginf(self.scores)] = -600
-                 
-        print("scores stats min, avg, max, std",np.min(self.scores),
-                np.average(self.scores),np.max(self.scores),np.std(self.scores))
+        if debug>0:                 
+            print("scores stats min, avg, max, std",np.min(self.scores),
+                    np.average(self.scores),np.max(self.scores),np.std(self.scores))
         self.scoresNotCalculated = False
             
     def predict_unknown_class(self, predictions_test, open_features, debug=1): # self.model_list, self.threshold

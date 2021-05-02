@@ -432,6 +432,7 @@ class LEM(Dataset):
 		if self.dataSource.name == 'SARSource':
 			mode='var'
 			mode='fixed'
+			seq_len = 12
 			
 			#self.im_list=['20170612_S1', '20170706_S1', '20170811_S1', '20170916_S1', '20171010_S1', '20171115_S1', '20171209_S1', '20180114_S1', '20180219_S1', '20180315_S1', '20180420_S1', '20180514_S1', '20180619_S1']
 			# dataset with 1 prev image without last date jun

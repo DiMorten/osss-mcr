@@ -2,7 +2,7 @@
     "open_set": true,
     "setTrainAsTest": false,
     "metricsOnTrain": false,
-    "openSetMethod": "OpenPCS",
+    "openSetMethod": "SoftmaxThresholding",
     "makeCovMatrixIdentity": true,
     "plotROCCurve": true,
     "loadOpenResults": false
