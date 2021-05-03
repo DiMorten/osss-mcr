@@ -246,7 +246,7 @@ class OpticalSourceWithClouds(OpticalSource):
 		self.name='OpticalSourceWithClouds'
 
 class Dataset(object):
-	def __init__(self,path,im_h,im_w,class_n,class_list,name,padded_dates,seq_mode,seq_date,scaler_load,scaler_name):
+	def __init__(self,path,im_h,im_w,class_n,class_list,name,padded_dates,seq_mode,seq_date,scaler_load,scaler_name,seq_len):
 		self.path=Path(path)
 		self.class_n=class_n
 		self.im_h=im_h
@@ -258,6 +258,7 @@ class Dataset(object):
 		self.seq_date=seq_date
 		self.scaler_load = scaler_load
 		self.scaler_name = scaler_name
+		self.seq_len = seq_len
 	@abstractmethod
 	def addDataSource(self,dataSource):
 		pass
@@ -374,7 +375,7 @@ class Dataset(object):
 	def getChannelsToMask(self):
 		return self.dataSource.channelsToMask
 class CampoVerde(Dataset):
-	def __init__(self, seq_mode=None, seq_date=None):
+	def __init__(self, seq_mode=None, seq_date=None, seq_len=12):
 		name='cv'
 		path="../cv_data/"
 		class_n=13
@@ -385,7 +386,7 @@ class CampoVerde(Dataset):
 #		super().__init__(path,im_h,im_w,class_n,class_list,name)
 		scaler_load=False
 		scaler_name=name
-		super().__init__(path,im_h,im_w,class_n,class_list,name,padded_dates,seq_mode,seq_date,scaler_load,scaler_name)
+		super().__init__(path,im_h,im_w,class_n,class_list,name,padded_dates,seq_mode,seq_date,scaler_load,scaler_name,seq_len)
 	def addDataSource(self,dataSource):
 		self.dataSource = dataSource
 		if self.dataSource.name == 'SARSource':
@@ -414,7 +415,7 @@ class CampoVerde(Dataset):
 		self.t_len=len(self.im_list)
 		self.label_list=self.im_list.copy()
 class LEM(Dataset):
-	def __init__(self, seq_mode=None, seq_date=None):
+	def __init__(self, seq_mode=None, seq_date=None, seq_len=12):
 		name='lm'
 		path="../lm_data/"
 		class_n=15
@@ -424,7 +425,7 @@ class LEM(Dataset):
 		padded_dates = [-12, -11]
 		scaler_load=False
 		scaler_name=name
-		super().__init__(path,im_h,im_w,class_n,class_list,name,padded_dates,seq_mode,seq_date,scaler_load,scaler_name)
+		super().__init__(path,im_h,im_w,class_n,class_list,name,padded_dates,seq_mode,seq_date,scaler_load,scaler_name,seq_len)
 
 	def addDataSource(self,dataSource):
 		deb.prints(dataSource.name)
@@ -432,7 +433,7 @@ class LEM(Dataset):
 		if self.dataSource.name == 'SARSource':
 			mode='var'
 			mode='fixed'
-			seq_len = 12
+			#self.seq_len = 12
 			
 			#self.im_list=['20170612_S1', '20170706_S1', '20170811_S1', '20170916_S1', '20171010_S1', '20171115_S1', '20171209_S1', '20180114_S1', '20180219_S1', '20180315_S1', '20180420_S1', '20180514_S1', '20180619_S1']
 			# dataset with 1 prev image without last date jun
@@ -483,8 +484,8 @@ class LEM(Dataset):
 #						'20171209_S1', '20180114_S1', '20180219_S1']
 				# 12 len fixed. label -4
 				elif self.seq_date=='mar':					
-					self.im_list=im_list_full[-3-12+1:-3+1]
-					assert len(self.im_list)==12
+					self.im_list=im_list_full[-3-self.seq_len+1:-3+1]
+					assert len(self.im_list)==self.seq_len
 					assert self.im_list[-1]=='20180315_S1'
 
 #					self.im_list=[
@@ -561,7 +562,7 @@ class LEM(Dataset):
 		deb.prints(self.t_len)
 
 class LEM2(Dataset):
-	def __init__(self, seq_mode=None, seq_date=None):
+	def __init__(self, seq_mode=None, seq_date=None, seq_len=12):
 		name='l2'
 		path="../l2_data/"
 		class_n=15
@@ -571,7 +572,7 @@ class LEM2(Dataset):
 		padded_dates = []
 		scaler_load=True
 		scaler_name='lm'
-		super().__init__(path,im_h,im_w,class_n,class_list,name,padded_dates,seq_mode,seq_date,scaler_load,scaler_name)
+		super().__init__(path,im_h,im_w,class_n,class_list,name,padded_dates,seq_mode,seq_date,scaler_load,scaler_name,seq_len)
 
 	def addDataSource(self,dataSource):
 		deb.prints(dataSource.name)

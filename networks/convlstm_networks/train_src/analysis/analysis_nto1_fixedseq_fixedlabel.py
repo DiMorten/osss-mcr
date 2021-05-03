@@ -102,8 +102,8 @@ def openSetDefine(label_test,
 		deb.prints(known_classes)
 
 		if paramsAnalysis.openSetMethod == 'OpenPCS':
-#			n_components = 90
-			n_components = 20
+			n_components = 90
+#			n_components = 20
 
 			openModel = OpenPCS(known_classes = known_classes,
 #					n_components = 16)
@@ -447,8 +447,8 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 		else:
 #			predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabel(path_test, dataset=dataset)
 #			predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset, loco_class=8)
-			predictionsLoaderTrain = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_train, dataset=dataset)
-			predictionsLoaderTest = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset)
+			predictionsLoaderTrain = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_train, dataset=dataset, seq_len = paramsTrain.seq_len)
+			predictionsLoaderTest = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset, seq_len = paramsTrain.seq_len)
 
 
 		deb.prints(predictionsLoaderTest)
@@ -1298,6 +1298,7 @@ elif dataset=='lm':
 			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_'+args.seq_date+'_loco'+str(loco_class)+'_lm_testlm_fewknownclasses.h5']]	
 #			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_lm_testlm_2kkc.h5']]	
 #			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_lm_testlm_allkkc.h5']]
+#			experiment_groups=[['model_best_UUnet4ConvLSTM_len6_mar.h5']]	
 
 
 		elif args.seq_date =='feb':

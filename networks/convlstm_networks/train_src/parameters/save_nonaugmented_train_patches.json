@@ -10,5 +10,6 @@
     "samples_per_class": 2000,
     "val_set_mode": "random",
     "seq_date": "mar", 
-    "dataset": "lm"     
+    "dataset": "lm",
+    "seq_len": 12     
 }

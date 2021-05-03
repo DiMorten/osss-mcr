@@ -35,7 +35,7 @@ class MIMFixed_PaddedSeq(MIMFixed):
     def batchTrainPreprocess(self, batch, ds, label_date_id, batch_seq_len=12):
         len_input_seq = batch['in'].shape[1]
         #print("batch shape, len input seq", batch['shape'], len_input_seq)
-        if len_input_seq<12:
+        if len_input_seq<batch_seq_len:
             input_ = np.zeros(batch['shape']).astype(np.float16)
             input_[:, -len_input_seq:] = batch['in']
             input_ = ds.addDotyPadded(input_, 

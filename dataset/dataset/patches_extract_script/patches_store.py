@@ -1,7 +1,8 @@
 
 
 from __future__ import division
-import os
+import os 
+import sys
 import math
 import random
 import numpy as np
@@ -68,6 +69,12 @@ parser.add_argument('-seq_date','--seq_date', dest='seq_date',default=True, help
 
 args = parser.parse_args()
 
+sys.path.append('../../../networks/convlstm_networks/train_src/')
+from parameters.parameters_reader import ParamsTrain, ParamsAnalysis
+
+paramsTrain = ParamsTrain('../../../networks/convlstm_networks/train_src/parameters/')
+paramsAnalysis = ParamsAnalysis('../../../networks/convlstm_networks/train_src/analysis/parameters_analysis/')
+
 
 np.set_printoptions(suppress=True)
 
@@ -82,11 +89,11 @@ deb.prints(args.patches_save)
 deb.prints(args.dataset_name)
 #deb.prints('cv')
 if args.dataset_name=='cv':
-    dataset=CampoVerde(args.seq_mode, args.seq_date)
+    dataset=CampoVerde(args.seq_mode, args.seq_date, paramsTrain.seq_len)
 elif args.dataset_name=='lm':
-    dataset=LEM(args.seq_mode, args.seq_date)
+    dataset=LEM(args.seq_mode, args.seq_date, paramsTrain.seq_len)
 elif args.dataset_name=='l2':
-    dataset=LEM2(args.seq_mode, args.seq_date)
+    dataset=LEM2(args.seq_mode, args.seq_date, paramsTrain.seq_len)
 
 if args.dataset_source=='SAR':
     dataSource=SARSource()

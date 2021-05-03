@@ -344,7 +344,7 @@ class Dataset(NetObject):
 			self.labeled_dates = 1
 		elif args.seq_mode == 'var' or args.seq_mode == 'var_label':
 
-			self.labeled_dates = 12
+			self.labeled_dates = paramsTrain.seq_len
 
 			self.patches['train']['label'] = self.patches['train']['label'][:, -self.labeled_dates:]
 			self.patches['test']['label'] = self.patches['test']['label'][:, -self.labeled_dates:]
@@ -1157,7 +1157,7 @@ class NetModel(NetObject):
 		self.stop_epoch=stop_epoch
 		deb.prints(self.stop_epoch)
 
-		self.model_t_len = 12
+		self.model_t_len = paramsTrain.seq_len
 		self.mim = mim
 	def transition_down(self, pipe, filters):
 		pipe = Conv2D(filters, (3, 3), strides=(2, 2), padding='same')(pipe)
@@ -2880,9 +2880,9 @@ class NetModel(NetObject):
 		#for epoch in [0,1]:
 		init_time=time.time()
 
-		model_t_len = 12
+		#paramsTrain.model_t_len = 12
 		batch, data, min_seq_len = self.mim.trainingInit(batch, data, self.t_len, 
-									model_t_len=model_t_len)
+									model_t_len=paramsTrain.seq_len)
 		data = self.mim.valLabelSelect(data)
 
 #		data.doty_flag=True
@@ -2923,10 +2923,10 @@ class NetModel(NetObject):
 				##deb.prints(batch['train']['in'].shape)
 				# set label N to 1
 				#if args.seq_mode=='var' or args.seq_mode=='var_label':
-				batch_seq_len = 12
+#				batch_seq_len = 12
 				#deb.prints(self.mim)
 				input_ = self.mim.batchTrainPreprocess(batch['train'], data.ds, 
-								label_date_id, batch_seq_len)
+								label_date_id, paramsTrain.seq_len)
 				##deb.prints(input_[0].shape)
 				##deb.prints(input_[1].shape)
 				##deb.prints(batch['train']['in'].shape)
@@ -3046,9 +3046,9 @@ class NetModel(NetObject):
 					batch['test']['label'] = data.patches['test']['label'][idx0:idx1]
 
 					if self.batch_test_stats:
-						input_ = batch['test']['in'][:,-12:].astype(np.float16)
+						input_ = batch['test']['in'][:,-paramsTrain.seq_len:].astype(np.float16)
 						if args.seq_mode == 'var_label':
-							input_ = self.addDoty(input_, bounds=[-12, None])
+							input_ = self.addDoty(input_, bounds=[-paramsTrain.seq_len, None])
 						else:
 							input_ = self.addDoty(input_)
 						self.metrics['test']['loss'] += self.graph.test_on_batch(
@@ -3217,11 +3217,11 @@ if __name__ == '__main__':
 #	dataset='l2'
 	#dataset='l2'
 	if dataset=='lm':
-		ds=LEM(args.seq_mode, args.seq_date)
+		ds=LEM(args.seq_mode, args.seq_date, paramsTrain.seq_len)
 	elif dataset=='l2':
-		ds=LEM2(args.seq_mode, args.seq_date)
+		ds=LEM2(args.seq_mode, args.seq_date, paramsTrain.seq_len)
 	elif dataset=='cv':
-		ds=CampoVerde(args.seq_mode, args.seq_date)
+		ds=CampoVerde(args.seq_mode, args.seq_date, paramsTrain.seq_len)
 
 	deb.prints(ds)
 	dataSource = SARSource()

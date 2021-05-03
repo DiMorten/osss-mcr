@@ -26,11 +26,11 @@ def plotMultipleRocCurves(rocCurvesNames, nameID, legendNames):
 
 
 if __name__=='__main__':
-    dataset = 'cv'
+    dataset = 'lm'
 
     if dataset == 'lm':
         date = 'mar'
-        date = 'jun'
+#        date = 'jun'
 #        date = 'jun'
 
         if date == 'mar':
@@ -43,6 +43,15 @@ if __name__=='__main__':
 #                    'roc_curve_OpenPCS_comp20_test_mar_lm.npz',
                     'roc_curve_OpenPCS_comp90_nocovidentity_test.npz',
                     'roc_curve_OpenPCS_comp90_test.npz']
+            rocCurvesNames = ['roc_curve_SoftmaxThresholding__test_mar_lm.npz',
+#                    'roc_curve_OpenGMMS_comp1_full_test_mar_lm.npz',
+#                    'roc_curve_OpenGMMS_comp2_full_test_mar_lm.npz',
+#                    'roc_curve_OpenGMMS_comp4_full_test_mar_lm.npz',
+#                    'roc_curve_OpenGMMS_comp8_test.npz',
+
+#                    'roc_curve_OpenPCS_comp20_test_mar_lm.npz',
+                    'roc_curve_OpenPCS_comp90_nocovidentity_test_mar_lm.npz',
+                    'roc_curve_OpenPCS_comp90_test_mar_lm.npz']
 
             legendNames = ['Softmax Thresholding',
 #                'OpenGMMS 1 components',

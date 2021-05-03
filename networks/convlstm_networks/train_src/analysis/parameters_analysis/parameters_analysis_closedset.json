@@ -3,7 +3,7 @@
     "setTrainAsTest": false,
     "metricsOnTrain": false,
     "openSetMethod": "SoftmaxThresholding",
-    "makeCovMatrixIdentity": true,
+    "makeCovMatrixIdentity": false,
     "plotROCCurve": true,
     "loadOpenResults": false
 
