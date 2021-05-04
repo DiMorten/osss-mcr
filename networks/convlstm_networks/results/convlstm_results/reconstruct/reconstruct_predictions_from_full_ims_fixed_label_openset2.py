@@ -274,9 +274,11 @@ ic(full_label_test.shape)
 #pdb.set_trace()
 # ================ HERE CROP THE IMAGE IF NEEDED
 
-#full_ims_test = full_ims_test[:, 5200:6100,4900:5800]
-#full_label_test = full_label_test[:, 5200:6100,4900:5800]
-#mask = mask[5200:6100,4900:5800]
+croppedFlag = True
+if croppedFlag == True:
+	full_ims_test = full_ims_test[:, 5200:6100,4900:5800]
+	full_label_test = full_label_test[:, 5200:6100,4900:5800]
+	mask = mask[5200:6100,4900:5800]
 
 # convert labels; background is last
 #class_n=len(np.unique(full_label_test))-1
@@ -399,7 +401,13 @@ deb.prints(l2_date)
 del full_label_test
 translate_label_path = '../../../train_src/'
 #name_id = "closed_set"
-name_id = "openpca_identitycovmatrix_90pcs_crop"
+#name_id = "openpca_identitycovmatrix_90pcs_crop"
+name_id = ""
+
+if croppedFlag == True:
+	name_id = name_id + "crop"
+if croppedFlag == True:
+	name_id = name_id + "crop"
 
 open_set_mode = True
 mosaic_flag = True
@@ -413,7 +421,9 @@ if mosaic_flag == True:
 #	threshold = 100
 #	threshold = -210
 	#threshold = -175
+#	threshold = 0.7
 	threshold = 0.7
+#	threshold = -1
 	
 	ic(paramsAnalysis.openSetMethod)
 	ic(threshold)
@@ -437,7 +447,7 @@ if mosaic_flag == True:
 	print(len(range(patch_size//2,row-patch_size//2,stride)))
 	print(len(range(patch_size//2,col-patch_size//2,stride)))
 
-	debug = -1
+	debug = 0
 #	debug = 1
 	t0 = time.time()
 	count = 0
@@ -457,32 +467,46 @@ if mosaic_flag == True:
 
 				input_ = mim.batchTrainPreprocess(patch, ds,  
 							label_date_id = -1) # tstep is -12 to -1
+
+				pred_logits = model.predict(input_)
 				if open_set_mode == True:
 					if debug>-1:
 						print('*'*20, "Load decoder features")
-					test_pred_proba = predictionsLoaderTest.load_decoder_features(model, input_, debug = debug)
-
+					if paramsAnalysis.openSetMethod =='OpenPCS':
+						test_pred_proba = predictionsLoaderTest.load_decoder_features(model, input_, debug = 2) # , debug = debug
+					else:
+						test_pred_proba = pred_logits.copy()
+						test_pred_proba = np.reshape(test_pred_proba, (-1, test_pred_proba.shape[-1]))
 				#print(input_[0].shape)
 				#ic(len(input_))
 
 #				ic(input_.shape)
-				pred_cl = model.predict(input_).argmax(axis=-1)
+				pred_cl = pred_logits.argmax(axis=-1)
 				#deb.prints(pred_cl.shape)
 				_, x, y = pred_cl.shape
 				prediction_shape = pred_cl.shape
 				if debug>-1:
 					print('*'*20, "Starting openModel predict")
-				
+					ic(pred_cl.shape)
+					ic(test_pred_proba.shape)
+
+					ic(np.min(test_pred_proba), np.average(test_pred_proba), np.median(test_pred_proba), np.max(test_pred_proba))
 				# ========================================== open set
 				if open_set_mode == True:
 					# translate the preddictions.
 					pred_cl = predictionsLoaderTest.newLabel2labelTranslate(pred_cl, 
 							translate_label_path + 'new_labels2labels_lm_'+lm_date+'_S1.pkl',
 							bcknd_flag=False, debug = debug)
-
-					openModel.predictScores(pred_cl.flatten(), test_pred_proba,
+					if debug>0:
+						ic(pred_cl.shape)
+					openModel.predictScores(pred_cl, test_pred_proba,
 								debug = debug)
-
+					if debug>-1:
+						ic(np.min(openModel.scores), np.average(openModel.scores), 
+							np.median(openModel.scores), np.max(openModel.scores))
+						ic(openModel.scores.shape)
+						ic(test_pred_proba.shape)
+					#pdb.set_trace()
 					# load the pca model / covariance matrix 
 					#ic(pred_cl.shape)
 					pred_cl = openModel.predict(pred_cl.flatten(), debug = debug)

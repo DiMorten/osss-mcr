@@ -68,7 +68,6 @@ from parameters.parameters_reader import ParamsTrain, ParamsAnalysis
 
 paramsTrain = ParamsTrain('../../../train_src/parameters/')
 paramsAnalysis = ParamsAnalysis('../../../train_src/analysis/parameters_analysis/')
-
 class PredictionsLoader():
 	def __init__(self):
 		pass
@@ -102,9 +101,10 @@ class PredictionsLoaderModel(PredictionsLoader):
 
 
 class PredictionsLoaderModelNto1(PredictionsLoaderModel):
-	def __init__(self, path_test, dataset):
+	def __init__(self, path_test, dataset, seq_len=12):
 		self.path_test=path_test
 		self.dataset=dataset
+		self.seq_len = seq_len
 	def loadPredictions(self,path_model):
 		print("============== loading model =============")
 		model=load_model(path_model, compile=False)
@@ -232,9 +232,12 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 		# add doty
 
 		if self.dataset=='lm':
-			ds=LEM('fixed', seq_date)
+			ds=LEM('fixed', seq_date, self.seq_len)
 		elif self.dataset=='l2':
-			ds=LEM2('fixed', seq_date)
+			ds=LEM2('fixed', seq_date, self.seq_len)
+		elif self.dataset=='cv':
+			ds=CampoVerde('fixed', seq_date, self.seq_len)
+
 		dataSource = SARSource()
 		ds.addDataSource(dataSource)
 	
@@ -245,15 +248,17 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 
 		prediction_dtype = np.float16
 		
-		model_t_len = 12
-		batch['shape'] = (batch['in'].shape[0], model_t_len) + batch['in'].shape[2:]
+		model_t_len = self.seq_len
+		batch['shape'] = (batch['in'].shape[0], self.seq_len) + batch['in'].shape[2:]
 
 		# model dataset is to get the correct last date from the model dataset
 
 		if model_dataset=='lm':
-			train_ds=LEM('fixed',seq_date)
+			train_ds=LEM('fixed',seq_date, self.seq_len)
 		elif model_dataset=='l2':
-			train_ds=LEM2('fixed', seq_date)
+			train_ds=LEM2('fixed', seq_date, self.seq_len)
+		elif model_dataset=='cv':
+			train_ds=CampoVerde('fixed', seq_date, self.seq_len)
 		train_ds.addDataSource(SARSource())
 		# get model class n
 		model_shape = model.layers[-1].output_shape
@@ -273,7 +278,7 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 
 		#pdb.set_trace()
 		test_predictions=(model.predict(input_)).astype(prediction_dtype) 
-		if paramsAnalysis.openSetMethod =='OpenPCS':
+		if paramsAnalysis.openSetMethod =='OpenPCS' or paramsAnalysis.openSetMethod =='OpenGMMS':
 			load_decoder_features_flag = True
 		else:
 			load_decoder_features_flag = False
