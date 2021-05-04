@@ -402,18 +402,18 @@ del full_label_test
 translate_label_path = '../../../train_src/'
 #name_id = "closed_set"
 #name_id = "openpca_identitycovmatrix_90pcs_crop"
-name_id = ""
+name_id = paramsAnalysis.openSetMethod
 
+name_id = name_id + "_" + paramsTrain.dataset
 if croppedFlag == True:
-	name_id = name_id + "crop"
-if croppedFlag == True:
-	name_id = name_id + "crop"
+	name_id = name_id + "_crop"
+
 
 open_set_mode = True
 mosaic_flag = True
 if mosaic_flag == True:
-	#prediction_rebuilt=np.ones((row,col)).astype(np.uint8)*255
-	prediction_rebuilt=np.zeros((row,col)).astype(np.uint8)
+	prediction_rebuilt=np.ones((row,col)).astype(np.uint8)*255
+	scores_rebuilt=np.zeros((row,col)).astype(np.float16)
 
 
 	# --================= open set
@@ -451,6 +451,7 @@ if mosaic_flag == True:
 #	debug = 1
 	t0 = time.time()
 	count = 0
+	# score get
 	for m in range(patch_size//2,row-patch_size//2,stride): 
 		for n in range(patch_size//2,col-patch_size//2,stride):
 			patch_mask = mask_pad[m-patch_size//2:m+patch_size//2 + patch_size%2,
@@ -468,7 +469,7 @@ if mosaic_flag == True:
 				input_ = mim.batchTrainPreprocess(patch, ds,  
 							label_date_id = -1) # tstep is -12 to -1
 
-				pred_logits = model.predict(input_)
+				pred_logits = np.squeeze(model.predict(input_))
 				if open_set_mode == True:
 					if debug>-1:
 						print('*'*20, "Load decoder features")
@@ -476,6 +477,8 @@ if mosaic_flag == True:
 						test_pred_proba = predictionsLoaderTest.load_decoder_features(model, input_, debug = 2) # , debug = debug
 					else:
 						test_pred_proba = pred_logits.copy()
+						test_pred_proba_shape = test_pred_proba.shape 
+						ic(test_pred_proba_shape) # h, w, classes
 						test_pred_proba = np.reshape(test_pred_proba, (-1, test_pred_proba.shape[-1]))
 				#print(input_[0].shape)
 				#ic(len(input_))
@@ -483,7 +486,7 @@ if mosaic_flag == True:
 #				ic(input_.shape)
 				pred_cl = pred_logits.argmax(axis=-1)
 				#deb.prints(pred_cl.shape)
-				_, x, y = pred_cl.shape
+				x, y = pred_cl.shape
 				prediction_shape = pred_cl.shape
 				if debug>-1:
 					print('*'*20, "Starting openModel predict")
@@ -499,6 +502,8 @@ if mosaic_flag == True:
 							bcknd_flag=False, debug = debug)
 					if debug>0:
 						ic(pred_cl.shape)
+					#ic()
+					test_pred_proba = np.reshape(test_pred_proba, test_pred_proba_shape)
 					openModel.predictScores(pred_cl, test_pred_proba,
 								debug = debug)
 					if debug>-1:
@@ -509,14 +514,17 @@ if mosaic_flag == True:
 					#pdb.set_trace()
 					# load the pca model / covariance matrix 
 					#ic(pred_cl.shape)
-					pred_cl = openModel.predict(pred_cl.flatten(), debug = debug)
-					pred_cl = np.reshape(pred_cl, prediction_shape)
-					if debug>-1:
-						print('*'*20, "Finished openModel predict")
+
 				##deb.prints(np.unique(predictions_openmodel, return_counts=True))
 				#deb.prints(predictions_openmodel.shape)
 				##deb.prints(np.unique(prediction_rebuilt, return_counts=True))
-				prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_cl[:,overlap//2:x-overlap//2,overlap//2:y-overlap//2]
+				if debug>1:
+					ic(openModel.scores.shape)
+					ic(overlap)
+					ic(openModel.scores[overlap//2:x-overlap//2,overlap//2:y-overlap//2].shape)
+				scores_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = openModel.scores[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
+				prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_cl[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
+
 #				prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = predictions_openmodel[:,overlap//2:x-overlap//2,overlap//2:y-overlap//2]
 
 				##deb.prints(np.unique(prediction_rebuilt, return_counts=True))
@@ -543,11 +551,24 @@ if mosaic_flag == True:
 	#prediction_rebuilt=np.reshape(prediction_rebuilt,-1)
 
 	np.save('prediction_rebuilt_'+lm_date+'_'+name_id+'.npy',prediction_rebuilt)
+	np.save('scores_rebuilt_'+lm_date+'_'+name_id+'.npy',scores_rebuilt)
+	
 else:
 	prediction_rebuilt = np.load('prediction_rebuilt_'+lm_date+'_'+name_id+'.npy')
-	print(np.unique(prediction_rebuilt, return_counts=True))
+	scores_rebuilt = np.load('scores_rebuilt_'+lm_date+'_'+name_id+'.npy')
+
 
 deb.prints(np.unique(prediction_rebuilt,return_counts=True))
+
+prediction_rebuilt = openModel.predict(prediction_rebuilt, scores_rebuilt, debug = debug)
+
+
+if debug>-1:
+	print('*'*20, "Finished openModel predict")
+
+
+deb.prints(np.unique(prediction_rebuilt,return_counts=True))
+pdb.set_trace()
 deb.prints(label_rebuilt.shape)
 #label_rebuilt=np.reshape(label_rebuilt,-1)
 print("label_rebuilt.unique",np.unique(label_rebuilt,return_counts=True))

@@ -73,10 +73,12 @@ class SoftmaxThresholding(OpenSetMethod):
             deb.prints(pred_proba_max.shape)
 
         self.scores = pred_proba_max
-
-    def predict(self, predictions_test, debug = 1):
-
-        predictions_test[self.scores < self.threshold] = 40 #self.loco_class + 1
+        #ic(self.scores.shape)
+        #ic()
+    def predict(self, predictions_test, scores = None, debug = 1):
+        if np.all(scores) == None:
+            scores = self.scores
+        predictions_test[scores < self.threshold] = 40 #self.loco_class + 1
         return predictions_test
 
 
@@ -291,6 +293,8 @@ class OpenSetMethodGaussian(OpenSetMethod):
         if debug>0:                 
             print("scores stats min, avg, max, std",np.min(self.scores),
                     np.average(self.scores),np.max(self.scores),np.std(self.scores))
+        ic(self.scores.shape)
+        ic()
         self.scoresNotCalculated = False
             
     def predict_unknown_class(self, predictions_test, open_features, debug=1): # self.model_list, self.threshold
