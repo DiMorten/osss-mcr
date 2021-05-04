@@ -35,6 +35,7 @@ class Metrics():
 
         # =================== Find thresholds for specified TPR value
         tpr_threshold_values = [0.1, 0.3, 0.5, 0.7, 0.9]
+        deb.prints(tpr_threshold_values)
         tpr_idxs = [np.where(tpr>tpr_threshold_values[0])[0][0],
             np.where(tpr>tpr_threshold_values[1])[0][0],
             np.where(tpr>tpr_threshold_values[2])[0][0],

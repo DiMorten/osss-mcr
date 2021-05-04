@@ -274,7 +274,7 @@ ic(full_label_test.shape)
 #pdb.set_trace()
 # ================ HERE CROP THE IMAGE IF NEEDED
 
-croppedFlag = True
+croppedFlag = False
 if croppedFlag == True:
 	full_ims_test = full_ims_test[:, 5200:6100,4900:5800]
 	full_label_test = full_label_test[:, 5200:6100,4900:5800]
@@ -405,49 +405,62 @@ translate_label_path = '../../../train_src/'
 name_id = paramsAnalysis.openSetMethod
 
 name_id = name_id + "_" + paramsTrain.dataset
+
 if croppedFlag == True:
 	name_id = name_id + "_crop"
 
-
 open_set_mode = True
-mosaic_flag = True
+mosaic_flag = False
+
+# --================= open set
+
+tpr_threshold_values = [0.1, 0.3, 0.5, 0.7, 0.9]
+
+if paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
+	thresholds = [0.956, 0.9395, 0.9194, 0.8896, 0.796 ]
+
+#	threshold = -19
+#	threshold = 100
+#	threshold = -210
+#threshold = -175
+#	threshold = 0.7
+##threshold = 0.7
+#	threshold = -1
+threshold_idx = 3
+threshold = thresholds[threshold_idx]
+
+ic(paramsAnalysis.openSetMethod)
+ic(threshold)
+ic(paramsAnalysis.makeCovMatrixIdentity)
+
+known_classes = [x + 1 for x in paramsTrain.known_classes]
+deb.prints(known_classes)
+if paramsAnalysis.openSetMethod == 'OpenPCS':
+	openModel = OpenPCS(known_classes = known_classes,
+#			n_components = 16)
+		n_components = 90)
+	openModel.makeCovMatrixIdentitySet(paramsAnalysis.makeCovMatrixIdentity)
+elif paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
+	openModel = SoftmaxThresholding()
+openModel.setThreshold(threshold)
+try:
+	openModel.loadFittedModel(path = '../../../train_src/analysis/')
+except:
+	print("Exception: No fitted model method")
+
+debug = -1
+
 if mosaic_flag == True:
 	prediction_rebuilt=np.ones((row,col)).astype(np.uint8)*255
 	scores_rebuilt=np.zeros((row,col)).astype(np.float16)
 
 
-	# --================= open set
-#	threshold = -19
-#	threshold = 100
-#	threshold = -210
-	#threshold = -175
-#	threshold = 0.7
-	threshold = 0.7
-#	threshold = -1
-	
-	ic(paramsAnalysis.openSetMethod)
-	ic(threshold)
-	ic(paramsAnalysis.makeCovMatrixIdentity)
 
-	known_classes = [x + 1 for x in paramsTrain.known_classes]
-	deb.prints(known_classes)
-	if paramsAnalysis.openSetMethod == 'OpenPCS':
-		openModel = OpenPCS(known_classes = known_classes,
-#			n_components = 16)
-			n_components = 90)
-		openModel.makeCovMatrixIdentitySet(paramsAnalysis.makeCovMatrixIdentity)
-	elif paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
-		openModel = SoftmaxThresholding()
-	openModel.setThreshold(threshold)
-	try:
-		openModel.loadFittedModel(path = '../../../train_src/analysis/')
-	except:
-		print("Exception: No fitted model method")
 	print("stride", stride)
 	print(len(range(patch_size//2,row-patch_size//2,stride)))
 	print(len(range(patch_size//2,col-patch_size//2,stride)))
 
-	debug = 0
+
 #	debug = 1
 	t0 = time.time()
 	count = 0
@@ -478,7 +491,8 @@ if mosaic_flag == True:
 					else:
 						test_pred_proba = pred_logits.copy()
 						test_pred_proba_shape = test_pred_proba.shape 
-						ic(test_pred_proba_shape) # h, w, classes
+						if debug>0:
+							ic(test_pred_proba_shape) # h, w, classes
 						test_pred_proba = np.reshape(test_pred_proba, (-1, test_pred_proba.shape[-1]))
 				#print(input_[0].shape)
 				#ic(len(input_))
@@ -568,7 +582,6 @@ if debug>-1:
 
 
 deb.prints(np.unique(prediction_rebuilt,return_counts=True))
-pdb.set_trace()
 deb.prints(label_rebuilt.shape)
 #label_rebuilt=np.reshape(label_rebuilt,-1)
 print("label_rebuilt.unique",np.unique(label_rebuilt,return_counts=True))
@@ -766,9 +779,11 @@ def save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask,
 	save_folder=dataset+"/"+model_type+"/"
 	pathlib.Path(save_folder).mkdir(parents=True, exist_ok=True)
 	deb.prints(save_folder)
-	cv2.imwrite(save_folder+"prediction_t_"+a.seq_date+"_"+model_type+"_"+name_id+".png",prediction_rgb)
+	threshIdxName = "_threshIdx" + str(threshold_idx)
+	cv2.imwrite(save_folder+"prediction_t_"+a.seq_date+"_"+model_type+"_"+name_id+threshIdxName+".png",prediction_rgb)
 	cv2.imwrite(save_folder+"label_t_"+a.seq_date+"_"+model_type+"_"+name_id+".png",label_rgb)
 	cv2.imwrite(save_folder+"mask.png",mask*200)
+
 
 
 
