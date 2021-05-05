@@ -137,20 +137,22 @@ class OpenSetMethodGaussian(OpenSetMethod):
         print("*"*20, "model was loaded")
         #self.fittedFlag = True
         return loaded_list
-    def predict(self, predictions_test, debug = 1):
+    def predict(self, predictions_test, scores = None, debug = 1):
+        if np.all(scores) == None:
+            scores = self.scores
         if debug > 0:
             deb.prints(self.threshold)
             deb.prints(predictions_test.shape)
 
-            print("*"*20, " Flattening the results")
+#            print("*"*20, " Flattening the results")
 
-        predictions_test = predictions_test.flatten()
+#        predictions_test = predictions_test.flatten()
         if debug > 0:
             deb.prints(predictions_test.shape)
 
-            print("*"*20, " Flattened the results")
+#            print("*"*20, " Flattened the results")
 
-        predictions_test[self.scores < self.threshold] = 40 #self.loco_class + 1
+        predictions_test[scores < self.threshold] = 40 #self.loco_class + 1
         
         if debug > -1:
             deb.prints(np.unique(predictions_test, return_counts=True))
@@ -293,8 +295,8 @@ class OpenSetMethodGaussian(OpenSetMethod):
         if debug>0:                 
             print("scores stats min, avg, max, std",np.min(self.scores),
                     np.average(self.scores),np.max(self.scores),np.std(self.scores))
-        ic(self.scores.shape)
-        ic()
+            ic(self.scores.shape)
+            ic()
         self.scoresNotCalculated = False
             
     def predict_unknown_class(self, predictions_test, open_features, debug=1): # self.model_list, self.threshold

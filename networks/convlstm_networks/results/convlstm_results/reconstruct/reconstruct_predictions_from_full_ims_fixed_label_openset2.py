@@ -274,7 +274,7 @@ ic(full_label_test.shape)
 #pdb.set_trace()
 # ================ HERE CROP THE IMAGE IF NEEDED
 
-croppedFlag = False
+croppedFlag = True
 if croppedFlag == True:
 	full_ims_test = full_ims_test[:, 5200:6100,4900:5800]
 	full_label_test = full_label_test[:, 5200:6100,4900:5800]
@@ -410,15 +410,19 @@ if croppedFlag == True:
 	name_id = name_id + "_crop"
 
 open_set_mode = True
-mosaic_flag = False
+mosaic_flag = True
 
 # --================= open set
 
 tpr_threshold_values = [0.1, 0.3, 0.5, 0.7, 0.9]
-
+tpr_threshold_names = ['0_1', '0_3', '0_5', '0_7', '0_9']
 if paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
 	thresholds = [0.956, 0.9395, 0.9194, 0.8896, 0.796 ]
-
+elif paramsAnalysis.openSetMethod == 'OpenPCS' and paramsAnalysis.makeCovMatrixIdentity == True:
+	thresholds = [-109., -116.4, -125.2, -139.3, -177.3]
+elif paramsAnalysis.openSetMethod == 'OpenPCS' and paramsAnalysis.makeCovMatrixIdentity == False:
+	thresholds = [102.2, 64.2, 53.7, 36.0, -3.5]
+deb.prints(thresholds)
 #	threshold = -19
 #	threshold = 100
 #	threshold = -210
@@ -426,7 +430,7 @@ if paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
 #	threshold = 0.7
 ##threshold = 0.7
 #	threshold = -1
-threshold_idx = 3
+threshold_idx = 4
 threshold = thresholds[threshold_idx]
 
 ic(paramsAnalysis.openSetMethod)
@@ -483,11 +487,12 @@ if mosaic_flag == True:
 							label_date_id = -1) # tstep is -12 to -1
 
 				pred_logits = np.squeeze(model.predict(input_))
+				
 				if open_set_mode == True:
 					if debug>-1:
 						print('*'*20, "Load decoder features")
 					if paramsAnalysis.openSetMethod =='OpenPCS':
-						test_pred_proba = predictionsLoaderTest.load_decoder_features(model, input_, debug = 2) # , debug = debug
+						test_pred_proba = predictionsLoaderTest.load_decoder_features(model, input_, debug = debug) # , debug = debug
 					else:
 						test_pred_proba = pred_logits.copy()
 						test_pred_proba_shape = test_pred_proba.shape 
@@ -517,9 +522,10 @@ if mosaic_flag == True:
 					if debug>0:
 						ic(pred_cl.shape)
 					#ic()
-					test_pred_proba = np.reshape(test_pred_proba, test_pred_proba_shape)
-					openModel.predictScores(pred_cl, test_pred_proba,
+					#test_pred_proba = np.reshape(test_pred_proba, test_pred_proba_shape)
+					openModel.predictScores(pred_cl.flatten(), test_pred_proba,
 								debug = debug)
+					openModel.scores = np.reshape(openModel.scores, (x, y)) # reshape to h, w
 					if debug>-1:
 						ic(np.min(openModel.scores), np.average(openModel.scores), 
 							np.median(openModel.scores), np.max(openModel.scores))
@@ -600,6 +606,7 @@ deb.prints(prediction_rebuilt.shape)
 #pdb.set_trace()
 deb.prints(np.unique(prediction_rebuilt,return_counts=True))
 metrics_flag=True
+small_classes_ignore = False
 if metrics_flag==True:
 	# ========== metrics get =======#
 	def my_f1_score(label,prediction):
@@ -701,9 +708,9 @@ def small_classes_ignore(label, predictions, important_classes_idx):
 	deb.prints(np.unique(predictions,return_counts=True))
 
 	return label, predictions, important_classes_idx
-
-label_rebuilt, prediction_rebuilt, important_classes_idx = small_classes_ignore(
-			label_rebuilt, prediction_rebuilt,important_classes_idx)
+if small_classes_ignore == True:
+	label_rebuilt, prediction_rebuilt, important_classes_idx = small_classes_ignore(
+				label_rebuilt, prediction_rebuilt,important_classes_idx)
 
 prediction_rebuilt[prediction_rebuilt==39] = 20
 label_rebuilt[label_rebuilt==39] = 20
@@ -779,7 +786,7 @@ def save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask,
 	save_folder=dataset+"/"+model_type+"/"
 	pathlib.Path(save_folder).mkdir(parents=True, exist_ok=True)
 	deb.prints(save_folder)
-	threshIdxName = "_threshIdx" + str(threshold_idx)
+	threshIdxName = "_TPR" + tpr_threshold_names[threshold_idx]
 	cv2.imwrite(save_folder+"prediction_t_"+a.seq_date+"_"+model_type+"_"+name_id+threshIdxName+".png",prediction_rgb)
 	cv2.imwrite(save_folder+"label_t_"+a.seq_date+"_"+model_type+"_"+name_id+".png",label_rgb)
 	cv2.imwrite(save_folder+"mask.png",mask*200)
@@ -788,7 +795,7 @@ def save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask,
 
 
 save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask, 
-		sequence_len, custom_colormap, small_classes_ignore=True,
+		sequence_len, custom_colormap, small_classes_ignore=False,
 		name_id = name_id)
 
 if False:
