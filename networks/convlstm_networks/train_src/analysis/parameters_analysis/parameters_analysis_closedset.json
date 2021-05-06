@@ -5,6 +5,6 @@
     "openSetMethod": "OpenPCS",
     "makeCovMatrixIdentity": false,
     "plotROCCurve": true,
-    "loadOpenResults": true
+    "loadOpenResults": false
 
 }

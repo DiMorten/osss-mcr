@@ -330,6 +330,7 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 
 		deb.prints(open_features.shape)
 		print("open_features stats", np.min(open_features), np.average(open_features), np.max(open_features))
+		pdb.set_trace()
 		return open_features
 	def npyLoadPredictions(self, seq_date):
 		batch = {}

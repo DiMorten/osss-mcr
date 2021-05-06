@@ -276,9 +276,13 @@ ic(full_label_test.shape)
 
 croppedFlag = True
 if croppedFlag == True:
-	full_ims_test = full_ims_test[:, 5200:6100,4900:5800]
-	full_label_test = full_label_test[:, 5200:6100,4900:5800]
-	mask = mask[5200:6100,4900:5800]
+#	full_ims_test = full_ims_test[:, 5200:6100,4900:5800]
+#	full_label_test = full_label_test[:, 5200:6100,4900:5800]
+#	mask = mask[5200:6100,4900:5800]
+
+	full_ims_test = full_ims_test[:, 5200:6100,4900:6800]
+	full_label_test = full_label_test[:, 5200:6100,4900:6800]
+	mask = mask[5200:6100,4900:6800]
 
 # convert labels; background is last
 #class_n=len(np.unique(full_label_test))-1
@@ -410,7 +414,7 @@ if croppedFlag == True:
 	name_id = name_id + "_crop"
 
 open_set_mode = True
-mosaic_flag = True
+mosaic_flag = False
 
 # --================= open set
 
@@ -448,11 +452,16 @@ elif paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
 	openModel = SoftmaxThresholding()
 openModel.setThreshold(threshold)
 try:
-	openModel.loadFittedModel(path = '../../../train_src/analysis/')
+	nameID = paramsAnalysis.openSetMethod
+	if paramsAnalysis.makeCovMatrixIdentity == True:
+		nameID = nameID + "_covmatrix"
+	openModel.loadFittedModel(path = '../../../train_src/analysis/', nameID = nameID)
+#	openModel.loadFittedModel(path = '../../../train_src/analysis/')
+
 except:
 	print("Exception: No fitted model method")
 
-debug = -1
+debug = -2
 
 if mosaic_flag == True:
 	prediction_rebuilt=np.ones((row,col)).astype(np.uint8)*255
@@ -487,10 +496,11 @@ if mosaic_flag == True:
 							label_date_id = -1) # tstep is -12 to -1
 
 				pred_logits = np.squeeze(model.predict(input_))
-				
 				if open_set_mode == True:
 					if debug>-1:
 						print('*'*20, "Load decoder features")
+						ic(paramsAnalysis.openSetMethod)
+
 					if paramsAnalysis.openSetMethod =='OpenPCS':
 						test_pred_proba = predictionsLoaderTest.load_decoder_features(model, input_, debug = debug) # , debug = debug
 					else:
@@ -519,6 +529,7 @@ if mosaic_flag == True:
 					pred_cl = predictionsLoaderTest.newLabel2labelTranslate(pred_cl, 
 							translate_label_path + 'new_labels2labels_lm_'+lm_date+'_S1.pkl',
 							bcknd_flag=False, debug = debug)
+
 					if debug>0:
 						ic(pred_cl.shape)
 					#ic()
@@ -526,11 +537,23 @@ if mosaic_flag == True:
 					openModel.predictScores(pred_cl.flatten(), test_pred_proba,
 								debug = debug)
 					openModel.scores = np.reshape(openModel.scores, (x, y)) # reshape to h, w
-					if debug>-1:
+					if debug>0:
+						ic(np.min(test_pred_proba), np.average(test_pred_proba), 
+							np.median(test_pred_proba), np.max(test_pred_proba))
 						ic(np.min(openModel.scores), np.average(openModel.scores), 
 							np.median(openModel.scores), np.max(openModel.scores))
 						ic(openModel.scores.shape)
 						ic(test_pred_proba.shape)
+
+						idx = 1020
+						ic(np.min(test_pred_proba[idx]), np.average(test_pred_proba[idx]), 
+							np.median(test_pred_proba[idx]), np.max(test_pred_proba[idx]))
+						ic(openModel.scores.flatten()[idx].shape)
+						ic(openModel.scores.flatten()[idx])
+						ic(pred_cl.flatten()[idx])
+
+#						pdb.set_trace()
+
 					#pdb.set_trace()
 					# load the pca model / covariance matrix 
 					#ic(pred_cl.shape)
@@ -542,7 +565,8 @@ if mosaic_flag == True:
 					ic(openModel.scores.shape)
 					ic(overlap)
 					ic(openModel.scores[overlap//2:x-overlap//2,overlap//2:y-overlap//2].shape)
-				scores_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = openModel.scores[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
+				if open_set_mode == True:
+					scores_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = openModel.scores[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
 				prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_cl[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
 
 #				prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = predictions_openmodel[:,overlap//2:x-overlap//2,overlap//2:y-overlap//2]
@@ -571,16 +595,29 @@ if mosaic_flag == True:
 	#prediction_rebuilt=np.reshape(prediction_rebuilt,-1)
 
 	np.save('prediction_rebuilt_'+lm_date+'_'+name_id+'.npy',prediction_rebuilt)
-	np.save('scores_rebuilt_'+lm_date+'_'+name_id+'.npy',scores_rebuilt)
+	if open_set_mode == True:
+		np.save('scores_rebuilt_'+lm_date+'_'+name_id+'.npy',scores_rebuilt)
 	
 else:
 	prediction_rebuilt = np.load('prediction_rebuilt_'+lm_date+'_'+name_id+'.npy')
-	scores_rebuilt = np.load('scores_rebuilt_'+lm_date+'_'+name_id+'.npy')
+	if open_set_mode == True:
+		scores_rebuilt = np.load('scores_rebuilt_'+lm_date+'_'+name_id+'.npy')
 
+# ==== checking scores
+if open_set_mode == True:
+	if debug>-3:
+		scores_test = scores_rebuilt[mask == 2]
+		ic(np.min(scores_test), np.average(scores_test), 
+			np.median(scores_test), np.max(scores_test))
+		ic(np.min(scores_rebuilt), np.average(scores_rebuilt), 
+			np.median(scores_rebuilt), np.max(scores_rebuilt))
+		ic(scores_test.shape)
+		ic(scores_test.flatten().shape)
+		ic(scores_rebuilt.shape)
 
-deb.prints(np.unique(prediction_rebuilt,return_counts=True))
+		deb.prints(np.unique(prediction_rebuilt,return_counts=True))
 
-prediction_rebuilt = openModel.predict(prediction_rebuilt, scores_rebuilt, debug = debug)
+		prediction_rebuilt = openModel.predict(prediction_rebuilt, scores_rebuilt, debug = debug)
 
 
 if debug>-1:
@@ -592,7 +629,6 @@ deb.prints(label_rebuilt.shape)
 #label_rebuilt=np.reshape(label_rebuilt,-1)
 print("label_rebuilt.unique",np.unique(label_rebuilt,return_counts=True))
 
-#pdb.set_trace()
 
 #mask = np.reshape(mask,-1)
 deb.prints(prediction_rebuilt.shape)
@@ -606,7 +642,6 @@ deb.prints(prediction_rebuilt.shape)
 #pdb.set_trace()
 deb.prints(np.unique(prediction_rebuilt,return_counts=True))
 metrics_flag=True
-small_classes_ignore = False
 if metrics_flag==True:
 	# ========== metrics get =======#
 	def my_f1_score(label,prediction):
@@ -708,9 +743,9 @@ def small_classes_ignore(label, predictions, important_classes_idx):
 	deb.prints(np.unique(predictions,return_counts=True))
 
 	return label, predictions, important_classes_idx
-if small_classes_ignore == True:
-	label_rebuilt, prediction_rebuilt, important_classes_idx = small_classes_ignore(
-				label_rebuilt, prediction_rebuilt,important_classes_idx)
+
+label_rebuilt, prediction_rebuilt, important_classes_idx = small_classes_ignore(
+			label_rebuilt, prediction_rebuilt,important_classes_idx)
 
 prediction_rebuilt[prediction_rebuilt==39] = 20
 label_rebuilt[label_rebuilt==39] = 20
@@ -729,6 +764,8 @@ def save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask,
 #	for t_step in range(sequence_len):
 	label_rebuilt[mask==0]=255
 	prediction_rebuilt[mask==0]=255	
+	deb.prints(np.unique(label_rebuilt,return_counts=True))
+	deb.prints(np.unique(prediction_rebuilt,return_counts=True))
 
 
 	print("everything outside mask is 255")
@@ -795,7 +832,7 @@ def save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask,
 
 
 save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask, 
-		sequence_len, custom_colormap, small_classes_ignore=False,
+		sequence_len, custom_colormap, small_classes_ignore=True,
 		name_id = name_id)
 
 if False:

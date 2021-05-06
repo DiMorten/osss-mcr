@@ -207,16 +207,19 @@ class OpenSetMethodGaussian(OpenSetMethod):
             deb.prints(np.unique(predictions_test, return_counts=True))
             deb.prints(self.known_classes)
         for idx, c in enumerate(self.known_classes):
-            c = c - 1
-            if debug>0:
+            #c = c - 1
+            if debug>-1:
                 print('idx, class', idx, c)            
                 deb.prints(predictions_test.shape)
             feat_msk = (predictions_test == c)
-            if debug>0:            
+            
+            if debug>-1:            
                 deb.prints(np.unique(feat_msk,return_counts=True))
                 print("open_features stats",np.min(open_features),np.average(open_features),np.max(open_features))
+
             ##print("Model components",self.model_list[idx].components_)
 #            deb.stats_print(open_features)
+            
             if np.any(feat_msk):
                 #try:
                 if debug>0:                
@@ -278,6 +281,7 @@ class OpenSetMethodGaussian(OpenSetMethod):
                         #        covariance_matrix_list[idx])                            
                         scores_class = self.score_loglike(features_pca, 
                                 covariance_matrix_list[idx])
+
                     self.scores[feat_msk] = scores_class
                     if debug>0:
                         print("scores_class stats min, avg, max, std",np.min(self.scores[feat_msk]),
@@ -296,7 +300,7 @@ class OpenSetMethodGaussian(OpenSetMethod):
             print("scores stats min, avg, max, std",np.min(self.scores),
                     np.average(self.scores),np.max(self.scores),np.std(self.scores))
             ic(self.scores.shape)
-            ic()
+            
         self.scoresNotCalculated = False
             
     def predict_unknown_class(self, predictions_test, open_features, debug=1): # self.model_list, self.threshold
@@ -494,13 +498,16 @@ class OpenSetMethodGaussian(OpenSetMethod):
             toc = time.time()
             print('    Time spent fitting model %d: %.2f' % (c, toc - tic))
 
-        def save_list_in_pickle(list_, filename = "models.pckl"):
+        def save_list_in_pickle(list_, filename):
             with open(filename, "wb") as f:
                 for model in list_:
                     pickle.dump(model, f)
             print("*"*30, "List was saved in pickle")
-        save_list_in_pickle(self.model_list, "models.pckl")
-        save_list_in_pickle(self.covariance_matrix_list, "covariance_matrix_list.pckl")
+        nameID = self.name 
+        if self.makeCovMatrixIdentityFlag:
+            nameID = nameID + "_covmatrix"
+        save_list_in_pickle(self.model_list, "models_"+nameID+".pckl")
+        save_list_in_pickle(self.covariance_matrix_list, "covariance_matrix_list_"+nameID+".pckl")
             
         #predictions_test[pred_proba_max < self.threshold] = self.loco_class + 1
 
@@ -557,15 +564,20 @@ class OpenSetMethodGaussian(OpenSetMethod):
         else:
             print('!'*20, 'minimum samples not met for class',cl)
             return None, None
-    def loadFittedModel(self, path):
+    def loadFittedModel(self, path, nameID=""):
         #
         cwd = os.getcwd()
         deb.prints(cwd)
         #pdb.set_trace()
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        self.model_list = self.listLoadFromPickle(path + "models.pckl")
-        self.covariance_matrix_list = self.listLoadFromPickle(path + "covariance_matrix_list.pckl")
+#        ic(path + "models_"+nameID+".pckl")
+#        ic(path + "covariance_matrix_list_"+nameID+".pckl")
+
+#        pdb.set_trace()
+        self.model_list = self.listLoadFromPickle(path + "models_"+nameID+".pckl")
+        self.covariance_matrix_list = self.listLoadFromPickle(path + "covariance_matrix_list_"+nameID+".pckl")
         self.fittedFlag = True
+
         
 class OpenPCS(OpenSetMethodGaussian):
     def __init__(self, known_classes, n_components, loco_class=0):

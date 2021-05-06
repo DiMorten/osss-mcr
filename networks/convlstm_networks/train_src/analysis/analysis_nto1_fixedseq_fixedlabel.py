@@ -30,7 +30,7 @@ from parameters.parameters_reader import ParamsTrain, ParamsAnalysis
 import time
 from metrics import Metrics
 from scipy import optimize
-
+from icecream import ic
 paramsTrain = ParamsTrain('../parameters/')
 paramsAnalysis = ParamsAnalysis('parameters_analysis/')
 
@@ -729,6 +729,25 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 			
 			openModel.loadScores()
 		
+		#==== metrics on scores
+		ic(np.min(test_pred_proba), np.average(test_pred_proba), 
+			np.median(test_pred_proba), np.max(test_pred_proba))
+
+		ic(np.min(openModel.scores), np.average(openModel.scores), 
+			np.median(openModel.scores), np.max(openModel.scores))
+		ic(openModel.scores.shape)
+		idx = 0
+		ic(np.min(test_pred_proba[idx]), np.average(test_pred_proba[idx]), 
+			np.median(test_pred_proba[idx]), np.max(test_pred_proba[idx]))
+		ic(np.min(openModel.scores[idx]), np.average(openModel.scores[idx]), 
+			np.median(openModel.scores[idx]), np.max(openModel.scores[idx]))
+		idx = 100
+		ic(np.min(test_pred_proba[idx]), np.average(test_pred_proba[idx]), 
+			np.median(test_pred_proba[idx]), np.max(test_pred_proba[idx]))
+		ic(np.min(openModel.scores[idx]), np.average(openModel.scores[idx]), 
+			np.median(openModel.scores[idx]), np.max(openModel.scores[idx]))
+
+		pdb.set_trace()
 		metrics = Metrics()
 		if paramsAnalysis.plotROCCurve == True:
 			metrics.plotROCCurve(label_test_t, openModel.scores, 
