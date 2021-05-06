@@ -274,7 +274,7 @@ ic(full_label_test.shape)
 #pdb.set_trace()
 # ================ HERE CROP THE IMAGE IF NEEDED
 
-croppedFlag = True
+croppedFlag = False
 if croppedFlag == True:
 #	full_ims_test = full_ims_test[:, 5200:6100,4900:5800]
 #	full_label_test = full_label_test[:, 5200:6100,4900:5800]
@@ -820,13 +820,23 @@ def save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask,
 
 	label_rgb=cv2.cvtColor(label_rgb,cv2.COLOR_BGR2RGB)
 	prediction_rgb=cv2.cvtColor(prediction_rgb,cv2.COLOR_BGR2RGB)
-	save_folder=dataset+"/"+model_type+"/"
+	save_folder=dataset+"/"+model_type+"/"+a.seq_date+"/"
 	pathlib.Path(save_folder).mkdir(parents=True, exist_ok=True)
 	deb.prints(save_folder)
 	threshIdxName = "_TPR" + tpr_threshold_names[threshold_idx]
-	cv2.imwrite(save_folder+"prediction_t_"+a.seq_date+"_"+model_type+"_"+name_id+threshIdxName+".png",prediction_rgb)
-	cv2.imwrite(save_folder+"label_t_"+a.seq_date+"_"+model_type+"_"+name_id+".png",label_rgb)
-	cv2.imwrite(save_folder+"mask.png",mask*200)
+
+
+	prediction_savename = save_folder+"prediction_t_"+a.seq_date+"_"+model_type+"_"+name_id+threshIdxName+".png"
+	ic(prediction_savename)
+	print("saving...")
+	ret = cv2.imwrite(prediction_savename, prediction_rgb)
+	deb.prints(ret)
+	ret = cv2.imwrite(save_folder+"label_t_"+a.seq_date+"_"+model_type+"_"+name_id+".png",label_rgb)
+	deb.prints(ret)
+	ret = cv2.imwrite(save_folder+"mask.png",mask*200)
+	deb.prints(ret)
+
+	pdb.set_trace()
 
 
 
