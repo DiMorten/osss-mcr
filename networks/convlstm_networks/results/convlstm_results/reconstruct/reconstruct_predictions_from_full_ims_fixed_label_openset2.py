@@ -274,7 +274,7 @@ ic(full_label_test.shape)
 #pdb.set_trace()
 # ================ HERE CROP THE IMAGE IF NEEDED
 
-croppedFlag = False
+croppedFlag = True
 if croppedFlag == True:
 #	full_ims_test = full_ims_test[:, 5200:6100,4900:5800]
 #	full_label_test = full_label_test[:, 5200:6100,4900:5800]
@@ -408,7 +408,11 @@ translate_label_path = '../../../train_src/'
 #name_id = "openpca_identitycovmatrix_90pcs_crop"
 name_id = paramsAnalysis.openSetMethod
 
+if paramsAnalysis.openSetMethod == "OpenPCS" and paramsAnalysis.makeCovMatrixIdentity == True:
+	name_id = name_id + "++" 
 name_id = name_id + "_" + paramsTrain.dataset
+
+#name_id = name_id + "_" + a.seq_date
 
 if croppedFlag == True:
 	name_id = name_id + "_crop"
@@ -451,11 +455,13 @@ if paramsAnalysis.openSetMethod == 'OpenPCS':
 elif paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
 	openModel = SoftmaxThresholding()
 openModel.setThreshold(threshold)
+
 try:
-	nameID = paramsAnalysis.openSetMethod
-	if paramsAnalysis.makeCovMatrixIdentity == True:
-		nameID = nameID + "_covmatrix"
-	openModel.loadFittedModel(path = '../../../train_src/analysis/', nameID = nameID)
+	openModel.setModelSaveNameID(paramsTrain.seq_date, paramsTrain.dataset)
+#	nameID = paramsAnalysis.openSetMethod
+#	if paramsAnalysis.makeCovMatrixIdentity == True:
+#		nameID = nameID + "_covmatrix"
+	openModel.loadFittedModel(path = '../../../train_src/analysis/', nameID = openModel.nameID)
 #	openModel.loadFittedModel(path = '../../../train_src/analysis/')
 
 except:
@@ -534,8 +540,11 @@ if mosaic_flag == True:
 						ic(pred_cl.shape)
 					#ic()
 					#test_pred_proba = np.reshape(test_pred_proba, test_pred_proba_shape)
-					openModel.predictScores(pred_cl.flatten(), test_pred_proba,
+					openModel.predictScores(pred_cl.flatten() - 1, test_pred_proba,
 								debug = debug)
+#					openModel.predictScores(pred_cl.flatten(), test_pred_proba,
+#								debug = debug)
+
 					openModel.scores = np.reshape(openModel.scores, (x, y)) # reshape to h, w
 					if debug>0:
 						ic(np.min(test_pred_proba), np.average(test_pred_proba), 
@@ -573,9 +582,9 @@ if mosaic_flag == True:
 
 				##deb.prints(np.unique(prediction_rebuilt, return_counts=True))
 				#pdb.set_trace()
-		count = count + 1
-		if count % 500 == 0:
-			print(count)
+			count = count + 1
+			if count % 50000 == 0:
+				print(count)
 
 		#if count == 40:
 		#	deb.prints(np.unique(prediction_rebuilt, return_counts=True))
@@ -825,8 +834,10 @@ def save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask,
 	deb.prints(save_folder)
 	threshIdxName = "_TPR" + tpr_threshold_names[threshold_idx]
 
-
-	prediction_savename = save_folder+"prediction_t_"+a.seq_date+"_"+model_type+"_"+name_id+threshIdxName+".png"
+	if open_set_mode == True:
+		prediction_savename = save_folder+"prediction_t_"+a.seq_date+"_"+model_type+"_"+name_id+threshIdxName+".png"
+	else:
+		prediction_savename = save_folder+"prediction_t_"+a.seq_date+"_"+model_type+"_closedset.png"
 	ic(prediction_savename)
 	print("saving...")
 	ret = cv2.imwrite(prediction_savename, prediction_rgb)
@@ -835,9 +846,7 @@ def save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask,
 	deb.prints(ret)
 	ret = cv2.imwrite(save_folder+"mask.png",mask*200)
 	deb.prints(ret)
-
 	pdb.set_trace()
-
 
 
 
@@ -845,56 +854,3 @@ save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask,
 		sequence_len, custom_colormap, small_classes_ignore=True,
 		name_id = name_id)
 
-if False:
-	pdb.set_trace()
-	# everything outside mask is 255
-	for t_step in range(sequence_len):
-		label_rebuilt[t_step][mask==0]=255
-
-		prediction_rebuilt[t_step][mask==0]=255
-	#label_rebuilt[label_rebuilt==class_n]=255
-		
-	print("everything outside mask is 255")
-	print(np.unique(label_rebuilt,return_counts=True))
-	print(np.unique(prediction_rebuilt,return_counts=True))
-
-
-	# Paint it!
-
-
-	print(custom_colormap.shape)
-	#class_n=custom_colormap.shape[0]
-	#=== change to rgb
-	print("Gray",prediction_rebuilt.dtype)
-	prediction_rgb=np.zeros((prediction_rebuilt.shape+(3,))).astype(np.uint8)
-	label_rgb=np.zeros_like(prediction_rgb)
-	print("Adding color...")
-
-	for t_step in range(sequence_len):
-		prediction_rgb[t_step]=cv2.cvtColor(prediction_rebuilt[t_step],cv2.COLOR_GRAY2RGB)
-		label_rgb[t_step]=cv2.cvtColor(label_rebuilt[t_step],cv2.COLOR_GRAY2RGB)
-
-	print("RGB",prediction_rgb.dtype,prediction_rgb.shape)
-
-	for idx in range(custom_colormap.shape[0]):
-		print("Assigning color. t_step:",idx)
-		for chan in [0,1,2]:
-			prediction_rgb[:,:,:,chan][prediction_rgb[:,:,:,chan]==idx]=custom_colormap[idx,chan]
-			label_rgb[:,:,:,chan][label_rgb[:,:,:,chan]==idx]=custom_colormap[idx,chan]
-
-	print("RGB",prediction_rgb.dtype,prediction_rgb.shape)
-
-	#for idx in range(custom_colormap.shape[0]):
-	#	for chan in [0,1,2]:
-	#		prediction_rgb[:,:,chan][prediction_rgb[:,:,chan]==correspondence[idx]]=custom_colormap[idx,chan]
-	print("Saving the resulting images for all dates...")
-	for t_step in range(sequence_len):
-
-		label_rgb[t_step]=cv2.cvtColor(label_rgb[t_step],cv2.COLOR_BGR2RGB)
-		prediction_rgb[t_step]=cv2.cvtColor(prediction_rgb[t_step],cv2.COLOR_BGR2RGB)
-		save_folder=dataset+"/"+model_type+"/"
-		pathlib.Path(save_folder).mkdir(parents=True, exist_ok=True)
-		cv2.imwrite(save_folder+"prediction_t"+str(t_step)+"_"+model_type+".png",prediction_rgb[t_step])
-		cv2.imwrite(save_folder+"label_t"+str(t_step)+"_"+model_type+".png",label_rgb[t_step])
-
-	print(prediction_rgb[0,0,0,:])

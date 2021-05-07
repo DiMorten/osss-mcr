@@ -207,13 +207,15 @@ class OpenSetMethodGaussian(OpenSetMethod):
             deb.prints(np.unique(predictions_test, return_counts=True))
             deb.prints(self.known_classes)
         for idx, c in enumerate(self.known_classes):
-            #c = c - 1
-            if debug>-1:
+            c = c - 1
+            if debug>0:
                 print('idx, class', idx, c)            
                 deb.prints(predictions_test.shape)
+                deb.prints(np.unique(predictions_test))
+                deb.prints(c)
             feat_msk = (predictions_test == c)
             
-            if debug>-1:            
+            if debug>0:            
                 deb.prints(np.unique(feat_msk,return_counts=True))
                 print("open_features stats",np.min(open_features),np.average(open_features),np.max(open_features))
 
@@ -473,6 +475,13 @@ class OpenSetMethodGaussian(OpenSetMethod):
 #        pdb.set_trace()
         return features, np.eye(covariance_matrix.shape[0])
 
+    def setModelSaveNameID(self, dataset="", seq_date=""):
+        self.nameID = self.name 
+        if self.makeCovMatrixIdentityFlag:
+            self.nameID = self.nameID + "_covmatrix"
+        self.nameID = self.nameID + "_" + dataset
+        self.nameID = self.nameID + "_" + seq_date          
+
     def fit_pca_models(self, label_test, predictions_test, open_features):
         self.model_list = []
         self.covariance_matrix_list = []
@@ -503,11 +512,10 @@ class OpenSetMethodGaussian(OpenSetMethod):
                 for model in list_:
                     pickle.dump(model, f)
             print("*"*30, "List was saved in pickle")
-        nameID = self.name 
-        if self.makeCovMatrixIdentityFlag:
-            nameID = nameID + "_covmatrix"
-        save_list_in_pickle(self.model_list, "models_"+nameID+".pckl")
-        save_list_in_pickle(self.covariance_matrix_list, "covariance_matrix_list_"+nameID+".pckl")
+
+        #self.setModelSaveNameID()
+        save_list_in_pickle(self.model_list, "models_"+self.nameID+".pckl")
+        save_list_in_pickle(self.covariance_matrix_list, "covariance_matrix_list_"+self.nameID+".pckl")
             
         #predictions_test[pred_proba_max < self.threshold] = self.loco_class + 1
 
@@ -570,8 +578,8 @@ class OpenSetMethodGaussian(OpenSetMethod):
         deb.prints(cwd)
         #pdb.set_trace()
         dir_path = os.path.dirname(os.path.realpath(__file__))
-#        ic(path + "models_"+nameID+".pckl")
-#        ic(path + "covariance_matrix_list_"+nameID+".pckl")
+        ic(path + "models_"+nameID+".pckl")
+        ic(path + "covariance_matrix_list_"+nameID+".pckl")
 
 #        pdb.set_trace()
         self.model_list = self.listLoadFromPickle(path + "models_"+nameID+".pckl")

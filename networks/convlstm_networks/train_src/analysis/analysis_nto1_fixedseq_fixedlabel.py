@@ -695,7 +695,7 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 
 		openModel.appendToSaveNameId('_'+paramsTrain.seq_date)
 		openModel.appendToSaveNameId('_'+paramsTrain.dataset)
-
+		openModel.setModelSaveNameID(paramsTrain.seq_date, paramsTrain.dataset)
 		if paramsAnalysis.loadOpenResults == False:
 
 			openModel.fit(label_train, predictions_train, train_pred_proba)
@@ -728,26 +728,26 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 		else:
 			
 			openModel.loadScores()
-		
+		if debug > -2:
+
+			ic(np.min(test_pred_proba), np.average(test_pred_proba), 
+				np.median(test_pred_proba), np.max(test_pred_proba))
+
+			ic(np.min(openModel.scores), np.average(openModel.scores), 
+				np.median(openModel.scores), np.max(openModel.scores))
+			ic(openModel.scores.shape)
+			idx = 0
+			ic(np.min(test_pred_proba[idx]), np.average(test_pred_proba[idx]), 
+				np.median(test_pred_proba[idx]), np.max(test_pred_proba[idx]))
+			ic(np.min(openModel.scores[idx]), np.average(openModel.scores[idx]), 
+				np.median(openModel.scores[idx]), np.max(openModel.scores[idx]))
+			idx = 100
+			ic(np.min(test_pred_proba[idx]), np.average(test_pred_proba[idx]), 
+				np.median(test_pred_proba[idx]), np.max(test_pred_proba[idx]))
+			ic(np.min(openModel.scores[idx]), np.average(openModel.scores[idx]), 
+				np.median(openModel.scores[idx]), np.max(openModel.scores[idx]))
+
 		#==== metrics on scores
-		ic(np.min(test_pred_proba), np.average(test_pred_proba), 
-			np.median(test_pred_proba), np.max(test_pred_proba))
-
-		ic(np.min(openModel.scores), np.average(openModel.scores), 
-			np.median(openModel.scores), np.max(openModel.scores))
-		ic(openModel.scores.shape)
-		idx = 0
-		ic(np.min(test_pred_proba[idx]), np.average(test_pred_proba[idx]), 
-			np.median(test_pred_proba[idx]), np.max(test_pred_proba[idx]))
-		ic(np.min(openModel.scores[idx]), np.average(openModel.scores[idx]), 
-			np.median(openModel.scores[idx]), np.max(openModel.scores[idx]))
-		idx = 100
-		ic(np.min(test_pred_proba[idx]), np.average(test_pred_proba[idx]), 
-			np.median(test_pred_proba[idx]), np.max(test_pred_proba[idx]))
-		ic(np.min(openModel.scores[idx]), np.average(openModel.scores[idx]), 
-			np.median(openModel.scores[idx]), np.max(openModel.scores[idx]))
-
-		pdb.set_trace()
 		metrics = Metrics()
 		if paramsAnalysis.plotROCCurve == True:
 			metrics.plotROCCurve(label_test_t, openModel.scores, 
