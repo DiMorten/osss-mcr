@@ -481,7 +481,9 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelAdditionalTestClsses(Predictio
 		#pdb.set_trace()
 		
 #		self.mim = MIMVarLabel_PaddedSeq()
-		self.mim = MIMFixed()
+#		self.mim = MIMFixed()
+		self.mim = MIMFixed_PaddedSeq()
+
 
 		data = {'labeled_dates': 12}
 		data['labeled_dates'] = 12

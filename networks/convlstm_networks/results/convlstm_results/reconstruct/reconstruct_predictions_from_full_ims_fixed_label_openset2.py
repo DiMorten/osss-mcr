@@ -10,7 +10,7 @@ import pathlib
 from utils import seq_add_padding, add_padding
 import pdb
 sys.path.append('../../../train_src/')
-from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixedLabelAllLabels
+from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixedLabelAllLabels, MIMFixed_PaddedSeq
 sys.path.append('../../../../../dataset/dataset/patches_extract_script/')
 from dataSource import DataSource, SARSource, OpticalSource, Dataset, LEM, LEM2, CampoVerde, OpticalSourceWithClouds, Humidity
 from sklearn.metrics import confusion_matrix,f1_score,accuracy_score,classification_report,recall_score,precision_score
@@ -38,7 +38,9 @@ parser.add_argument('-mdl', '--model', dest='model_type',
 
 parser.add_argument('--seq_date', dest='seq_date', 
 #                    default='mar',
-                    default='mar',
+#                    default='mar',
+                    default='jun',
+
                     help='seq_date')
 parser.add_argument('--model_dataset', dest='model_dataset', 
                     default='lm',
@@ -49,7 +51,9 @@ paramsAnalysis = ParamsAnalysis('../../../train_src/analysis/parameters_analysis
 
 
 a = parser.parse_args()
+a.seq_date = paramsTrain.seq_date
 
+ic(a.seq_date)
 dataset=a.dataset
 model_type=a.model_type
 
@@ -88,8 +92,10 @@ if dataset=='lm':
 		#predictions_path=path+'prediction_BUnet4ConvLSTM_repeating4.npy'
 		predictions_path = path+'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+a.seq_date+'_700perclass.h5'			
 		predictions_path = path+'model_best_UUnet4ConvLSTM_fixed_label_fixed_'+a.seq_date+'_loco8_lm_testlm_fewknownclasses.h5'	
-
-		predictions_path = path+'model_best_UUnet4ConvLSTM_fixed_label_fixed_'+a.seq_date+'_loco8_lm_testlm_fewknownclasses.h5'	
+		if paramsTrain.seq_date == 'mar':
+			predictions_path = path+'model_best_UUnet4ConvLSTM_fixed_label_fixed_'+a.seq_date+'_loco8_lm_testlm_fewknownclasses.h5'	
+		elif paramsTrain.seq_date == 'jun':
+			predictions_path = path+'model_best_UUnet4ConvLSTM_fixed_label_fixed_jun_lm_fewknownclasses2.h5'	
 
 	elif model_type=='atrous':
 		predictions_path=path+'prediction_BAtrousConvLSTM_2convins5.npy'
@@ -186,6 +192,7 @@ elif dataset=='l2':
 					[114,114,56],
 					[53,255,255]])
 print("Loading patch locations...")
+ic(predictions_path)
 #order_id_load=False
 #if order_id_load==False:
 #	order_id=patch_file_id_order_from_folder(folder_load_path)
@@ -274,7 +281,7 @@ ic(full_label_test.shape)
 #pdb.set_trace()
 # ================ HERE CROP THE IMAGE IF NEEDED
 
-croppedFlag = True
+croppedFlag = False
 if croppedFlag == True:
 #	full_ims_test = full_ims_test[:, 5200:6100,4900:5800]
 #	full_label_test = full_label_test[:, 5200:6100,4900:5800]
@@ -296,7 +303,8 @@ ic(mask.shape)
 print("Full label test unique",np.unique(full_label_test,return_counts=True))
 #pdb.set_trace()
 # add doty
-mim = MIMFixed()
+#mim = MIMFixed()
+mim = MIMFixed_PaddedSeq()
 
 data = {'labeled_dates': 12}
 data['labeled_dates'] = 12
@@ -467,7 +475,7 @@ try:
 except:
 	print("Exception: No fitted model method")
 
-debug = -2
+debug = -3
 
 if mosaic_flag == True:
 	prediction_rebuilt=np.ones((row,col)).astype(np.uint8)*255
@@ -497,6 +505,7 @@ if mosaic_flag == True:
 				#patch = patch.reshape((1,patch_size,patch_size,bands))
 
 				# features = predictionsLoaderTest.getFeatures(patch['in'], )
+				patch['shape'] = (patch['in'].shape[0], paramsTrain.seq_len) + patch['in'].shape[2:]
 
 				input_ = mim.batchTrainPreprocess(patch, ds,  
 							label_date_id = -1) # tstep is -12 to -1

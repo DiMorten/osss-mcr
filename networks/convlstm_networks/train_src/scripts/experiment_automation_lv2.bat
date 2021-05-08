@@ -25,7 +25,7 @@ set seq_mode=fixed
 set loco_class=8
 :: pasture
 
-set seq_date=mar
+set seq_date=jun
 :: set seq_date=jun
 
 :: set seq_date=feb
@@ -40,7 +40,7 @@ set id=dummy
 :: set id=fixed_label_%seq_mode%_%seq_date%_lm_testlm_2kkc_groupclasses
 :: set id=fixed_label_%seq_mode%_%seq_date%_lm_testlm_allkkc
 
-call patches_extract.bat %dataset% %dataSource% %seq_mode% %seq_date%
+:: call patches_extract.bat %dataset% %dataSource% %seq_mode% %seq_date%
 call experiment_automation.bat %id% %model% %dataset% %dataSource% %seq_mode% %seq_date% %loco_class%
 
 :: set seq_date=jul
