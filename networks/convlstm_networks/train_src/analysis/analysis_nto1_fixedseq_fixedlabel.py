@@ -602,8 +602,8 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 					thresholds = np.linspace(100, 500, 10)
 				elif args.seq_date == 'jun':
 					threshold_range = (-500, 200)
-					best_threshold = -28.366	
-					#best_threshold = -193.6 # jun pca identity 90	
+					#best_threshold = -28.366	
+					best_threshold = -193.6 # jun pca identity 90	
 
 				#thresholds = [-2000]
 	#			thresholds = np.linspace(-250, -150, 10)

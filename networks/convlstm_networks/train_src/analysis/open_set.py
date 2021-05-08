@@ -208,14 +208,14 @@ class OpenSetMethodGaussian(OpenSetMethod):
             deb.prints(self.known_classes)
         for idx, c in enumerate(self.known_classes):
             c = c - 1
-            if debug>-1:
+            if debug>0:
                 print('idx, class', idx, c)            
                 deb.prints(predictions_test.shape)
                 deb.prints(np.unique(predictions_test))
                 deb.prints(c)
             feat_msk = (predictions_test == c)
             
-            if debug>-1:            
+            if debug>0:            
                 deb.prints(np.unique(feat_msk,return_counts=True))
                 print("open_features stats",np.min(open_features),np.average(open_features),np.max(open_features))
 

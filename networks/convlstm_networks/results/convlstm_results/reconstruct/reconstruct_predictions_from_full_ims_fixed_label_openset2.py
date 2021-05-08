@@ -281,7 +281,7 @@ ic(full_label_test.shape)
 #pdb.set_trace()
 # ================ HERE CROP THE IMAGE IF NEEDED
 
-croppedFlag = False
+croppedFlag = True
 if croppedFlag == True:
 #	full_ims_test = full_ims_test[:, 5200:6100,4900:5800]
 #	full_label_test = full_label_test[:, 5200:6100,4900:5800]
@@ -557,7 +557,7 @@ if mosaic_flag == True:
 #								debug = debug)
 #					pdb.set_trace()
 					openModel.scores = np.reshape(openModel.scores, (x, y)) # reshape to h, w
-					if debug>0:
+					if debug>-2:
 						ic(np.min(test_pred_proba), np.average(test_pred_proba), 
 							np.median(test_pred_proba), np.max(test_pred_proba))
 						ic(np.min(openModel.scores), np.average(openModel.scores), 
@@ -857,7 +857,6 @@ def save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask,
 	deb.prints(ret)
 	ret = cv2.imwrite(save_folder+"mask.png",mask*200)
 	deb.prints(ret)
-	pdb.set_trace()
 
 
 
