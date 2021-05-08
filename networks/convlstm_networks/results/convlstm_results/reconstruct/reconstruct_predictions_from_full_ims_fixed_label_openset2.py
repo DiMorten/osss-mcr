@@ -426,7 +426,7 @@ if croppedFlag == True:
 	name_id = name_id + "_crop"
 
 open_set_mode = True
-mosaic_flag = False
+mosaic_flag = True
 
 # --================= open set
 
@@ -475,7 +475,7 @@ try:
 except:
 	print("Exception: No fitted model method")
 
-debug = -3
+debug = -2
 
 if mosaic_flag == True:
 	prediction_rebuilt=np.ones((row,col)).astype(np.uint8)*255
@@ -524,6 +524,8 @@ if mosaic_flag == True:
 						if debug>0:
 							ic(test_pred_proba_shape) # h, w, classes
 						test_pred_proba = np.reshape(test_pred_proba, (-1, test_pred_proba.shape[-1]))
+#				ic(np.average(test_pred_proba))
+
 				#print(input_[0].shape)
 				#ic(len(input_))
 
@@ -553,7 +555,7 @@ if mosaic_flag == True:
 								debug = debug)
 #					openModel.predictScores(pred_cl.flatten(), test_pred_proba,
 #								debug = debug)
-
+#					pdb.set_trace()
 					openModel.scores = np.reshape(openModel.scores, (x, y)) # reshape to h, w
 					if debug>0:
 						ic(np.min(test_pred_proba), np.average(test_pred_proba), 
@@ -635,7 +637,7 @@ if open_set_mode == True:
 
 		deb.prints(np.unique(prediction_rebuilt,return_counts=True))
 
-		prediction_rebuilt = openModel.predict(prediction_rebuilt, scores_rebuilt, debug = debug)
+	prediction_rebuilt = openModel.predict(prediction_rebuilt, scores_rebuilt, debug = debug)
 
 
 if debug>-1:
