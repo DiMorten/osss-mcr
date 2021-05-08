@@ -46,6 +46,12 @@ class OpenSetMethod(): # abstract
         self.scores = np.load('scores_'+self.name+'_'+self.saveNameId+'.npy')
     def appendToSaveNameId(self, saveNameId):
         self.saveNameId = self.saveNameId + saveNameId
+    def setModelSaveNameID(self, dataset="", seq_date=""):
+        self.nameID = self.name 
+
+        self.nameID = self.nameID + "_" + dataset
+        self.nameID = self.nameID + "_" + seq_date          
+
 class SoftmaxThresholding(OpenSetMethod):
 
     def __init__(self, loco_class=0):
@@ -199,23 +205,23 @@ class OpenSetMethodGaussian(OpenSetMethod):
     
     def predictScores(self, predictions_test, open_features, debug=1):
         self.scores = np.zeros_like(predictions_test, dtype=np.float)
-        if debug>0:
+        if debug>-2:
             print('*'*20, 'predict_unknown_class')
             deb.prints(self.model_list)
         covariance_matrix_list = self.covariance_matrix_list.copy()
-        if debug>0:          
+        if debug>-2:          
             deb.prints(np.unique(predictions_test, return_counts=True))
             deb.prints(self.known_classes)
         for idx, c in enumerate(self.known_classes):
-            c = c - 1
-            if debug>0:
+#            c = c - 1
+            if debug>-2:
                 print('idx, class', idx, c)            
                 deb.prints(predictions_test.shape)
-                deb.prints(np.unique(predictions_test))
+                deb.prints(np.unique(predictions_test, return_counts=True))
                 deb.prints(c)
             feat_msk = (predictions_test == c)
             
-            if debug>0:            
+            if debug>-2:            
                 deb.prints(np.unique(feat_msk,return_counts=True))
                 print("open_features stats",np.min(open_features),np.average(open_features),np.max(open_features))
 
@@ -224,7 +230,7 @@ class OpenSetMethodGaussian(OpenSetMethod):
             
             if np.any(feat_msk):
                 #try:
-                if debug>0:                
+                if debug>-1:                
                     deb.prints(open_features.shape)
                     deb.prints(feat_msk.shape)
                     deb.prints(open_features[feat_msk, :].shape)

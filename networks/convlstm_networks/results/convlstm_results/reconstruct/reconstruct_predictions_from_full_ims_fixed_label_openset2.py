@@ -10,7 +10,7 @@ import pathlib
 from utils import seq_add_padding, add_padding
 import pdb
 sys.path.append('../../../train_src/')
-from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixedLabelAllLabels
+from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixedLabelAllLabels, MIMFixed_PaddedSeq
 sys.path.append('../../../../../dataset/dataset/patches_extract_script/')
 from dataSource import DataSource, SARSource, OpticalSource, Dataset, LEM, LEM2, CampoVerde, OpticalSourceWithClouds, Humidity
 from sklearn.metrics import confusion_matrix,f1_score,accuracy_score,classification_report,recall_score,precision_score
@@ -50,8 +50,12 @@ paramsAnalysis = ParamsAnalysis('../../../train_src/analysis/parameters_analysis
 
 a = parser.parse_args()
 
+a.dataset = paramsTrain.dataset
+a.seq_date = paramsTrain.seq_date
+
 dataset=a.dataset
 model_type=a.model_type
+
 
 direct_execution=False
 if direct_execution==True:
@@ -89,7 +93,10 @@ if dataset=='lm':
 		predictions_path = path+'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+a.seq_date+'_700perclass.h5'			
 		predictions_path = path+'model_best_UUnet4ConvLSTM_fixed_label_fixed_'+a.seq_date+'_loco8_lm_testlm_fewknownclasses.h5'	
 
-		predictions_path = path+'model_best_UUnet4ConvLSTM_fixed_label_fixed_'+a.seq_date+'_loco8_lm_testlm_fewknownclasses.h5'	
+		if a.seq_date == 'mar':
+			predictions_path = path+'model_best_UUnet4ConvLSTM_fixed_label_fixed_'+a.seq_date+'_loco8_lm_testlm_fewknownclasses.h5'	
+		elif a.seq_date == 'jun':
+			predictions_path = path+'model_best_UUnet4ConvLSTM_fixed_label_fixed_jun_lm_fewknownclasses2.h5'	
 
 	elif model_type=='atrous':
 		predictions_path=path+'prediction_BAtrousConvLSTM_2convins5.npy'
@@ -296,7 +303,8 @@ ic(mask.shape)
 print("Full label test unique",np.unique(full_label_test,return_counts=True))
 #pdb.set_trace()
 # add doty
-mim = MIMFixed()
+#mim = MIMFixed()
+mim = MIMFixed_PaddedSeq()
 
 data = {'labeled_dates': 12}
 data['labeled_dates'] = 12
@@ -418,18 +426,27 @@ if croppedFlag == True:
 	name_id = name_id + "_crop"
 
 open_set_mode = True
-mosaic_flag = False
+mosaic_flag = True
 
 # --================= open set
 
 tpr_threshold_values = [0.1, 0.3, 0.5, 0.7, 0.9]
 tpr_threshold_names = ['0_1', '0_3', '0_5', '0_7', '0_9']
-if paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
-	thresholds = [0.956, 0.9395, 0.9194, 0.8896, 0.796 ]
-elif paramsAnalysis.openSetMethod == 'OpenPCS' and paramsAnalysis.makeCovMatrixIdentity == True:
-	thresholds = [-109., -116.4, -125.2, -139.3, -177.3]
-elif paramsAnalysis.openSetMethod == 'OpenPCS' and paramsAnalysis.makeCovMatrixIdentity == False:
-	thresholds = [102.2, 64.2, 53.7, 36.0, -3.5]
+if paramsTrain.dataset == 'lm'  and paramsTrain.seq_date == 'mar':
+	if paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
+		thresholds = [0.956, 0.9395, 0.9194, 0.8896, 0.796 ]
+	elif paramsAnalysis.openSetMethod == 'OpenPCS' and paramsAnalysis.makeCovMatrixIdentity == True:
+		thresholds = [-109., -116.4, -125.2, -139.3, -177.3]
+	elif paramsAnalysis.openSetMethod == 'OpenPCS' and paramsAnalysis.makeCovMatrixIdentity == False:
+		thresholds = [102.2, 64.2, 53.7, 36.0, -3.5]
+if paramsTrain.dataset == 'lm'  and paramsTrain.seq_date == 'jun':
+	if paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
+		thresholds = [0.9507, 0.9414, 0.932,  0.9067, 0.805]
+	elif paramsAnalysis.openSetMethod == 'OpenPCS' and paramsAnalysis.makeCovMatrixIdentity == True:
+		thresholds = [-108.10554097, -117.10615606, -127.44819797, -143.76708535, -184.1262301 ]
+	elif paramsAnalysis.openSetMethod == 'OpenPCS' and paramsAnalysis.makeCovMatrixIdentity == False:
+		thresholds = [ 77.52661477,  40.03403332,  29.19242245,  12.49784905, -27.00064113]
+
 deb.prints(thresholds)
 #	threshold = -19
 #	threshold = 100
@@ -494,6 +511,7 @@ if mosaic_flag == True:
 							n-patch_size//2:n+patch_size//2 + patch_size%2]
 							
 				patch['in'] = np.expand_dims(patch['in'], axis = 0)
+				patch['shape'] = (patch['in'].shape[0], paramsTrain.seq_len) + patch['in'].shape[2:]
 				#patch = patch.reshape((1,patch_size,patch_size,bands))
 
 				# features = predictionsLoaderTest.getFeatures(patch['in'], )
@@ -540,10 +558,11 @@ if mosaic_flag == True:
 						ic(pred_cl.shape)
 					#ic()
 					#test_pred_proba = np.reshape(test_pred_proba, test_pred_proba_shape)
-					openModel.predictScores(pred_cl.flatten() - 1, test_pred_proba,
-								debug = debug)
-#					openModel.predictScores(pred_cl.flatten(), test_pred_proba,
+#					openModel.predictScores(pred_cl.flatten() - 1, test_pred_proba,
 #								debug = debug)
+
+					openModel.predictScores(pred_cl.flatten(), test_pred_proba,
+								debug = debug)
 
 					openModel.scores = np.reshape(openModel.scores, (x, y)) # reshape to h, w
 					if debug>0:
@@ -846,7 +865,7 @@ def save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask,
 	deb.prints(ret)
 	ret = cv2.imwrite(save_folder+"mask.png",mask*200)
 	deb.prints(ret)
-	pdb.set_trace()
+#	pdb.set_trace()
 
 
 
