@@ -281,7 +281,7 @@ ic(full_label_test.shape)
 #pdb.set_trace()
 # ================ HERE CROP THE IMAGE IF NEEDED
 
-croppedFlag = True
+croppedFlag = False
 if croppedFlag == True:
 #	full_ims_test = full_ims_test[:, 5200:6100,4900:5800]
 #	full_label_test = full_label_test[:, 5200:6100,4900:5800]
