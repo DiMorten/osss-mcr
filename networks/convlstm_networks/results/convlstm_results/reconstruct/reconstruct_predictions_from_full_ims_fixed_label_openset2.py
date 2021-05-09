@@ -52,6 +52,7 @@ paramsAnalysis = ParamsAnalysis('../../../train_src/analysis/parameters_analysis
 
 a = parser.parse_args()
 a.seq_date = paramsTrain.seq_date
+a.dataset = paramsTrain.dataset
 
 ic(a.seq_date)
 dataset=a.dataset
@@ -136,6 +137,8 @@ elif dataset=='cv':
 	elif model_type=='unet':
 		#predictions_path=path+'prediction_BUnet4ConvLSTM_repeating2.npy'
 		predictions_path=path+'model_best_BUnet4ConvLSTM_int16.h5'
+		if paramsTrain.seq_date == 'jun':
+			predictions_path = path+'model_best_UUnet4ConvLSTM_jun.h5'
 	elif model_type=='atrous':
 		predictions_path=path+'prediction_BAtrousConvLSTM_repeating2.npy'			
 	elif model_type=='atrousgap':
@@ -356,59 +359,63 @@ lm_labeled_dates = ['20170612', '20170706', '20170811', '20170916', '20171010', 
 					'20171209', '20180114', '20180219', '20180315', '20180420', '20180514']
 l2_labeled_dates = ['20191012','20191117','20191223','20200116','20200221','20200316',
 					'20200421','20200515','20200620','20200714','20200819','20200912']
+cv_labeled_dates = ['20151029', '20151110', '20151122', '20151204', '20151216', '20160121', 
+					'20160214', '20160309', '20160321', '20160508', '20160520', '20160613', 
+					'20160707', '20160731']
+if paramsTrain.dataset == 'lm':
+	if a.seq_date=='jan':
+		dataset_date = lm_labeled_dates[7]
+		l2_date = l2_labeled_dates[3]
 
-if a.seq_date=='jan':
-	lm_date = lm_labeled_dates[7]
-	l2_date = l2_labeled_dates[3]
+	elif a.seq_date=='feb':
+		dataset_date = lm_labeled_dates[8]
+		l2_date = l2_labeled_dates[4]
 
-elif a.seq_date=='feb':
-	lm_date = lm_labeled_dates[8]
-	l2_date = l2_labeled_dates[4]
+	elif a.seq_date=='mar':
+		dataset_date = lm_labeled_dates[9]
+		l2_date = l2_labeled_dates[5]
 
-elif a.seq_date=='mar':
-	lm_date = lm_labeled_dates[9]
-	l2_date = l2_labeled_dates[5]
+	elif a.seq_date=='apr':
+		dataset_date = lm_labeled_dates[10]
+		l2_date = l2_labeled_dates[6]
 
-elif a.seq_date=='apr':
-	lm_date = lm_labeled_dates[10]
-	l2_date = l2_labeled_dates[6]
+	elif a.seq_date=='may':
+		dataset_date = lm_labeled_dates[11]
+		l2_date = l2_labeled_dates[7]
 
-elif a.seq_date=='may':
-	lm_date = lm_labeled_dates[11]
-	l2_date = l2_labeled_dates[7]
+	elif a.seq_date=='jun':
+		dataset_date = lm_labeled_dates[0]
+		l2_date = l2_labeled_dates[8]
 
-elif a.seq_date=='jun':
-	lm_date = lm_labeled_dates[0]
-	l2_date = l2_labeled_dates[8]
+	elif a.seq_date=='jul':
+		dataset_date = lm_labeled_dates[1]
+		l2_date = l2_labeled_dates[9]
 
-elif a.seq_date=='jul':
-	lm_date = lm_labeled_dates[1]
-	l2_date = l2_labeled_dates[9]
+	elif a.seq_date=='aug':
+		dataset_date = lm_labeled_dates[2]
+		l2_date = l2_labeled_dates[10]
 
-elif a.seq_date=='aug':
-	lm_date = lm_labeled_dates[2]
-	l2_date = l2_labeled_dates[10]
+	elif a.seq_date=='sep':
+		dataset_date = lm_labeled_dates[3]
+		l2_date = l2_labeled_dates[11]
 
-elif a.seq_date=='sep':
-	lm_date = lm_labeled_dates[3]
-	l2_date = l2_labeled_dates[11]
+	elif a.seq_date=='oct':
+		dataset_date = lm_labeled_dates[4]
+		l2_date = l2_labeled_dates[0]
 
-elif a.seq_date=='oct':
-	lm_date = lm_labeled_dates[4]
-	l2_date = l2_labeled_dates[0]
+	elif a.seq_date=='nov':
+		dataset_date = lm_labeled_dates[5]
+		l2_date = l2_labeled_dates[1]
 
-elif a.seq_date=='nov':
-	lm_date = lm_labeled_dates[5]
-	l2_date = l2_labeled_dates[1]
-
-if a.seq_date=='dec':
-#dec
-	lm_date = lm_labeled_dates[6]
-	l2_date = l2_labeled_dates[2]
-
+	if a.seq_date=='dec':
+	#dec
+		dataset_date = lm_labeled_dates[6]
+		l2_date = l2_labeled_dates[2]
+elif paramsTrain.dataset == 'cv':
+	if a.seq_date=='jun':
+		dataset_date = cv_labeled_dates[11]
 deb.prints(a.seq_date)
-deb.prints(lm_date)
-deb.prints(l2_date)
+deb.prints(dataset_date)
 
 del full_label_test
 translate_label_path = '../../../train_src/'
@@ -432,12 +439,24 @@ mosaic_flag = True
 
 tpr_threshold_values = [0.1, 0.3, 0.5, 0.7, 0.9]
 tpr_threshold_names = ['0_1', '0_3', '0_5', '0_7', '0_9']
-if paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
-	thresholds = [0.956, 0.9395, 0.9194, 0.8896, 0.796 ]
-elif paramsAnalysis.openSetMethod == 'OpenPCS' and paramsAnalysis.makeCovMatrixIdentity == True:
-	thresholds = [-109., -116.4, -125.2, -139.3, -177.3]
-elif paramsAnalysis.openSetMethod == 'OpenPCS' and paramsAnalysis.makeCovMatrixIdentity == False:
-	thresholds = [102.2, 64.2, 53.7, 36.0, -3.5]
+if paramsTrain.dataset == 'lm':
+	if paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
+		thresholds = [0.956, 0.9395, 0.9194, 0.8896, 0.796 ]
+	elif paramsAnalysis.openSetMethod == 'OpenPCS' and paramsAnalysis.makeCovMatrixIdentity == True:
+		thresholds = [-109., -116.4, -125.2, -139.3, -177.3]
+	elif paramsAnalysis.openSetMethod == 'OpenPCS' and paramsAnalysis.makeCovMatrixIdentity == False:
+		thresholds = [102.2, 64.2, 53.7, 36.0, -3.5]
+elif paramsTrain.dataset == 'cv':
+	if paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
+		thresholds = [0.693, 0.647, 0.5845, 0.4814, 0.4177]
+	elif paramsAnalysis.openSetMethod == 'OpenPCS' and paramsAnalysis.makeCovMatrixIdentity == True:
+		thresholds = [-105.84688768, -112.12532142, -118.91670095, -130.085203,   -162.30341175]
+	elif paramsAnalysis.openSetMethod == 'OpenPCS' and paramsAnalysis.makeCovMatrixIdentity == False:
+		thresholds = [231.84498577, 213.47336953, 205.30315372, 194.55497196, 162.43701695]
+
+
+	
+
 deb.prints(thresholds)
 #	threshold = -19
 #	threshold = 100
@@ -544,7 +563,7 @@ if mosaic_flag == True:
 				if open_set_mode == True:
 					# translate the preddictions.
 					pred_cl = predictionsLoaderTest.newLabel2labelTranslate(pred_cl, 
-							translate_label_path + 'new_labels2labels_lm_'+lm_date+'_S1.pkl',
+							translate_label_path + 'new_labels2labels_'+paramsTrain.dataset+'_'+dataset_date+'_S1.pkl',
 							bcknd_flag=False, debug = debug)
 
 					if debug>0:
@@ -614,14 +633,14 @@ if mosaic_flag == True:
 
 	#prediction_rebuilt=np.reshape(prediction_rebuilt,-1)
 
-	np.save('prediction_rebuilt_'+lm_date+'_'+name_id+'.npy',prediction_rebuilt)
+	np.save('prediction_rebuilt_'+dataset_date+'_'+name_id+'.npy',prediction_rebuilt)
 	if open_set_mode == True:
-		np.save('scores_rebuilt_'+lm_date+'_'+name_id+'.npy',scores_rebuilt)
+		np.save('scores_rebuilt_'+dataset_date+'_'+name_id+'.npy',scores_rebuilt)
 	
 else:
-	prediction_rebuilt = np.load('prediction_rebuilt_'+lm_date+'_'+name_id+'.npy')
+	prediction_rebuilt = np.load('prediction_rebuilt_'+dataset_date+'_'+name_id+'.npy')
 	if open_set_mode == True:
-		scores_rebuilt = np.load('scores_rebuilt_'+lm_date+'_'+name_id+'.npy')
+		scores_rebuilt = np.load('scores_rebuilt_'+dataset_date+'_'+name_id+'.npy')
 
 # ==== checking scores
 if open_set_mode == True:
@@ -655,7 +674,7 @@ deb.prints(prediction_rebuilt.shape)
 # THIS NEEDS TO BE DONE BEFORE THE OPEN SET
 if open_set_mode == False:
 	prediction_rebuilt = predictionsLoaderTest.newLabel2labelTranslate(prediction_rebuilt, 
-			translate_label_path + 'new_labels2labels_lm_'+lm_date+'_S1.pkl',
+			translate_label_path + 'new_labels2labels_'+paramsTrain.dataset+'_'+dataset_date+'_S1.pkl',
 			bcknd_flag=False)
 
 deb.prints(prediction_rebuilt.shape)
@@ -730,13 +749,13 @@ if metrics_flag==True:
 			
 	metrics = metrics_get(label_rebuilt, prediction_rebuilt, mask, small_classes_ignore=False)
 	print(metrics)
-	f = open("metrics_fixed_"+lm_date+".pkl", "wb")
+	f = open("metrics_fixed_"+dataset_date+".pkl", "wb")
 	pickle.dump(metrics, f)
 	f.close()
 
 	metrics = metrics_get(label_rebuilt, prediction_rebuilt, mask, small_classes_ignore=True)
 	print(metrics)
-	f = open("metrics_fixed_"+lm_date+"_small_classes_ignore.pkl", "wb")
+	f = open("metrics_fixed_"+dataset_date+"_small_classes_ignore.pkl", "wb")
 	pickle.dump(metrics, f)
 	f.close()
 

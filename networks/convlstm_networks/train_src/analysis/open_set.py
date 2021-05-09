@@ -46,6 +46,13 @@ class OpenSetMethod(): # abstract
         self.scores = np.load('scores_'+self.name+'_'+self.saveNameId+'.npy')
     def appendToSaveNameId(self, saveNameId):
         self.saveNameId = self.saveNameId + saveNameId
+
+    def setModelSaveNameID(self, dataset="", seq_date=""):
+        self.nameID = self.name 
+
+        self.nameID = self.nameID + "_" + dataset
+        self.nameID = self.nameID + "_" + seq_date          
+
 class SoftmaxThresholding(OpenSetMethod):
 
     def __init__(self, loco_class=0):
