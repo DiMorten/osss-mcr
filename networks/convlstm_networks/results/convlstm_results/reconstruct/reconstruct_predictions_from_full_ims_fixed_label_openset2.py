@@ -284,15 +284,16 @@ ic(full_label_test.shape)
 #pdb.set_trace()
 # ================ HERE CROP THE IMAGE IF NEEDED
 
-croppedFlag = False
+croppedFlag = True
 if croppedFlag == True:
-#	full_ims_test = full_ims_test[:, 5200:6100,4900:5800]
-#	full_label_test = full_label_test[:, 5200:6100,4900:5800]
-#	mask = mask[5200:6100,4900:5800]
 
-	full_ims_test = full_ims_test[:, 5200:6100,4900:6800]
-	full_label_test = full_label_test[:, 5200:6100,4900:6800]
-	mask = mask[5200:6100,4900:6800]
+#	full_ims_test = full_ims_test[:, 5200:6100,4900:6800]
+#	full_label_test = full_label_test[:, 5200:6100,4900:6800]
+#	mask = mask[5200:6100,4900:6800]
+
+	full_ims_test = full_ims_test[:, 5100:6100,4900:5900]
+	full_label_test = full_label_test[:, 5100:6100,4900:5900]
+	mask = mask[5100:6100,4900:5900]
 
 # convert labels; background is last
 #class_n=len(np.unique(full_label_test))-1
@@ -432,7 +433,7 @@ name_id = name_id + "_" + paramsTrain.dataset
 if croppedFlag == True:
 	name_id = name_id + "_crop"
 
-open_set_mode = True
+open_set_mode = False
 mosaic_flag = True
 
 # --================= open set
@@ -867,11 +868,12 @@ def save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask,
 	if open_set_mode == True:
 		prediction_savename = save_folder+"prediction_t_"+a.seq_date+"_"+model_type+"_"+name_id+threshIdxName+".png"
 	else:
-		prediction_savename = save_folder+"prediction_t_"+a.seq_date+"_"+model_type+"_closedset.png"
+		prediction_savename = save_folder+"prediction_t_"+a.seq_date+"_"+model_type+"_closedset_"+name_id+".png"
 	ic(prediction_savename)
 	print("saving...")
 	ret = cv2.imwrite(prediction_savename, prediction_rgb)
 	deb.prints(ret)
+	ic(save_folder+"label_t_"+a.seq_date+"_"+model_type+"_"+name_id+".png")
 	ret = cv2.imwrite(save_folder+"label_t_"+a.seq_date+"_"+model_type+"_"+name_id+".png",label_rgb)
 	deb.prints(ret)
 	ret = cv2.imwrite(save_folder+"mask.png",mask*200)

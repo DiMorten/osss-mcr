@@ -9,7 +9,7 @@
 
 
 :: set dataset=lm
-set dataset=cv
+set dataset=lm
 :: set dataset=lm
 
 ::::dataSource='OpticalWithClouds'
@@ -25,7 +25,7 @@ set seq_mode=fixed
 set loco_class=8
 :: pasture
 
-set seq_date=jun
+set seq_date=mar
 :: set seq_date=jun
 
 :: set seq_date=feb
