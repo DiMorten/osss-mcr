@@ -8,5 +8,8 @@
     "group_bcknd_classes": true,
     "samples_per_class": 2000,
     "val_set_mode": "random",
-    "dataset": "cv"     
+    "seq_date": "mar", 
+    "dataset": "lm",
+    "seq_len": 12     
+
 }

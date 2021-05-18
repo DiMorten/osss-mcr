@@ -295,6 +295,18 @@ if croppedFlag == True:
 	full_label_test = full_label_test[:, 5100:6100,4900:5900]
 	mask = mask[5100:6100,4900:5900]
 
+save_input_im = True
+if save_input_im == True:
+	im = np.load('../../../../../dataset/dataset/'+dataset+'_data/in_np2/20180315_S1.npy')
+	ic(im.shape)
+	im = im[5100:6100,4900:5900, 1]
+	ic(im.shape)
+#	max_val = np.average(im)+np.std(im)*4
+	max_val = 0.6
+	im = im * 255/max_val
+	ic(np.min(im), np.average(im), np.max(im))
+	cv2.imwrite('sample_im.png', im.astype(np.uint8))
+	pdb.set_trace()
 # convert labels; background is last
 #class_n=len(np.unique(full_label_test))-1
 #full_label_test=full_label_test-1
