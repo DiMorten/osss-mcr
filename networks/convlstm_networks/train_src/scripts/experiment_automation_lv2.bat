@@ -34,13 +34,13 @@ set seq_date=mar
 :: set id=fixed_label_%seq_mode%_%seq_date%_loco%loco_class%_lm_testlm_lessclass8_groupclasses
 :: set id=fixed_label_%seq_mode%_%seq_date%_lm_fewknownclasses2
 :: set id=len6_%seq_date%
-set id=dummy
+set id=dummy_fit
 
 :: set id=fixed_label_%seq_mode%_%seq_date%_lm_testlm_2kkc
 :: set id=fixed_label_%seq_mode%_%seq_date%_lm_testlm_2kkc_groupclasses
 :: set id=fixed_label_%seq_mode%_%seq_date%_lm_testlm_allkkc
 
-call patches_extract.bat %dataset% %dataSource% %seq_mode% %seq_date%
+:: call patches_extract.bat %dataset% %dataSource% %seq_mode% %seq_date%
 call experiment_automation.bat %id% %model% %dataset% %dataSource% %seq_mode% %seq_date% %loco_class%
 
 :: set seq_date=jul

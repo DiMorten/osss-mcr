@@ -53,6 +53,9 @@ from dataSource import DataSource, SARSource, OpticalSource, Dataset, LEM, LEM2,
 from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixedLabelAllLabels, MIMFixed_PaddedSeq
 from parameters.parameters_reader import ParamsTrain
 
+from icecream import ic
+from monitor import Monitor
+
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('-tl', '--t_len', dest='t_len',
 					type=int, default=7, help='t len')
@@ -2795,6 +2798,51 @@ class NetModel(NetObject):
 		metrics=data.metrics_get(data.patches['test']['prediction'],data.patches['test']['label'],debug=1)
 		print('oa={}, aa={}, f1={}, f1_wght={}'.format(metrics['overall_acc'],
 			metrics['average_acc'],metrics['f1_score'],metrics['f1_score_weighted']))
+	def train_fit(self, data):
+		# data.patches['train']['in']
+		# data.patches['train']['in']
+		#========= VAL INIT
+
+
+		if self.val_set:
+			count,unique=np.unique(data.patches['val']['label'].argmax(axis=-1),return_counts=True)
+			print("Val label count,unique",count,unique)
+
+		count,unique=np.unique(data.patches['train']['label'].argmax(axis=-1),return_counts=True)
+		print("Train count,unique",count,unique)
+		
+		count,unique=np.unique(data.patches['test']['label'].argmax(axis=-1),return_counts=True)
+		print("Test count,unique",count,unique)
+		# self.batch['train']['size']
+
+		ic(data.patches['train']['in'].shape)
+		ic(data.patches['train']['label'].shape)
+#		pdb.set_trace()
+		data.patches['train']['label'] = np.expand_dims(data.patches['train']['label'].argmax(axis=-1),axis=-1).astype(np.int8)
+		data.patches['val']['label'] = np.expand_dims(data.patches['val']['label'].argmax(axis=-1),axis=-1).astype(np.int8)
+
+		from keras.callbacks import EarlyStopping
+#		es = EarlyStopping(monitor = 'val_loss',
+#                          patience = 10)
+
+		history = self.graph.fit(data.patches['train']['in'], data.patches['train']['label'],
+			batch_size = 16, epochs = 200, 
+#			validation_data=(data.patches['val']['in'], data.patches['val']['label']),
+#			callbacks = [es])
+			callbacks = [Monitor(
+				validation=(data.patches['val']['in'], data.patches['val']['label']),
+				patience=10, classes=5)]
+			)
+
+		self.graph.save('model_best_fit.h5')		
+		pdb.set_trace()
+
+	def evaluate(self, data):		
+		data.patches['test']['prediction'] = self.graph.predict(data.patches['test']['in'])
+		metrics_test=data.metrics_get(data.patches['test']['prediction'],
+			data.patches['test']['label'],debug=2)
+		deb.prints(metrics_test)
+
 	def train(self, data):
 
 		# Random shuffle
@@ -3402,14 +3450,20 @@ if __name__ == '__main__':
 	model.graph.compile(loss=loss,
 				  optimizer=adam, metrics=metrics)
 
-	model_load=False
-	if model_load:
-		model=load_model('/home/lvc/Documents/Jorg/sbsr/fcn_model/results/seq2_true_norm/models/model_1000.h5')
-		model.test(data)
+#	paramsTrain.model_load=False
+	if paramsTrain.model_load:
+#		model=load_model('/home/lvc/Documents/Jorg/sbsr/fcn_model/results/seq2_true_norm/models/model_1000.h5')
+		model=load_model('model_best_fit.h5')
+	else:
+		model.train_fit(data)
+
+#		model.test(data)
 	
 	if args.debug:
 		deb.prints(np.unique(data.patches['train']['label']))
 		deb.prints(data.patches['train']['label'].shape)
         
 	#pdb.set_trace()
-	model.train(data)
+#	model.train(data)
+	model.evaluate(data)
+

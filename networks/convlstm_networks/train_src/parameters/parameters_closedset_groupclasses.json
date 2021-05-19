@@ -1,4 +1,6 @@
 {
+    "train": true,
+    "model_load": false,
     "open_set": false,
     "balancing": true,
     "val_set": true,
@@ -10,6 +12,6 @@
     "val_set_mode": "random",
     "seq_date": "mar", 
     "dataset": "lm",
-    "seq_len": 12     
+    "seq_len": 12
 
 }
