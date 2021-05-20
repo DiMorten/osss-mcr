@@ -7,19 +7,25 @@ import os
 import math
 #import json
 import random
-
+#import pprint
+#import scipy.misc
 import numpy as np
 from time import gmtime, strftime
+#from osgeo import gdal
 import glob
-
+#from skimage.transform import resize
+#from sklearn import preprocessing as pre
+#import matplotlib.pyplot as plt
 import cv2
 import pathlib
 from pathlib import Path
+#from sklearn.feature_extraction.image import extract_patches_2d
 #from skimage.util import view_as_windows
 import sys
 import pickle
 import argparse
 from sklearn.preprocessing import StandardScaler
+#from skimage.util import view_as_windows
 from abc import ABC, abstractmethod
 import pdb
 import shutil
@@ -28,7 +34,7 @@ import deb
 from dataSource import DataSource, SARSource, OpticalSource, Dataset, LEM, CampoVerde, OpticalSourceWithClouds, Humidity
 from dataset_stats import DatasetStats
 import matplotlib.pyplot as plt
-from icecream import ic
+
 def mask_train_test_switch_from_path(path):
 	mask=cv2.imread(path)
 	out=mask_train_test_switch(mask)
@@ -409,9 +415,7 @@ class DataForNet(object):
 				path_test=self.conf["test"],patches_save=self.patches_save,label_type=label_type,memory_mode=self.conf["memory_mode"])
 		else:			
 			self.conf["train"]["n"],self.conf["test"]["n"]=self.patches_multitemporal_get(patch["full_label_ims"], \
-				self.conf["patch"]["size"],self.conf["patch"]["overlap"],mask=patch["train_mask"],
-				path = self.dataset.path,
-				path_train=self.conf["train"], \
+				self.conf["patch"]["size"],self.conf["patch"]["overlap"],mask=patch["train_mask"],path_train=self.conf["train"], \
 				path_test=self.conf["test"],patches_save=self.patches_save,label_type=label_type,memory_mode=self.conf["memory_mode"])
 			deb.prints(self.conf["test"]["overlap_full"])
 			#print(self.conf["test"]["overlap_full"]==True)
@@ -585,13 +589,9 @@ class DataForNet(object):
 
 
 		return patches,count
-	def patches_multitemporal_get(self,label,window,overlap,mask,
-		path, path_train,path_test,patches_save=True, 
+	def patches_multitemporal_get(self,label,window,overlap,mask,path_train,path_test,patches_save=True, \
 		label_type="one_hot",memory_mode="hdd",test_only=False, ram_store=True):
-		ic(path)
-#		ic(path_train)
-#		ic(path_test)
-#		pdb.set_trace()
+
 		fname=sys._getframe().f_code.co_name
 
 		deb.prints(window,fname)
@@ -627,9 +627,6 @@ class DataForNet(object):
 		locations['row']=[]
 		locations['col']=[]
 		locations['label']=[]	
-
-		indexes_train = []
-		indexes_test = []
 		#======================== START IMG LOOP ==================================#
 		for i in range(len(gridx)):
 			for j in range(len(gridy)):
@@ -638,7 +635,6 @@ class DataForNet(object):
 					deb.prints(counter,fname)
 				xx = gridx[i]
 				yy = gridy[j]
-				indexes = (xx + window/2, yy + window/2)
 				#patch_clouds=Bclouds[yy: yy + window, xx: xx + window]
 				#patch = img[:,yy: yy + window, xx: xx + window,:]
 				label_patch = label[:,yy: yy + window, xx: xx + window]
@@ -658,14 +654,15 @@ class DataForNet(object):
 				#elif np.all(mask_patch==1): # Train sample
 				#=======================IS PATCH FROM TRAIN =================================#
 				if is_mask_from_train==True: # Train sample
-					indexes_train.append(indexes)
 					patch = patch_train.copy()
 					#deb.prints("train")
 					mask_train_areas=mask_patch.copy()
 					mask_train_areas[mask_train_areas==2]=0 # Remove test from this patch
 					mask_train[yy: yy + window, xx: xx + window]=mask_train_areas.astype(np.uint8)*255
-
-
+					
+					for t_step in range(0,self.conf["t_len"]):
+						label_patch[t_step]=cv2.bitwise_and(label_patch[t_step],label_patch[t_step],mask=mask_train_areas.astype(np.uint8))
+					
 					# re-write label to masked version!
 					label_patch=self.full_label_train[:,yy: yy + window, xx: xx + window]
 					#save label patch
@@ -688,7 +685,6 @@ class DataForNet(object):
 				
 				#============================ IS PATCH FROM TEST ===============================#
 				if is_mask_from_test==True: # Test sample
-					indexes_test.append(indexes)
 					patch=patch_test.copy()
 					#deb.prints("test")
 					test_counter+=1
@@ -728,13 +724,6 @@ class DataForNet(object):
 						test_real_count+=1
 					#np.random.choice(index, samples_per_class, replace=replace)
 		#==========================END IMG LOOP=============================================#
-		indexes_train = np.asarray(indexes_train)
-		indexes_test = np.asarray(indexes_test)
-		ic(indexes_train.shape, indexes_test.shape)
-		#pdb.set_trace()
-		np.save(path/"indexes_train.npy", indexes_train)
-		np.save(path/"indexes_test.npy", indexes_test)
-
 		print("Final mask test average",np.average(mask_test))
 		cv2.imwrite("mask_train.png",mask_train)
 		cv2.imwrite("mask_test.png",mask_test)
