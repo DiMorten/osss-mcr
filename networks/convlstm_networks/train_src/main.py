@@ -46,8 +46,10 @@ from keras.callbacks import EarlyStopping
 import tensorflow as tf
 
 from patches_storage import PatchesStorageEachSample,PatchesStorageAllSamples, PatchesStorageAllSamplesOpenSet
-from datagenerator import DataGenerator
+#from datagenerator import DataGenerator
+from generator import DataGenerator
 
+import matplotlib.pyplot as plt
 sys.path.append('../../../dataset/dataset/patches_extract_script/')
 from dataSource import DataSource, SARSource, OpticalSource, Dataset, LEM, LEM2, CampoVerde, OpticalSourceWithClouds, Humidity
 from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixedLabelAllLabels, MIMFixed_PaddedSeq
@@ -2798,50 +2800,6 @@ class NetModel(NetObject):
 		metrics=data.metrics_get(data.patches['test']['prediction'],data.patches['test']['label'],debug=1)
 		print('oa={}, aa={}, f1={}, f1_wght={}'.format(metrics['overall_acc'],
 			metrics['average_acc'],metrics['f1_score'],metrics['f1_score_weighted']))
-	def train_fit(self, data):
-		# data.patches['train']['in']
-		# data.patches['train']['in']
-		#========= VAL INIT
-
-
-		if self.val_set:
-			count,unique=np.unique(data.patches['val']['label'].argmax(axis=-1),return_counts=True)
-			print("Val label count,unique",count,unique)
-
-		count,unique=np.unique(data.patches['train']['label'].argmax(axis=-1),return_counts=True)
-		print("Train count,unique",count,unique)
-		
-		count,unique=np.unique(data.patches['test']['label'].argmax(axis=-1),return_counts=True)
-		print("Test count,unique",count,unique)
-		# self.batch['train']['size']
-
-		ic(data.patches['train']['in'].shape)
-		ic(data.patches['train']['label'].shape)
-#		pdb.set_trace()
-		data.patches['train']['label'] = np.expand_dims(data.patches['train']['label'].argmax(axis=-1),axis=-1).astype(np.int8)
-		data.patches['val']['label'] = np.expand_dims(data.patches['val']['label'].argmax(axis=-1),axis=-1).astype(np.int8)
-
-		from keras.callbacks import EarlyStopping
-#		es = EarlyStopping(monitor = 'val_loss',
-#                          patience = 10)
-
-		history = self.graph.fit(data.patches['train']['in'], data.patches['train']['label'],
-			batch_size = 16, epochs = 200, 
-#			validation_data=(data.patches['val']['in'], data.patches['val']['label']),
-#			callbacks = [es])
-			callbacks = [Monitor(
-				validation=(data.patches['val']['in'], data.patches['val']['label']),
-				patience=10, classes=5)]
-			)
-
-		self.graph.save('model_best_fit.h5')		
-		pdb.set_trace()
-
-	def evaluate(self, data):		
-		data.patches['test']['prediction'] = self.graph.predict(data.patches['test']['in'])
-		metrics_test=data.metrics_get(data.patches['test']['prediction'],
-			data.patches['test']['label'],debug=2)
-		deb.prints(metrics_test)
 
 	def train(self, data):
 
@@ -3217,6 +3175,93 @@ class NetModel(NetObject):
 		np.save("prediction.npy",data.patches['test']['prediction'])
 		np.save("labels.npy",data.patches['test']['label'])
 
+class ModelFit(NetModel):
+	def train(self, data):
+		#========= VAL INIT
+
+
+		if self.val_set:
+			count,unique=np.unique(data.patches['val']['label'].argmax(axis=-1),return_counts=True)
+			print("Val label count,unique",count,unique)
+
+		count,unique=np.unique(data.patches['train']['label'].argmax(axis=-1),return_counts=True)
+		print("Train count,unique",count,unique)
+		
+		count,unique=np.unique(data.patches['test']['label'].argmax(axis=-1),return_counts=True)
+		print("Test count,unique",count,unique)
+		# self.batch['train']['size']
+
+		ic(data.patches['train']['in'].shape)
+		ic(data.patches['train']['label'].shape)
+#		pdb.set_trace()
+		data.patches['train']['label'] = np.expand_dims(data.patches['train']['label'].argmax(axis=-1),axis=-1).astype(np.int8)
+		data.patches['val']['label'] = np.expand_dims(data.patches['val']['label'].argmax(axis=-1),axis=-1).astype(np.int8)
+
+		self.batch['train']['size'] = 16
+
+
+
+		history = self.applyFitMethod(data)
+
+		def PlotHistory(_model, feature, path_file = None):
+			val = "val_" + feature
+			
+			plt.xlabel('Epoch Number')
+			plt.ylabel(feature)
+			plt.plot(_model.history[feature])
+			plt.plot(_model.history[val])
+			plt.legend(["train_"+feature, val])    
+			if path_file:
+				plt.savefig(path_file)
+		PlotHistory(history, 'loss', path_file='loss_fig.png')
+
+		self.graph.save('model_best_fit2.h5')		
+
+	def applyFitMethod(self, data):
+		history = self.graph.fit(data.patches['train']['in'], data.patches['train']['label'],
+			batch_size = self.batch['train']['size'], 
+			epochs = 70, 
+			validation_data=(data.patches['val']['in'], data.patches['val']['label']),
+#			callbacks = [es])
+			callbacks = [Monitor(
+				validation=(data.patches['val']['in'], data.patches['val']['label']),
+				patience=10, classes=5)]
+			)
+		return history
+
+	def evaluate(self, data):		
+		data.patches['test']['prediction'] = self.graph.predict(data.patches['test']['in'])
+		metrics_test=data.metrics_get(data.patches['test']['prediction'],
+			data.patches['test']['label'],debug=2)
+		deb.prints(metrics_test)
+		
+
+class ModelLoadGenerator(ModelFit):
+	def applyFitMethod(self,data):
+		params_train = {
+			'dim': (self.t_len,self.patch_len,self.patch_len),
+			'label_dim': (self.t_len,self.patch_len,self.patch_len,1),
+			'batch_size': self.batch['train']['size'],
+#			'n_classes': self.class_n,
+			'n_classes': 6, # is it 6 or 5
+
+			'n_channels': 2,
+			'shuffle': True}
+
+		training_generator = DataGenerator(data.patches['train']['in'], data.patches['train']['label'], **params_train)
+
+		history = self.graph.fit_generator(generator = training_generator,
+#			batch_size = self.batch['train']['size'], 
+			epochs = 70, 
+			validation_data=(data.patches['val']['in'], data.patches['val']['label']),
+#			callbacks = [es])
+			callbacks = [Monitor(
+				validation=(data.patches['val']['in'], data.patches['val']['label']),
+				patience=10, classes=5)]
+			)
+		return history
+
+
 class ModelLoadEachBatch(NetModel):
 	def train(self,data):
 
@@ -3319,11 +3364,14 @@ if __name__ == '__main__':
 
 
 	#adam = Adam(lr=0.0001, beta_1=0.9)
-	adam = Adam(lr=0.001, beta_1=0.9)
+	adam = Adam(lr=paramsTrain.learning_rate, beta_1=0.9)
 	
 	#adam = Adagrad(0.01)
 	#model = ModelLoadEachBatch(epochs=args.epochs, patch_len=args.patch_len,
-	model = NetModel(epochs=args.epochs, patch_len=args.patch_len,
+##	modelClass = NetModel
+##	modelClass = ModelFit
+	modelClass = ModelLoadGenerator
+	model = modelClass(epochs=args.epochs, patch_len=args.patch_len,
 					 patch_step_train=args.patch_step_train, eval_mode=args.eval_mode,
 					 batch_size_train=args.batch_size_train,batch_size_test=args.batch_size_test,
 					 patience=args.patience,t_len=ds.t_len,class_n=args.class_n,channel_n=args.channel_n,path=args.path,
@@ -3455,9 +3503,7 @@ if __name__ == '__main__':
 #		model=load_model('/home/lvc/Documents/Jorg/sbsr/fcn_model/results/seq2_true_norm/models/model_1000.h5')
 		model=load_model('model_best_fit.h5')
 	else:
-		model.train_fit(data)
-
-#		model.test(data)
+		model.train(data)
 	
 	if args.debug:
 		deb.prints(np.unique(data.patches['train']['label']))
