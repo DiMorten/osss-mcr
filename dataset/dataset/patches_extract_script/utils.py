@@ -628,8 +628,8 @@ class DataForNet(object):
 		locations['col']=[]
 		locations['label']=[]	
 
-		indexes_train = []
-		indexes_test = []
+		coords_train = []
+		coords_test = []
 		#======================== START IMG LOOP ==================================#
 		for i in range(len(gridx)):
 			for j in range(len(gridy)):
@@ -658,7 +658,7 @@ class DataForNet(object):
 				#elif np.all(mask_patch==1): # Train sample
 				#=======================IS PATCH FROM TRAIN =================================#
 				if is_mask_from_train==True: # Train sample
-					indexes_train.append(indexes)
+					coords_train.append(indexes)
 					patch = patch_train.copy()
 					#deb.prints("train")
 					mask_train_areas=mask_patch.copy()
@@ -688,7 +688,7 @@ class DataForNet(object):
 				
 				#============================ IS PATCH FROM TEST ===============================#
 				if is_mask_from_test==True: # Test sample
-					indexes_test.append(indexes)
+					coords_test.append(indexes)
 					patch=patch_test.copy()
 					#deb.prints("test")
 					test_counter+=1
@@ -728,12 +728,12 @@ class DataForNet(object):
 						test_real_count+=1
 					#np.random.choice(index, samples_per_class, replace=replace)
 		#==========================END IMG LOOP=============================================#
-		indexes_train = np.asarray(indexes_train)
-		indexes_test = np.asarray(indexes_test)
-		ic(indexes_train.shape, indexes_test.shape)
+		coords_train = np.asarray(coords_train)
+		coords_test = np.asarray(coords_test)
+		ic(coords_train.shape, coords_test.shape)
 		#pdb.set_trace()
-		np.save(path/"indexes_train.npy", indexes_train)
-		np.save(path/"indexes_test.npy", indexes_test)
+		np.save(path/"coords_train.npy", coords_train)
+		np.save(path/"coords_test.npy", coords_test)
 
 		print("Final mask test average",np.average(mask_test))
 		cv2.imwrite("mask_train.png",mask_train)
