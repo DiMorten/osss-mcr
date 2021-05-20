@@ -47,7 +47,7 @@ import tensorflow as tf
 
 from patches_storage import PatchesStorageEachSample,PatchesStorageAllSamples, PatchesStorageAllSamplesOpenSet
 #from datagenerator import DataGenerator
-from generator import DataGenerator
+from generator import DataGenerator, DataGeneratorWithCoords
 
 import matplotlib.pyplot as plt
 sys.path.append('../../../dataset/dataset/patches_extract_script/')
@@ -1124,9 +1124,12 @@ class Dataset(NetObject):
 class DatasetWithCoords(Dataset):
 	def create_load(self):
 		super().create_load()
-		self.patches['train']['coords'] = np.load(self.path['v']+'coords_train.npy')
-		self.patches['test']['coords'] = np.load(self.path['v']+'coords_test.npy')
+		self.patches['train']['coords'] = np.load(self.path['v']+'coords_train.npy').astype(np.uint8)
+		self.patches['test']['coords'] = np.load(self.path['v']+'coords_test.npy').astype(np.uint8)
 
+		self.full_ims_train = np.load(self.path['v']+'full_ims/'+'full_ims_train.npy')
+		self.full_label_train = np.load(self.path['v']+'full_ims/'+'full_label_train.npy').astype(np.uint8)
+		self.full_label_train = self.full_label_train[-1]
 	def val_set_get(self,mode='stratified',validation_split=0.2, idxs=None):
 		super().val_set_get()
 		
@@ -1169,7 +1172,7 @@ class DatasetWithCoords(Dataset):
 
 		balance["out_labels"]=np.zeros((balance["out_n"],) + self.patches["train"]["label"].shape[1::])
 
-		balance["coords"] = np.zeros((balance["out_n"], *self.patches["train"]["coords"].shape[1:]))
+		balance["coords"] = np.zeros((balance["out_n"], *self.patches["train"]["coords"].shape[1:])).astype(np.uint8)
 		ic(balance["coords"].shape) 
 		label_int=self.patches['train']['label'].argmax(axis=-1)
 		labels_flat=np.reshape(label_int,(label_int.shape[0],np.prod(label_int.shape[1:])))
@@ -3416,7 +3419,32 @@ class ModelLoadGenerator(ModelFit):
 				patience=10, classes=5)]
 			)
 		return history
+class ModelLoadGeneratorWithCoords(ModelFit):
+	def applyFitMethod(self,data):
+		params_train = {
+			'dim': (self.t_len,self.patch_len,self.patch_len),
+			'label_dim': (self.patch_len,self.patch_len),
+			'batch_size': self.batch['train']['size'],
+#			'n_classes': self.class_n,
+			'n_classes': 6, # is it 6 or 5
 
+			'n_channels': 2,
+			'shuffle': True}
+
+		ic(data.patches['train']['coords'].shape)
+		training_generator = DataGeneratorWithCoords(data.full_ims_train, data.full_label_train, 
+			data.patches['train']['coords'], **params_train)
+
+		history = self.graph.fit_generator(generator = training_generator,
+#			batch_size = self.batch['train']['size'], 
+			epochs = 70, 
+			validation_data=(data.patches['val']['in'], data.patches['val']['label']),
+#			callbacks = [es])
+			callbacks = [Monitor(
+				validation=(data.patches['val']['in'], data.patches['val']['label']),
+				patience=10, classes=5)]
+			)
+		return history
 
 class ModelLoadEachBatch(NetModel):
 	def train(self,data):
@@ -3479,10 +3507,9 @@ if __name__ == '__main__':
 	dotys, dotys_sin_cos = ds.getDayOfTheYear()
 	#pdb.set_trace()
 
-
-#	datasetObj = Dataset
-	datasetObj = DatasetWithCoords
-	data = datasetObj(patch_len=args.patch_len, patch_step_train=args.patch_step_train,
+#	datasetClass = Dataset
+	datasetClass = DatasetWithCoords
+	data = datasetClass(patch_len=args.patch_len, patch_step_train=args.patch_step_train,
 		patch_step_test=args.patch_step_test,exp_id=args.exp_id,
 		path=args.path, t_len=ds.t_len, class_n=args.class_n, channel_n = args.channel_n,
 		dotys_sin_cos = dotys_sin_cos, ds = ds)
@@ -3503,10 +3530,6 @@ if __name__ == '__main__':
 
 		data.create_load()
 	
-		
-
-
-
 		deb.prints(data.patches['train']['label'].shape)
 		deb.prints(data.patches['test']['label'].shape)
 		
@@ -3518,9 +3541,6 @@ if __name__ == '__main__':
 		deb.prints(train_label_count)
 		data.label_unique=test_label_unique.copy()
 		
-
-
-
 	#adam = Adam(lr=0.0001, beta_1=0.9)
 	adam = Adam(lr=paramsTrain.learning_rate, beta_1=0.9)
 	
@@ -3528,7 +3548,8 @@ if __name__ == '__main__':
 	#model = ModelLoadEachBatch(epochs=args.epochs, patch_len=args.patch_len,
 ##	modelClass = NetModel
 ##	modelClass = ModelFit
-	modelClass = ModelLoadGenerator
+##	modelClass = ModelLoadGenerator
+	modelClass = ModelLoadGeneratorWithCoords
 	model = modelClass(epochs=args.epochs, patch_len=args.patch_len,
 					 patch_step_train=args.patch_step_train, eval_mode=args.eval_mode,
 					 batch_size_train=args.batch_size_train,batch_size_test=args.batch_size_test,

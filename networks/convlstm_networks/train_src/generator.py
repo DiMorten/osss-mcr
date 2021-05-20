@@ -26,6 +26,7 @@ from keras.applications.vgg16 import VGG16
 from icecream import ic
 import matplotlib.pyplot as plt
 import pdb
+import deb
 
 class DataGenerator(keras.utils.Sequence):
 	'Generates data for Keras'
@@ -34,6 +35,8 @@ class DataGenerator(keras.utils.Sequence):
 		'Initialization'
 		self.inputs = inputs
 		self.dim = dim
+		self.patch_size = dim[1]
+		ic(self.patch_size)
 		self.batch_size = batch_size
 		ic(self.batch_size)
 		self.labels = labels
@@ -111,3 +114,89 @@ class DataGenerator(keras.utils.Sequence):
 
 		return X, Y
 
+class DataGeneratorWithCoords(keras.utils.Sequence):
+	'Generates data for Keras'
+	def __init__(self, inputs, labels, coords, batch_size=16, dim=(20,128,128), label_dim=(128,128),
+				n_channels=3, n_classes=2, shuffle=True):
+		'Initialization'
+		self.inputs = inputs
+		self.dim = dim
+		self.batch_size = batch_size
+		ic(self.batch_size)
+		self.patch_size = dim[1]
+		ic(self.patch_size)
+
+		self.labels = labels
+
+		self.n_channels = n_channels
+		self.n_classes = n_classes
+		self.shuffle = shuffle
+		self.label_dim = label_dim
+		self.coords = coords
+		self.on_epoch_end()
+
+	def __len__(self):
+		'Denotes the number of batches per epoch'
+#		return int(np.floor(len(self.list_IDs) / self.batch_size))
+		n_batches = int(np.floor(self.coords.shape[0] / self.batch_size))
+		ic(n_batches)
+		return n_batches
+	def __getitem__(self, index):
+		'Generate one batch of data'
+		# Generate indexes of the batch
+		indexes = self.indexes[index*self.batch_size:(index+1)*self.batch_size]
+
+		# Find list of IDs
+#		list_IDs_temp = [self.list_IDs[k] for k in indexes]
+		coords_batch = self.coords[indexes]
+
+		# Generate data
+		X, y = self.__data_generation(coords_batch)
+
+		return X, y
+
+	def on_epoch_end(self):
+		'Updates indexes after each epoch'
+#		self.indexes = np.arange(len(self.list_IDs))
+		self.indexes = np.arange(self.coords.shape[0])
+
+		if self.shuffle == True:
+			np.random.shuffle(self.indexes)
+
+
+	def __data_generation(self, coords_batch):
+	
+		'Generates data containing batch_size samples' # X : (n_samples, *dim, n_channels)
+		# Initialization
+		X = np.empty((self.batch_size, *self.dim, self.n_channels), dtype=np.float32)
+		Y = np.empty((self.batch_size, *self.label_dim), dtype=int)
+
+		#deb.prints(coords_batch)
+		#deb.prints(coords_batch.shape[0])
+		for idx in range(coords_batch.shape[0]):
+			'''
+			print(idx, coords_batch[idx], coords_batch[idx][0])
+			print(coords_batch[idx][0]-self.patch_size//2)
+			print(coords_batch[idx][0]+self.patch_size//2+self.patch_size%2)
+			print(coords_batch[idx][1]-self.patch_size//2)
+			print(coords_batch[idx][1]+self.patch_size//2+self.patch_size%2)
+			ic(self.inputs.shape)
+			ic(self.labels.shape)
+
+			#pdb.set_trace()
+			'''
+			input_patch = self.inputs[:, coords_batch[idx][0]-self.patch_size//2:coords_batch[idx][0]+self.patch_size//2+self.patch_size%2,
+						  coords_batch[idx][1]-self.patch_size//2:coords_batch[idx][1]+self.patch_size//2+self.patch_size%2]
+
+			label_patch = self.labels[coords_batch[idx][0]-self.patch_size//2:coords_batch[idx][0]+self.patch_size//2+self.patch_size%2,
+						  coords_batch[idx][1]-self.patch_size//2:coords_batch[idx][1]+self.patch_size//2+self.patch_size%2]
+			#ic(input_patch.shape)
+			#ic(label_patch.shape)
+
+			#pdb.set_trace()
+			X[idx] = input_patch
+			Y[idx] = label_patch
+			#pdb.set_trace()
+
+
+		return X, np.expand_dims(Y,axis=-1)
