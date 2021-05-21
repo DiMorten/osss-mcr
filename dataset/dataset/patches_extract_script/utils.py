@@ -638,7 +638,11 @@ class DataForNet(object):
 					deb.prints(counter,fname)
 				xx = gridx[i]
 				yy = gridy[j]
-				indexes = (xx + window/2, yy + window/2)
+#				indexes = (yy + window//2, xx + window//2)
+#				indexes = (yy + window//2, xx + window//2)
+				ic(yy, xx)
+				indexes = (yy, xx)
+				
 				#patch_clouds=Bclouds[yy: yy + window, xx: xx + window]
 				#patch = img[:,yy: yy + window, xx: xx + window,:]
 				label_patch = label[:,yy: yy + window, xx: xx + window]
@@ -731,6 +735,8 @@ class DataForNet(object):
 		coords_train = np.asarray(coords_train)
 		coords_test = np.asarray(coords_test)
 		ic(coords_train.shape, coords_test.shape)
+		ic(coords_train.dtype)
+		ic(coords_train[0])
 		#pdb.set_trace()
 		np.save(path/"coords_train.npy", coords_train)
 		np.save(path/"coords_test.npy", coords_test)

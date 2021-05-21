@@ -185,11 +185,21 @@ class DataGeneratorWithCoords(keras.utils.Sequence):
 
 			#pdb.set_trace()
 			'''
-			input_patch = self.inputs[:, coords_batch[idx][0]-self.patch_size//2:coords_batch[idx][0]+self.patch_size//2+self.patch_size%2,
-						  coords_batch[idx][1]-self.patch_size//2:coords_batch[idx][1]+self.patch_size//2+self.patch_size%2]
+			input_patch = self.inputs[:, coords_batch[idx][0]:coords_batch[idx][0]+self.patch_size,
+				coords_batch[idx][1]:coords_batch[idx][1]+self.patch_size]
+			
+#			-self.patch_size//2:coords_batch[idx][0]+self.patch_size//2+self.patch_size%2,
+#						  coords_batch[idx][1]-self.patch_size//2:coords_batch[idx][1]+self.patch_size//2+self.patch_size%2]
 
-			label_patch = self.labels[coords_batch[idx][0]-self.patch_size//2:coords_batch[idx][0]+self.patch_size//2+self.patch_size%2,
-						  coords_batch[idx][1]-self.patch_size//2:coords_batch[idx][1]+self.patch_size//2+self.patch_size%2]
+
+			label_patch = self.labels[coords_batch[idx][0]:coords_batch[idx][0]+self.patch_size,
+				coords_batch[idx][1]:coords_batch[idx][1]+self.patch_size]
+				
+#				coords_batch[idx][0]-self.patch_size//2:coords_batch[idx][0]+self.patch_size//2+self.patch_size%2,
+#						  coords_batch[idx][1]-self.patch_size//2:coords_batch[idx][1]+self.patch_size//2+self.patch_size%2]
+##			ic(coords_batch[idx])
+##			ic(label_patch)
+##			pdb.set_trace()
 			#ic(input_patch.shape)
 			#ic(label_patch.shape)
 
