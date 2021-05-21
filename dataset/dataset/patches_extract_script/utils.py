@@ -639,9 +639,9 @@ class DataForNet(object):
 				xx = gridx[i]
 				yy = gridy[j]
 #				indexes = (yy + window//2, xx + window//2)
-#				indexes = (yy + window//2, xx + window//2)
-				ic(yy, xx)
-				indexes = (yy, xx)
+#				ic(yy, xx)
+#				indexes = (yy, xx)
+				indexes = (yy + window//2, xx + window//2)
 				
 				#patch_clouds=Bclouds[yy: yy + window, xx: xx + window]
 				#patch = img[:,yy: yy + window, xx: xx + window,:]
