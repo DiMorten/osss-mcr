@@ -118,7 +118,7 @@ class DataGenerator(keras.utils.Sequence):
 class DataGeneratorWithCoords(keras.utils.Sequence):
 	'Generates data for Keras'
 	def __init__(self, inputs, labels, coords, batch_size=16, dim=(20,128,128), label_dim=(128,128),
-				n_channels=3, n_classes=2, shuffle=True):
+				n_channels=3, n_classes=2, shuffle=True, center_pixel = False):
 		'Initialization'
 		self.inputs = inputs
 		self.dim = dim
@@ -134,6 +134,7 @@ class DataGeneratorWithCoords(keras.utils.Sequence):
 		self.shuffle = shuffle
 		self.label_dim = label_dim
 		self.coords = coords
+		self.center_pixel = center_pixel
 		self.on_epoch_end()
 
 	def __len__(self):

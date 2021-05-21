@@ -44,6 +44,7 @@ from keras.layers import Conv3DTranspose, Conv3D
 
 from keras.callbacks import EarlyStopping
 import tensorflow as tf
+from collections import Counter
 
 from patches_storage import PatchesStorageEachSample,PatchesStorageAllSamples, PatchesStorageAllSamplesOpenSet
 #from datagenerator import DataGenerator
@@ -1217,7 +1218,36 @@ class DatasetWithCoords(Dataset):
 		label_int=self.patches['train']['label'].argmax(axis=-1)
 		labels_flat=np.reshape(label_int,(label_int.shape[0],np.prod(label_int.shape[1:])))
 		k=0
+
+		# get patch class
+		classes = np.zeros((self.patches['train']['coords'].shape[0]))
+		ic(classes.shape)
+		unique_train = np.unique(self.full_label_train)
+		ic(unique_train)
+		bcknd_idx = unique_train[-1]
+		psize = 32 # 32
+		ic(psize)
+		
+		for idx in range(self.patches['train']['coords'].shape[0]):
+			coord = self.patches['train']['coords'][idx]
+			patch_class = self.full_label_train[coord[0], coord[1]]
+			if patch_class!= bcknd_idx:
+				classes[idx] = patch_class
+			elif patch_class == bcknd_idx:
+				label_patch = self.full_label_train[coord[0]-psize//2:coord[0]+psize//2 + psize%2,coord[1]-psize//2:coord[1]+psize//2 + psize%2]
+				no_class = np.sum(label_patch>0)
+				if no_class>0.05*psize**2:
+					cnt = Counter(label_patch[label_patch>0])
+					classes[idx] = max(cnt, key=cnt.get)
+		
+
 		for clss in range(1,self.class_n):
+			ic(clss)
+			ic(patch_count[clss])
+			patch_count[clss] = np.count_nonzero(np.where(classes == clss))
+
+			ic(patch_count[clss])
+			#pdb.set_trace()
 			if patch_count[clss]==0:
 				continue
 			ic(labels_flat.shape)
