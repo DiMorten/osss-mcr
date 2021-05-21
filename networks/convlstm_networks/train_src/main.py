@@ -3469,7 +3469,7 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 			'n_classes': 6, # is it 6 or 5
 
 			'n_channels': 2,
-			'shuffle': False}
+			'shuffle': True}
 		ic(data.patches['train']['label'].shape)
 		ic(data.patches['train']['label'][0])
 

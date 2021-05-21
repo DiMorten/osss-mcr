@@ -31,7 +31,7 @@ import deb
 class DataGenerator(keras.utils.Sequence):
 	'Generates data for Keras'
 	def __init__(self, inputs, labels, batch_size=16, dim=(20,128,128), label_dim=(128,128),
-				n_channels=3, n_classes=2, shuffle=True):
+				n_channels=3, n_classes=2, shuffle=True, center_pixel = False):
 		'Initialization'
 		self.inputs = inputs
 		self.dim = dim
@@ -45,6 +45,7 @@ class DataGenerator(keras.utils.Sequence):
 		self.n_classes = n_classes
 		self.shuffle = shuffle
 		self.label_dim = label_dim
+		self.center_pixel = center_pixel
 		self.on_epoch_end()
 
 	def __len__(self):
@@ -212,18 +213,18 @@ class DataGeneratorWithCoords(keras.utils.Sequence):
 
 			#pdb.set_trace()
 			'''
-			'''
-			input_patch = self.inputs[:, coords_batch[idx][0]:coords_batch[idx][0]+self.patch_size,
-				coords_batch[idx][1]:coords_batch[idx][1]+self.patch_size]
+			if self.center_pixel == False:
+				input_patch = self.inputs[:, coords_batch[idx][0]:coords_batch[idx][0]+self.patch_size,
+					coords_batch[idx][1]:coords_batch[idx][1]+self.patch_size]
 
-			label_patch = self.labels[coords_batch[idx][0]:coords_batch[idx][0]+self.patch_size,
-				coords_batch[idx][1]:coords_batch[idx][1]+self.patch_size]
-			'''
-			input_patch = self.inputs[:, coords_batch[idx][0]-self.patch_size//2:coords_batch[idx][0]+self.patch_size//2+self.patch_size%2,
-					coords_batch[idx][1]-self.patch_size//2:coords_batch[idx][1]+self.patch_size//2+self.patch_size%2]
+				label_patch = self.labels[coords_batch[idx][0]:coords_batch[idx][0]+self.patch_size,
+					coords_batch[idx][1]:coords_batch[idx][1]+self.patch_size]
+			else:
+				input_patch = self.inputs[:, coords_batch[idx][0]-self.patch_size//2:coords_batch[idx][0]+self.patch_size//2+self.patch_size%2,
+						coords_batch[idx][1]-self.patch_size//2:coords_batch[idx][1]+self.patch_size//2+self.patch_size%2]
 
-			label_patch = self.labels[coords_batch[idx][0]-self.patch_size//2:coords_batch[idx][0]+self.patch_size//2+self.patch_size%2,
-					coords_batch[idx][1]-self.patch_size//2:coords_batch[idx][1]+self.patch_size//2+self.patch_size%2]
+				label_patch = self.labels[coords_batch[idx][0]-self.patch_size//2:coords_batch[idx][0]+self.patch_size//2+self.patch_size%2,
+						coords_batch[idx][1]-self.patch_size//2:coords_batch[idx][1]+self.patch_size//2+self.patch_size%2]
 		
 
 

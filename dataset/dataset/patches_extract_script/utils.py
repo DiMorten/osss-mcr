@@ -603,12 +603,28 @@ class DataForNet(object):
 		t_steps, h, w, channels = self.full_ims_train.shape
 		mask_train=np.zeros((h,w))
 		mask_test=np.zeros((h,w))
-		
-		gridx = range(0, w - window, window - overlap)
-		gridx = np.hstack((gridx, w - window))
 
-		gridy = range(0, h - window, window - overlap)
-		gridy = np.hstack((gridy, h - window))
+		stride = window
+		centered_pixel = False
+		if centered_pixel == False:
+			gridx = range(0, w - window, window - overlap)
+			deb.prints(len(gridx))
+			gridx = np.hstack((gridx, w - window))
+			gridy = range(0, h - window, window - overlap)
+			deb.prints(len(gridy))
+			gridy = np.hstack((gridy, h - window))
+
+		else:
+			gridx = range(window//2, w - window//2, stride)
+			gridx = np.hstack((gridx, w - window//2))
+
+			gridy = range(window//2, h - window//2, stride)
+	#		deb.prints(len(gridy))
+			gridy = np.hstack((gridy, h - window//2))
+
+			bounds_y = (yy - window//2, yy + window//2 + window%2)
+			bounds_x = (xx - window//2, xx + window//2 + window%2)
+
 		deb.prints(gridx.shape)
 		deb.prints(gridy.shape)
 		
@@ -619,7 +635,7 @@ class DataForNet(object):
 		test_counter=0
 		test_real_count=0
 		
-
+##		self.patches_save = False
 		deb.prints(self.patches_save)
 		# ==================== PATCH LOCATIONS FOR RECONSTRUCTION====#
 
@@ -631,6 +647,9 @@ class DataForNet(object):
 		coords_train = []
 		coords_test = []
 		#======================== START IMG LOOP ==================================#
+		
+##		for xx in range(window//2,w-window//2,stride):	
+##			for yy in range(window//2,h-window//2,stride): 
 		for i in range(len(gridx)):
 			for j in range(len(gridy)):
 				counter=counter+1
@@ -640,16 +659,25 @@ class DataForNet(object):
 				yy = gridy[j]
 #				indexes = (yy + window//2, xx + window//2)
 #				ic(yy, xx)
-#				indexes = (yy, xx)
-				indexes = (yy + window//2, xx + window//2)
-				
+				if centered_pixel == False:
+					indexes = (yy, xx)
+					bounds_y = (yy, yy + window)
+					bounds_x = (xx, xx + window)
+
+				else:
+					indexes = (yy + window//2, xx + window//2)
+					bounds_y = (yy - window//2, yy + window//2 + window%2)
+					bounds_x = (xx - window//2, xx + window//2 + window%2)
+
 				#patch_clouds=Bclouds[yy: yy + window, xx: xx + window]
 				#patch = img[:,yy: yy + window, xx: xx + window,:]
-				label_patch = label[:,yy: yy + window, xx: xx + window]
-				mask_patch = mask[yy: yy + window, xx: xx + window].astype(np.float64)
+
+
+				label_patch = label[:,bounds_y[0]: bounds_y[1], bounds_x[0]: bounds_x[1]]
+				mask_patch = mask[bounds_y[0]: bounds_y[1], bounds_x[0]: bounds_x[1]].astype(np.float64)
 				
-				patch_train = self.full_ims_train[:,yy: yy + window, xx: xx + window,:]
-				patch_test = self.full_ims_test[:,yy: yy + window, xx: xx + window,:]
+				patch_train = self.full_ims_train[:,bounds_y[0]: bounds_y[1], bounds_x[0]: bounds_x[1],:]
+				patch_test = self.full_ims_test[:,bounds_y[0]: bounds_y[1], bounds_x[0]: bounds_x[1],:]
 				
 				is_mask_from_train=self.is_mask_from_train(mask_patch,label_patch)
 				
@@ -667,11 +695,11 @@ class DataForNet(object):
 					#deb.prints("train")
 					mask_train_areas=mask_patch.copy()
 					mask_train_areas[mask_train_areas==2]=0 # Remove test from this patch
-					mask_train[yy: yy + window, xx: xx + window]=mask_train_areas.astype(np.uint8)*255
+					mask_train[bounds_y[0]: bounds_y[1], bounds_x[0]: bounds_x[1]]=mask_train_areas.astype(np.uint8)*255
 
 
 					# re-write label to masked version!
-					label_patch=self.full_label_train[:,yy: yy + window, xx: xx + window]
+					label_patch=self.full_label_train[:,bounds_y[0]: bounds_y[1], bounds_x[0]: bounds_x[1]]
 					#save label patch
 					if self.conf["memory_mode"]=="ram" and self.ram_store==True:
 						if not test_only:
@@ -711,7 +739,7 @@ class DataForNet(object):
 						##if test_counter>=self.conf["extract"]["test_skip"]:
 						mask_test,label_patch=self.mask_test_update(mask_test,yy,xx,window,label_patch,mask_patch)
 							##deb.prints(np.average(mask_test))
-							#mask_test[yy: yy + window, xx: xx + window]=255
+							#mask_test[bounds_y[0]: bounds_y[1], bounds_x[0]: bounds_x[1]]=255
 							#mask_test[int(yy + window/2), int(xx + window/2)]=255
 						##	test_counter=0
 							
