@@ -164,6 +164,33 @@ class DataGeneratorWithCoords(keras.utils.Sequence):
 			np.random.shuffle(self.indexes)
 
 
+	def data_augmentation(self, X, Y):
+		transf = np.random.randint(0,6,1)
+		if transf == 0:
+			# rot 90
+			X = np.rot90(X,1,(0,1))
+			Y = np.rot90(Y,1,(0,1))
+			
+		elif transf == 1:
+			# rot 180
+			X = np.rot90(X,2,(0,1))
+			Y = np.rot90(Y,2,(0,1))
+			
+		elif transf == 2:
+			# flip horizontal
+			X = np.flip(X,0)
+			Y = np.flip(Y,0)
+			
+		elif transf == 3:
+			# flip vertical
+			X = np.flip(X,1)
+			Y = np.flip(Y,1)
+			
+		elif transf == 4:
+			# rot 270
+			X = np.rot90(X,3,(0,1))
+			Y = np.rot90(Y,3,(0,1))
+		return X, Y
 	def __data_generation(self, coords_batch):
 	
 		'Generates data containing batch_size samples' # X : (n_samples, *dim, n_channels)
@@ -202,11 +229,39 @@ class DataGeneratorWithCoords(keras.utils.Sequence):
 ##			pdb.set_trace()
 			#ic(input_patch.shape)
 			#ic(label_patch.shape)
-
 			#pdb.set_trace()
+			#ic(X.shape, Y.shape)
+			#X, Y = self.data_augmentation(X, Y)
+			#ic(X.shape, Y.shape)
+			self.augm = True
+			if self.augm == True:
+				transf = np.random.randint(0,6,1)
+				if transf == 0:
+					# rot 90
+					input_patch = np.rot90(input_patch,1,(1,2))
+					label_patch = np.rot90(label_patch,1,(0,1))
+					
+				elif transf == 1:
+					# rot 180
+					input_patch = np.rot90(input_patch,2,(1,2))
+					label_patch = np.rot90(label_patch,2,(0,1))
+					
+				elif transf == 2:
+					# flip horizontal
+					input_patch = np.flip(input_patch,1)
+					label_patch = np.flip(label_patch,0)
+					
+				elif transf == 3:
+					# flip vertical
+					input_patch = np.flip(input_patch,2)
+					label_patch = np.flip(label_patch,1)
+					
+				elif transf == 4:
+					# rot 270
+					input_patch = np.rot90(input_patch,3,(1,2))
+					label_patch = np.rot90(label_patch,3,(0,1))
+
 			X[idx] = input_patch
 			Y[idx] = label_patch
-			#pdb.set_trace()
-
 
 		return X, np.expand_dims(Y,axis=-1)
