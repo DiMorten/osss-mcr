@@ -1,5 +1,5 @@
 {
-    "open_set": true,
+    "open_set": false,
     "setTrainAsTest": false,
     "metricsOnTrain": false,
     "openSetMethod": "OpenPCS",

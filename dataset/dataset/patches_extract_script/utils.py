@@ -622,9 +622,6 @@ class DataForNet(object):
 	#		deb.prints(len(gridy))
 			gridy = np.hstack((gridy, h - window//2))
 
-			bounds_y = (yy - window//2, yy + window//2 + window%2)
-			bounds_x = (xx - window//2, xx + window//2 + window%2)
-
 		deb.prints(gridx.shape)
 		deb.prints(gridy.shape)
 		

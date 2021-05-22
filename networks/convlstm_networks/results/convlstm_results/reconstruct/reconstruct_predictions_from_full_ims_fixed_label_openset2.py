@@ -95,6 +95,7 @@ if dataset=='lm':
 		predictions_path = path+'model_best_UUnet4ConvLSTM_fixed_label_fixed_'+a.seq_date+'_loco8_lm_testlm_fewknownclasses.h5'	
 		if paramsTrain.seq_date == 'mar':
 			predictions_path = path+'model_best_UUnet4ConvLSTM_fixed_label_fixed_'+a.seq_date+'_loco8_lm_testlm_fewknownclasses.h5'	
+			#predictions_path = path+'model_best_UUnet4ConvLSTM_mar_lm_fixed_fewknownclasses_groupclasses_newdataaugmentation_coords.h5'
 		elif paramsTrain.seq_date == 'jun':
 			predictions_path = path+'model_best_UUnet4ConvLSTM_fixed_label_fixed_jun_lm_fewknownclasses2.h5'	
 
@@ -284,7 +285,7 @@ ic(full_label_test.shape)
 #pdb.set_trace()
 # ================ HERE CROP THE IMAGE IF NEEDED
 
-croppedFlag = True
+croppedFlag = False
 if croppedFlag == True:
 
 #	full_ims_test = full_ims_test[:, 5200:6100,4900:6800]
@@ -306,7 +307,7 @@ if save_input_im == True:
 	im = im * 255/max_val
 	ic(np.min(im), np.average(im), np.max(im))
 	cv2.imwrite('sample_im.png', im.astype(np.uint8))
-	pdb.set_trace()
+	#pdb.set_trace()
 # convert labels; background is last
 #class_n=len(np.unique(full_label_test))-1
 #full_label_test=full_label_test-1

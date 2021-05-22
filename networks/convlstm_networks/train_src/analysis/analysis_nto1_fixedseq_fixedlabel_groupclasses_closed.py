@@ -1317,6 +1317,8 @@ elif dataset=='lm':
 
 		if args.seq_date =='mar':
 			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_'+args.seq_date+'_loco'+str(loco_class)+'_lm_testlm_fewknownclasses.h5']]	
+			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_'+args.seq_date+'_loco'+str(loco_class)+'_lm_testlm_fewknownclasses.h5']]	
+			experiment_groups=[['model_best_UUnet4ConvLSTM_mar_lm_fixed_fewknownclasses_groupclasses_newdataaugmentation_coords.h5']]
 #			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_lm_testlm_2kkc.h5']]	
 #			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_lm_testlm_allkkc.h5']]
 #			experiment_groups=[['model_best_UUnet4ConvLSTM_len6_mar.h5']]	
