@@ -322,7 +322,7 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 				predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabel(path_test, dataset=dataset)
 			deb.prints(args.seq_date in additionalTestClsses)
 		else:
-			predictionsLoaderTest = PredictionsLoaderModelNto1FixedSeqFixedLabel(path_test, dataset=dataset)
+			predictionsLoaderTest = PredictionsLoaderModelNto1FixedSeqFixedLabel(path_test, dataset=dataset, seq_len = paramsTrain.seq_len)
 #			predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset, loco_class=8)
 #			predictionsLoaderTrain = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_train, dataset=dataset)
 #			predictionsLoaderTest = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset)

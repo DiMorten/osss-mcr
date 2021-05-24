@@ -238,7 +238,8 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 		else:
 			load_decoder_features_flag = False
 		if load_decoder_features_flag==True:
-			pred_proba = self.load_decoder_features(model, input_)
+			#pred_proba = self.load_decoder_features(model, input_)
+			pred_proba = test_predictions.copy()
 		else:
 			pred_proba = test_predictions.copy()
 		
@@ -279,6 +280,8 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 		
 		del batch['in']
 		return test_predictions, batch['label'], pred_proba, model
+
+
 
 class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModelNto1FixedSeqFixedLabel):
 	def load_decoder_features(self, model, input_, prediction_dtype = np.float16):

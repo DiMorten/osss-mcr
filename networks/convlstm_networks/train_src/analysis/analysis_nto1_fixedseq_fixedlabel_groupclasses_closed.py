@@ -448,10 +448,12 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 #			predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabel(path_test, dataset=dataset)
 #			predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset, loco_class=8)
 			predictionsLoaderTrain = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_train, dataset=dataset, seq_len = paramsTrain.seq_len)
-			predictionsLoaderTest = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset, seq_len = paramsTrain.seq_len)
+#			predictionsLoaderTest = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset, seq_len = paramsTrain.seq_len)
+			predictionsLoaderTest = PredictionsLoaderModelNto1FixedSeqFixedLabel(path_test, dataset=dataset, seq_len = paramsTrain.seq_len)
 
 
 		deb.prints(predictionsLoaderTest)
+#		model_path = 'D:/jorg/phd/FCN_ConvLSTM_Crop_Recognition_Open_Set/networks/convlstm_networks/train_src/model_best_fit2.h5'
 		deb.prints(model_path)
 		deb.prints(args.seq_date)
 		#pdb.set_trace()

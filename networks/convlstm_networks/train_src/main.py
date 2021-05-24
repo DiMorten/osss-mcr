@@ -1132,8 +1132,13 @@ class DatasetWithCoords(Dataset):
 		self.full_label_train = np.load(self.path['v']+'full_ims/'+'full_label_train.npy').astype(np.uint8)
 		self.full_label_train = self.full_label_train[-1]
 
+		self.full_label_test = np.load(self.path['v']+'full_ims/'+'full_label_test.npy').astype(np.uint8)
+		self.full_label_test = self.full_label_test[-1]
+
 
 		ic(np.unique(self.full_label_train, return_counts=True))
+		ic(np.unique(self.full_label_test, return_counts=True))
+
 #		pdb.set_trace()
 		ic(paramsTrain.known_classes)
 		ic(self.unknown_classes)
@@ -3747,14 +3752,19 @@ if __name__ == '__main__':
 	loss=categorical_focal_ignoring_last_label(alpha=0.25,gamma=2)
 	#loss=weighted_categorical_focal_ignoring_last_label(model.loss_weights,alpha=0.25,gamma=2)
 
-	model.graph.compile(loss=loss,
-				  optimizer=adam, metrics=metrics)
 
 #	paramsTrain.model_load=False
 	if paramsTrain.model_load:
 #		model=load_model('/home/lvc/Documents/Jorg/sbsr/fcn_model/results/seq2_true_norm/models/model_1000.h5')
-		model=load_model('model_best_fit.h5')
+		
+		model.graph=load_model('model_best_fit2.h5', compile=False)		
+#		model.graph.compile(loss=loss,
+#					optimizer=adam, metrics=metrics)
+
 	else:
+		model.graph.compile(loss=loss,
+					optimizer=adam, metrics=metrics)
+
 		model.train(data)
 	
 	if args.debug:
