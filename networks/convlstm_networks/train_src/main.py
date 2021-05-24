@@ -299,8 +299,8 @@ class Dataset(NetObject):
 
 		#self.patches_list['test']['ims']=glob.glob(self.path['test']['in']+'*.npy')
 		#self.patches_list['test']['label']=glob.glob(self.path['test']['label']+'*.npy')
-		self.patches['test']['label'],self.patches_list['test']['label']=self.folder_load(self.path['test']['label'])
-		
+
+		self.patches['test']['label'],self.patches_list['test']['label']=self.folder_load(self.path['test']['label'])			
 		self.patches['train']['in'],self.patches_list['train']['ims']=self.folder_load(self.path['train']['in'])
 		self.patches['train']['label'],self.patches_list['train']['label']=self.folder_load(self.path['train']['label'])
 		self.patches['test']['in'],self.patches_list['test']['ims']=self.folder_load(self.path['test']['in'])
@@ -326,6 +326,7 @@ class Dataset(NetObject):
 							axis = 0)
 		'''
 		self.dataset=None
+
 		unique,count=np.unique(self.patches['train']['label'],return_counts=True)
 		deb.prints(np.unique(self.patches['train']['label'],return_counts=True))
 		deb.prints(np.unique(self.patches['test']['label'],return_counts=True))
@@ -337,6 +338,7 @@ class Dataset(NetObject):
 
 		# ========================================= pick label for N to 1
 		deb.prints(args.seq_mode)
+
 		print('*'*20, 'Selecting date label')
 		if args.seq_mode == 'fixed':
 			args.seq_label = -1
@@ -356,7 +358,7 @@ class Dataset(NetObject):
 			self.patches['test']['label'] = self.patches['test']['label'][:, -self.labeled_dates:]
 		ic(np.unique(self.patches['train']['label'],return_counts=True))
 		deb.prints(np.unique(self.patches['test']['label'],return_counts=True))
-			
+		
 		self.class_n=unique.shape[0] #10 plus background
 		if paramsTrain.open_set==True:
 
@@ -389,6 +391,7 @@ class Dataset(NetObject):
 				self.patches['test']['label'][self.patches['test']['label']==int(clss) + 1] = 0
 		elif paramsTrain.group_bcknd_classes == True:
 			print('*'*20, 'Open set - grouping bcknd class')
+
 			all_classes = np.unique(self.patches['train']['label']) # with background
 			all_classes = all_classes[1:] - 1 # no bcknd
 			deb.prints(all_classes)
@@ -399,7 +402,7 @@ class Dataset(NetObject):
 				self.patches['train']['label'][self.patches['train']['label']==int(clss) + 1] = 20
 				self.patches['test']['label'][self.patches['test']['label']==int(clss) + 1] = 20			
 
-			
+		
 			ic(np.unique(self.patches['train']['label'],return_counts=True))
 
 			#pdb.set_trace()
@@ -408,6 +411,7 @@ class Dataset(NetObject):
 
 		# ======================================= fix labels before one hot
 		print("===== preprocessing labels")
+
 		self.classes = np.unique(self.patches['train']['label'])
 		deb.prints(np.unique(self.patches['train']['label'], return_counts=True))
 		
@@ -438,6 +442,7 @@ class Dataset(NetObject):
 
 		self.labels2new_labels = dict((c, i) for i, c in enumerate(self.classes))
 		self.new_labels2labels = dict((i, c) for i, c in enumerate(self.classes))
+		
 		for j in range(len(self.classes)):
 			self.patches['train']['label'][tmp_tr == self.classes[j]] = self.labels2new_labels[self.classes[j]]
 			self.patches['test']['label'][tmp_tst == self.classes[j]] = self.labels2new_labels[self.classes[j]]
@@ -1124,7 +1129,31 @@ class Dataset(NetObject):
 
 class DatasetWithCoords(Dataset):
 	def create_load(self):
-		super().create_load()
+
+
+		self.patches_list={'train':{},'test':{}}
+
+		self.dataset=None
+		self.dataset='seq1'
+
+
+		# ========================================= pick label for N to 1
+		deb.prints(args.seq_mode)
+	
+		self.class_n=unique.shape[0] #10 plus background
+		if paramsTrain.open_set==True:
+
+			print('*'*20, 'Open set - ignoring class')
+
+		elif paramsTrain.group_bcknd_classes == True:
+			print('*'*20, 'Open set - grouping bcknd class')
+
+			print('*'*20, 'End open set - ignoring class')
+
+		# ======================================= fix labels before one hot
+		print("===== preprocessing labels")
+
+
 		self.patches['train']['coords'] = np.load(self.path['v']+'coords_train.npy').astype(np.int)
 		self.patches['test']['coords'] = np.load(self.path['v']+'coords_test.npy').astype(np.int)
 
@@ -1139,23 +1168,43 @@ class DatasetWithCoords(Dataset):
 		ic(np.unique(self.full_label_train, return_counts=True))
 		ic(np.unique(self.full_label_test, return_counts=True))
 
-#		pdb.set_trace()
 		ic(paramsTrain.known_classes)
 		ic(self.unknown_classes)
 		if paramsTrain.open_set==True:
 			for clss in self.unknown_classes:
 				self.full_label_train[self.full_label_train==int(clss) + 1] = 0
+				self.full_label_test[self.full_label_test==int(clss) + 1] = 0
+
 		elif paramsTrain.group_bcknd_classes == True:
 
 			for clss in self.unknown_classes:
 				self.full_label_train[self.full_label_train==int(clss) + 1] = 20	
-		ic(np.unique(self.full_label_train, return_counts=True))
+				self.full_label_test[self.full_label_test==int(clss) + 1] = 20	
+
+#		ic(np.unique(self.full_label_train, return_counts=True))
 
 		tmp_tr = self.full_label_train.copy()
+		tmp_tst = self.full_label_train.copy()
+
+		if paramsTrain.loadPatches == False:
+			self.classes = np.unique(self.full_label_train)
+			deb.prints(np.unique(self.full_label_train, return_counts=True))
+			self.labels2new_labels = dict((c, i) for i, c in enumerate(self.classes))
+			self.new_labels2labels = dict((i, c) for i, c in enumerate(self.classes))
+			
 		ic(self.classes)
 		for j in range(len(self.classes)):
 			#ic(j, self.classes[j], self.labels2new_labels[self.classes[j]])
 			self.full_label_train[tmp_tr == self.classes[j]] = self.labels2new_labels[self.classes[j]]
+			self.full_label_test[tmp_tst == self.classes[j]] = self.labels2new_labels[self.classes[j]]
+
+		# save dicts
+		dict_filename = "new_labels2labels_"+self.ds.name+"_"+self.ds.im_list[-1]+".pkl" 
+		deb.prints(dict_filename)
+		f = open(dict_filename, "wb")
+		pickle.dump(self.new_labels2labels, f)
+		f.close()
+		deb.prints(self.new_labels2labels)
 
 		# bcknd to last class
 		ic(np.unique(self.full_label_train, return_counts=True))
@@ -1164,17 +1213,11 @@ class DatasetWithCoords(Dataset):
 		self.full_label_train = self.full_label_train - 1
 		self.full_label_train[self.full_label_train == 255] = unique[-1]
 		ic(np.unique(self.full_label_train, return_counts=True))
-#		pdb.set_trace()
-		'''
-		self.patches['train']['label'] = self.patches['train']['label']-1
-		self.patches['test']['label'] = self.patches['test']['label']-1
 
-		deb.prints(np.unique(self.patches['train']['label'], return_counts=True))
-		
-##            labels_val = labels_val-1
-		class_n_no_bkcnd = len(self.classes)-1
-		self.patches['train']['label'][self.patches['train']['label']==255] = class_n_no_bkcnd
-		'''
+		self.patches['train']['n']=self.patches['train']['label'].shape[0]
+		self.patches['train']['idx']=range(self.patches['train']['n'])
+
+		deb.prints(self.patches['train']['label'].shape)
 
 	def val_set_get(self,mode='stratified',validation_split=0.2, idxs=None):
 		super().val_set_get()
@@ -1192,36 +1235,14 @@ class DatasetWithCoords(Dataset):
 		
 		# Count test
 		patch_count=np.zeros(self.class_n)
-		if label_type == 'NtoN':
-			patch_count_axis = (1,2,3)
-			rotation_axis = (2,3)
-		elif label_type == 'Nto1':	
-			patch_count_axis = (1,2)
-			rotation_axis = (1,2)
-		for clss in range(self.class_n):
-			patch_count[clss]=np.count_nonzero(np.isin(self.patches['test']['label'].argmax(axis=-1),clss).sum(axis=patch_count_axis))
-		deb.prints(patch_count.shape)
-		print("Test",patch_count)
-		
-		# Count train
-		patch_count=np.zeros(self.class_n)
-
-		for clss in range(self.class_n):
-			patch_count[clss]=np.count_nonzero(np.isin(self.patches['train']['label'].argmax(axis=-1),clss).sum(axis=patch_count_axis))
-		deb.prints(patch_count.shape)
-		ic("Train",patch_count)
 		
 		# Start balancing
 		balance={}
 		balance["out_n"]=(self.class_n-1)*samples_per_class
-		balance["out_in"]=np.zeros((balance["out_n"],) + self.patches["train"]["in"].shape[1::])
-
-		balance["out_labels"]=np.zeros((balance["out_n"],) + self.patches["train"]["label"].shape[1::])
 
 		balance["coords"] = np.zeros((balance["out_n"], *self.patches["train"]["coords"].shape[1:])).astype(np.int)
 		ic(balance["coords"].shape) 
-		label_int=self.patches['train']['label'].argmax(axis=-1)
-		labels_flat=np.reshape(label_int,(label_int.shape[0],np.prod(label_int.shape[1:])))
+
 		k=0
 
 		# get patch class
@@ -1252,21 +1273,17 @@ class DatasetWithCoords(Dataset):
 			patch_count[clss] = np.count_nonzero(np.where(classes == clss))
 
 			ic(patch_count[clss])
-			#pdb.set_trace()
+
 			if patch_count[clss]==0:
 				continue
 			ic(labels_flat.shape)
 			ic(clss)
-			#print((np.count_nonzero(np.isin(labels_flat,clss))>0).shape)
+
 			idxs=np.any(labels_flat==clss,axis=1)
 			ic(idxs.shape,idxs.dtype)
-			#labels_flat[np.count_nonzero(np.isin(labels_flat,clss))>0]
 
-			balance["in"]=self.patches['train']['in'][idxs]
-			balance["label"]=self.patches['train']['label'][idxs]
 			balance["class_coords"]=self.patches['train']['coords'][idxs]
 
-			ic(balance["in"].shape, balance["label"].shape)
 			ic(balance["class_coords"].shape)
 			ic(samples_per_class)
 			deb.prints(clss)
@@ -1275,84 +1292,42 @@ class DatasetWithCoords(Dataset):
 				index=range(balance["class_coords"].shape[0])
 				index = np.random.choice(index, samples_per_class, replace=replace)
 				#print(idxs.shape,index.shape)
-				balance["out_labels"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["label"][index]
-				balance["out_in"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["in"][index]
+
 				balance["coords"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["class_coords"][index]
 
 			else:
-
+				replace=True
 				augmented_manipulations=True
 				if augmented_manipulations==True:
 					augmented_data = balance["in"]
-					augmented_labels = balance["label"]
+
 					augmented_coords = balance["class_coords"]
 
 					cont_transf = 0
-					for i in range(int(samples_per_class/balance["label"].shape[0] - 1)):                
-						augmented_data_temp = balance["in"]
-						augmented_label_temp = balance["label"]
-						
-						if cont_transf == 0:
-							augmented_data_temp = np.rot90(augmented_data_temp,1,(2,3))
-							augmented_label_temp = np.rot90(augmented_label_temp,1,rotation_axis)
-						
-						elif cont_transf == 1:
-							augmented_data_temp = np.rot90(augmented_data_temp,2,(2,3))
-							augmented_label_temp = np.rot90(augmented_label_temp,2,rotation_axis)
-
-						elif cont_transf == 2:
-							augmented_data_temp = np.flip(augmented_data_temp,2)
-							augmented_label_temp = np.flip(augmented_label_temp,rotation_axis[0])
-							
-						elif cont_transf == 3:
-							augmented_data_temp = np.flip(augmented_data_temp,3)
-							augmented_label_temp = np.flip(augmented_label_temp,rotation_axis[1])
-						
-						elif cont_transf == 4:
-							augmented_data_temp = np.rot90(augmented_data_temp,3,(2,3))
-							augmented_label_temp = np.rot90(augmented_label_temp,3,rotation_axis)
-							
-						elif cont_transf == 5:
-							augmented_data_temp = augmented_data_temp
-							augmented_label_temp = augmented_label_temp
-							
-						cont_transf+=1
-						if cont_transf==6:
-							cont_transf = 0
-						print(augmented_data.shape,augmented_data_temp.shape)
-
-						augmented_data = np.vstack((augmented_data,augmented_data_temp))
-						augmented_labels = np.vstack((augmented_labels,augmented_label_temp))
+					for i in range(int(samples_per_class/balance["class_coords"].shape[0] - 1)):                
 						augmented_coords = np.vstack((augmented_coords, balance['class_coords']))
 						
-		#            augmented_labels_temp = np.tile(clss_labels,samples_per_class/num_samples )
-					#print(augmented_data.shape)
-					#print(augmented_labels.shape)
 					index = range(augmented_data.shape[0])
-					ic(augmented_data.shape)
+
 					ic(augmented_coords.shape)
-					index = np.random.choice(index, samples_per_class, replace=True)
+					index = np.random.choice(index, samples_per_class, replace=replace)
 					ic(index.shape)
-					balance["out_labels"][k*samples_per_class:k*samples_per_class + samples_per_class] = augmented_labels[index]
-					balance["out_in"][k*samples_per_class:k*samples_per_class + samples_per_class] = augmented_data[index]
+
 					balance["coords"][k*samples_per_class:k*samples_per_class + samples_per_class] = augmented_coords[index]
 
 				else:
-					replace=True
+					
 					index = range(balance["label"].shape[0])
 					index = np.random.choice(index, samples_per_class, replace=replace)
-					balance["out_labels"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["label"][index]
-					balance["out_in"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["in"][index]		
 					balance["coords"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["class_coords"][index]
-
 			k+=1
 		
 		idx = np.random.permutation(balance["coords"].shape[0])
-		self.patches['train']['in'] = balance["out_in"][idx]
-		self.patches['train']['label'] = balance["out_labels"][idx]
+
+		deb.prints(np.unique(self.full_label_train,return_counts=True))
+
 		self.patches['train']['coords'] = balance["coords"][idx]
 
-		deb.prints(np.unique(self.patches['train']['label'],return_counts=True))
 
 # ========== NetModel object implements model graph definition, train/testing, early stopping ================ #
 
@@ -3449,7 +3424,7 @@ class ModelFit(NetModel):
 				plt.savefig(path_file)
 		PlotHistory(history, 'loss', path_file='loss_fig.png')
 
-		self.graph.save('model_best_fit2.h5')		
+		self.graph.save('model_best.h5')		
 
 	def applyFitMethod(self, data):
 		history = self.graph.fit(data.patches['train']['in'], data.patches['train']['label'],
@@ -3757,7 +3732,7 @@ if __name__ == '__main__':
 	if paramsTrain.model_load:
 #		model=load_model('/home/lvc/Documents/Jorg/sbsr/fcn_model/results/seq2_true_norm/models/model_1000.h5')
 		
-		model.graph=load_model('model_best_fit2.h5', compile=False)		
+		model.graph=load_model('model_best.h5', compile=False)		
 #		model.graph.compile(loss=loss,
 #					optimizer=adam, metrics=metrics)
 
