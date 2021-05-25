@@ -22,8 +22,8 @@ from pathlib import Path
 import cv2
 import joblib
 elu_alpha = 0.1
-
-
+import deb
+from icecream import ic
 class Monitor(Callback):
     def __init__(self, validation, patience, classes, sample_validation_store=False):   
         super(Monitor, self).__init__()
@@ -51,26 +51,7 @@ class Monitor(Callback):
      
     def on_epoch_end(self, epoch, logs={}):
 
-#    for batch_index in range(len(self.validation)):
-        val_targ = self.validation[:][1]   
-        val_input = self.validation[:][0]
-        val_pred = self.model.predict(val_input)
-
-        val_predict = val_pred.argmax(axis=-1)            
-#        val_target = val_targ.argmax(axis=-1)
-
-        self.pred = val_predict.flatten()
-        self.targ = val_targ.flatten()     
-        targ_unique = np.unique(self.targ)
-        # ignore bckdn samples
-        self.pred = self.pred[self.targ!=targ_unique[-1]]
-        self.targ = self.targ[self.targ!=targ_unique[-1]]
-
-#        ic(self.pred.shape)
-#        ic(self.targ.shape)
-#        ic(np.unique(self.targ, return_counts=True))       
-#        ic(np.unique(self.pred, return_counts=True))       
-#        pdb.set_trace()
+        self.getValidationData()
 
         f1 = np.round(f1_score(self.targ, self.pred, average=None)*100,2)
         precision = np.round(precision_score(self.targ, self.pred, average=None)*100,2)
@@ -117,3 +98,120 @@ class Monitor(Callback):
         print("oa history",self.oa_history)
         
 
+class MonitorNPY(Monitor):
+    def getValidationData(self):
+        val_targ = self.validation[:][1]   
+        val_input = self.validation[:][0]
+        val_pred = self.model.predict(val_input)
+
+        val_pred = val_pred.argmax(axis=-1)            
+#        val_target = val_targ.argmax(axis=-1)
+
+        self.pred = val_pred.flatten()
+        self.targ = val_targ.flatten()     
+        targ_unique = np.unique(self.targ)
+        # ignore bckdn samples
+        self.pred = self.pred[self.targ!=targ_unique[-1]]
+        self.targ = self.targ[self.targ!=targ_unique[-1]]
+
+
+class MonitorGenerator(Monitor):
+    def getValidationData(self):
+        deb.prints(range(len(self.validation)))
+        for batch_index in range(len(self.validation)):
+            val_targ = self.validation[batch_index][1]   
+            val_pred = self.model.predict(self.validation[batch_index][0])
+            #deb.prints(val_pred.shape) # was programmed to get two outputs> classif. and depth
+            #deb.prints(val_targ.shape) # was programmed to get two outputs> classif. and depth
+            #deb.prints(len(self.validation[batch_index][1])) # was programmed to get two outputs> classif. and depth
+
+            val_prob = val_pred.copy()
+            val_predict = np.argmax(val_prob,axis=-1)
+            if batch_index == 0:
+                #plot_figures(self.validation[batch_index][0],val_targ,val_predict,
+                #             val_prob,self.model_dir,epoch, 
+                #             self.classes,'val')
+                #plot_figures_timedistributed(self.validation[batch_index][0],val_targ,val_predict,
+                #             val_prob,self.model_dir,epoch, 
+                #             self.classes,'val')
+                pass
+            val_targ = np.squeeze(val_targ)
+            #ic(val_predict.shape, val_targ.shape)
+            val_predict = val_predict[val_targ<self.classes]
+            val_targ = val_targ[val_targ<self.classes]
+            self.pred.extend(val_predict)
+            self.targ.extend(val_targ)        
+
+
+
+class MonitorNPYAndGenerator(Monitor):
+    def on_epoch_begin(self, epoch, logs={}):        
+        self.pred_npy = []
+        self.targ_npy = []
+
+        self.pred_generator = []
+        self.targ_generator = []
+
+    def getValidationData(self):
+#        deb.prints(range(len(self.validation)))
+# self.validation[0] is npy and self.validation[1] is generator (tuple)
+        for batch_index in range(len(self.validation[1])):
+            val_targ = self.validation[1][batch_index][1]   
+            val_pred = self.model.predict(self.validation[1][batch_index][0])
+            #deb.prints(val_pred.shape) # was programmed to get two outputs> classif. and depth
+            #deb.prints(val_targ.shape) # was programmed to get two outputs> classif. and depth
+            #deb.prints(len(self.validation[batch_index][1])) # was programmed to get two outputs> classif. and depth
+
+            val_prob = val_pred.copy()
+            val_predict = np.argmax(val_prob,axis=-1)
+            if batch_index == 0:
+                #plot_figures(self.validation[batch_index][0],val_targ,val_predict,
+                #             val_prob,self.model_dir,epoch, 
+                #             self.classes,'val')
+                #plot_figures_timedistributed(self.validation[batch_index][0],val_targ,val_predict,
+                #             val_prob,self.model_dir,epoch, 
+                #             self.classes,'val')
+                pass
+            val_targ = np.squeeze(val_targ)
+            #ic(val_predict.shape, val_targ.shape)
+            val_predict = val_predict.flatten()
+            val_targ = val_predict.flatten()
+#            val_predict = val_predict[val_targ<self.classes]
+#            val_targ = val_targ[val_targ<self.classes]
+            self.pred_generator.extend(val_predict)
+            self.targ_generator.extend(val_targ)     
+            #pdb.set_trace()   
+        self.pred_generator = np.asarray(self.pred_generator)
+        self.targ_generator = np.asarray(self.targ_generator)
+
+        ic(val_predict.shape, val_targ.shape)
+        pdb.set_trace()
+
+        self.pred_generator = self.pred_generator[self.targ_generator<self.classes]
+        self.targ_generator = self.targ_generator[self.targ_generator<self.classes]
+
+        pdb.set_trace()
+
+        val_targ = self.validation[0][:][1]   
+        val_input = self.validation[0][:][0]
+        val_pred = self.model.predict(val_input)
+
+        val_pred = val_pred.argmax(axis=-1)            
+#        val_target = val_targ.argmax(axis=-1)
+
+        self.pred_npy = val_pred.flatten()
+        self.targ_npy = val_targ.flatten()     
+        targ_unique = np.unique(self.targ_npy)
+        # ignore bckdn samples
+        self.pred_npy = self.pred_npy[self.targ_npy!=targ_unique[-1]]
+        self.targ_npy = self.targ_npy[self.targ_npy!=targ_unique[-1]]
+
+
+        pdb.set_trace()
+        deb.prints(self.pred_npy.shape)
+        deb.prints(self.pred_generator.shape)
+
+        deb.prints(self.targ_npy.shape)
+        deb.prints(self.targ_generator.shape)
+        
+        

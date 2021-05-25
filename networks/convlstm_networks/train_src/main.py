@@ -57,7 +57,7 @@ from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_
 from parameters.parameters_reader import ParamsTrain
 
 from icecream import ic
-from monitor import Monitor
+from monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerator
 
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('-tl', '--t_len', dest='t_len',
@@ -916,7 +916,7 @@ class Dataset(NetObject):
 		clss_train_unique,clss_train_count=np.unique(self.patches['train']['label'].argmax(axis=-1),return_counts=True)
 		deb.prints(clss_train_count)
 		self.patches['val']={'n':int(self.patches['train']['n']*validation_split)}
-		
+		ic(self.patches['train']['n'], self.patches['val']['n'])
 		#===== CHOOSE VAL IDX
 		#mode='stratified'
 		if mode=='random':
@@ -3504,7 +3504,20 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 			'n_classes': 6, # is it 6 or 5
 
 			'n_channels': 2,
-			'shuffle': True}
+			'shuffle': True,
+			'printCoords': False,
+			'augm': True}
+
+		params_validation = {
+			'dim': (self.t_len,self.patch_len,self.patch_len),
+			'label_dim': (self.patch_len,self.patch_len),
+			'batch_size': self.batch['train']['size'],
+#			'n_classes': self.class_n,
+			'n_classes': 6, # is it 6 or 5
+			'n_channels': 2,
+			'shuffle': False,
+			'printCoords': False,
+			'augm': False}
 		ic(data.patches['train']['label'].shape)
 		ic(data.patches['train']['label'][0])
 
@@ -3512,16 +3525,28 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 		ic(data.patches['train']['coords'][0])
 		training_generator = DataGeneratorWithCoords(data.full_ims_train, data.full_label_train, 
 			data.patches['train']['coords'], **params_train)
+		validation_generator = DataGeneratorWithCoords(data.full_ims_train, data.full_label_train, 
+			data.patches['val']['coords'], **params_validation)
 
+		ic(data.patches['val']['label'].shape)
+		ic(data.patches['val']['coords'].shape)
+		ic(data.patches['val']['coords'])
+#		pdb.set_trace()
 		history = self.graph.fit_generator(generator = training_generator,
 #			batch_size = self.batch['train']['size'], 
 			epochs = 70, 
-			validation_data=(data.patches['val']['in'], data.patches['val']['label']),
+			validation_data=validation_generator,
+#			validation_data=(data.patches['val']['in'], data.patches['val']['label']),
 #			callbacks = [es])
-			callbacks = [Monitor(
-				validation=(data.patches['val']['in'], data.patches['val']['label']),
+#			callbacks = [MonitorNPY(
+			callbacks = [MonitorGenerator(
+#			callbacks = [MonitorNPYAndGenerator(
+#				validation=((data.patches['val']['in'], data.patches['val']['label']),validation_generator),
+#				validation=(data.patches['val']['in'], data.patches['val']['label']),				
+				validation=validation_generator,
 				patience=10, classes=5)]
 			)
+
 		return history
 
 class ModelLoadEachBatch(NetModel):

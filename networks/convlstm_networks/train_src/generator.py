@@ -118,7 +118,8 @@ class DataGenerator(keras.utils.Sequence):
 class DataGeneratorWithCoords(keras.utils.Sequence):
 	'Generates data for Keras'
 	def __init__(self, inputs, labels, coords, batch_size=16, dim=(20,128,128), label_dim=(128,128),
-				n_channels=3, n_classes=2, shuffle=True, center_pixel = False):
+				n_channels=3, n_classes=2, shuffle=True, center_pixel = False, printCoords=False,
+				augm = False):
 		'Initialization'
 		self.inputs = inputs
 		self.dim = dim
@@ -135,6 +136,8 @@ class DataGeneratorWithCoords(keras.utils.Sequence):
 		self.label_dim = label_dim
 		self.coords = coords
 		self.center_pixel = center_pixel
+		self.printCoords = printCoords
+		self.augm = augm
 		self.on_epoch_end()
 
 	def __len__(self):
@@ -202,6 +205,8 @@ class DataGeneratorWithCoords(keras.utils.Sequence):
 
 		#deb.prints(coords_batch)
 		#deb.prints(coords_batch.shape[0])
+		if self.printCoords:
+			ic(coords_batch)
 		for idx in range(coords_batch.shape[0]):
 			'''
 			print(idx, coords_batch[idx], coords_batch[idx][0])
@@ -241,7 +246,7 @@ class DataGeneratorWithCoords(keras.utils.Sequence):
 			#ic(X.shape, Y.shape)
 			#X, Y = self.data_augmentation(X, Y)
 			#ic(X.shape, Y.shape)
-			self.augm = True
+#			self.augm = True
 			if self.augm == True:
 				transf = np.random.randint(0,6,1)
 				if transf == 0:
