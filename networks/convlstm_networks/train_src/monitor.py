@@ -117,7 +117,7 @@ class MonitorNPY(Monitor):
 
 class MonitorGenerator(Monitor):
     def getValidationData(self):
-        deb.prints(range(len(self.validation)))
+#        deb.prints(range(len(self.validation)))
         for batch_index in range(len(self.validation)):
             val_targ = self.validation[batch_index][1]   
             val_pred = self.model.predict(self.validation[batch_index][0])

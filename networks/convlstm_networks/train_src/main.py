@@ -1141,7 +1141,7 @@ class DatasetWithCoords(Dataset):
 
 #		pdb.set_trace()
 		ic(paramsTrain.known_classes)
-		ic(self.unknown_classes)
+		#ic(self.unknown_classes)
 		if paramsTrain.open_set==True:
 			for clss in self.unknown_classes:
 				self.full_label_train[self.full_label_train==int(clss) + 1] = 0
@@ -3610,8 +3610,10 @@ if __name__ == '__main__':
 	dotys, dotys_sin_cos = ds.getDayOfTheYear()
 	#pdb.set_trace()
 
-#	datasetClass = Dataset
-	datasetClass = DatasetWithCoords
+	if paramsTrain.sliceFromCoords == False:
+		datasetClass = Dataset
+	else:
+		datasetClass = DatasetWithCoords
 	data = datasetClass(patch_len=args.patch_len, patch_step_train=args.patch_step_train,
 		patch_step_test=args.patch_step_test,exp_id=args.exp_id,
 		path=args.path, t_len=ds.t_len, class_n=args.class_n, channel_n = args.channel_n,
@@ -3652,7 +3654,10 @@ if __name__ == '__main__':
 ##	modelClass = NetModel
 ##	modelClass = ModelFit
 ##	modelClass = ModelLoadGenerator
-	modelClass = ModelLoadGeneratorWithCoords
+	if paramsTrain.sliceFromCoords == False:
+		modelClass = NetModel
+	else:
+		modelClass = ModelLoadGeneratorWithCoords
 	model = modelClass(epochs=args.epochs, patch_len=args.patch_len,
 					 patch_step_train=args.patch_step_train, eval_mode=args.eval_mode,
 					 batch_size_train=args.batch_size_train,batch_size_test=args.batch_size_test,
