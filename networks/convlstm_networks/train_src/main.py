@@ -3501,15 +3501,21 @@ class ModelLoadGenerator(ModelFit):
 			'shuffle': False,
 			'augm': True}
 
+		params_validation = params_train.copy()
+		params_validation['augm'] = False
+
 		training_generator = DataGenerator(data.patches['train']['in'], data.patches['train']['label'], **params_train)
+		validation_generator = DataGenerator(data.patches['val']['in'], data.patches['val']['label'], **params_validation)
 
 		history = self.graph.fit_generator(generator = training_generator,
 #			batch_size = self.batch['train']['size'], 
 			epochs = 70, 
-			validation_data=(data.patches['val']['in'], data.patches['val']['label']),
+#			validation_data=(data.patches['val']['in'], data.patches['val']['label']),
+			validation_data=validation_generator,
 #			callbacks = [es])
-			callbacks = [MonitorNPY(
-				validation=(data.patches['val']['in'], data.patches['val']['label']),
+#			callbacks = [MonitorNPY(
+			callbacks = [MonitorGenerator(
+				validation=validation_generator,
 				patience=10, classes=self.class_n)],
 			shuffle = False
 			)
