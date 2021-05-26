@@ -31,7 +31,8 @@ import deb
 class DataGenerator(keras.utils.Sequence):
 	'Generates data for Keras'
 	def __init__(self, inputs, labels, batch_size=16, dim=(20,128,128), label_dim=(128,128),
-				n_channels=3, n_classes=2, shuffle=True, center_pixel = False):
+				n_channels=3, n_classes=2, shuffle=True, center_pixel = False,
+				augm = False):
 		'Initialization'
 		self.inputs = inputs
 		self.dim = dim
@@ -46,6 +47,7 @@ class DataGenerator(keras.utils.Sequence):
 		self.shuffle = shuffle
 		self.label_dim = label_dim
 		self.center_pixel = center_pixel
+		self.augm = augm
 		self.on_epoch_end()
 
 	def __len__(self):
@@ -112,6 +114,38 @@ class DataGenerator(keras.utils.Sequence):
 
 	  # You: Uncomment this for N-to-N (Classify all frames)
 			#Y[i] = np.load('labels/' + ID + '.npy').astype(np.float32)/255.
+		if self.augm == True:
+			for idx in range(X.shape[0]):
+				input_patch = X[idx]
+				label_patch = Y[idx]
+				transf = np.random.randint(0,6,1)
+				if transf == 0:
+					# rot 90
+					input_patch = np.rot90(input_patch,1,(1,2))
+					label_patch = np.rot90(label_patch,1,(0,1))
+					
+				elif transf == 1:
+					# rot 180
+					input_patch = np.rot90(input_patch,2,(1,2))
+					label_patch = np.rot90(label_patch,2,(0,1))
+					
+				elif transf == 2:
+					# flip horizontal
+					input_patch = np.flip(input_patch,1)
+					label_patch = np.flip(label_patch,0)
+					
+				elif transf == 3:
+					# flip vertical
+					input_patch = np.flip(input_patch,2)
+					label_patch = np.flip(label_patch,1)
+					
+				elif transf == 4:
+					# rot 270
+					input_patch = np.rot90(input_patch,3,(1,2))
+					label_patch = np.rot90(label_patch,3,(0,1))
+
+			X[idx] = input_patch
+			Y[idx] = label_patch
 
 		return X, Y
 

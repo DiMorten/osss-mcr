@@ -59,6 +59,9 @@ from parameters.parameters_reader import ParamsTrain
 from icecream import ic
 from monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerator
 
+np.random.seed(2021)
+tf.set_random_seed(2021)
+
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('-tl', '--t_len', dest='t_len',
 					type=int, default=7, help='t len')
@@ -3463,9 +3466,9 @@ class ModelFit(NetModel):
 			epochs = 70, 
 			validation_data=(data.patches['val']['in'], data.patches['val']['label']),
 #			callbacks = [es])
-			callbacks = [Monitor(
+			callbacks = [MonitorNPY(
 				validation=(data.patches['val']['in'], data.patches['val']['label']),
-				patience=10, classes=5)]
+				patience=10, classes=self.class_n)]
 			)
 		return history
 
@@ -3483,10 +3486,11 @@ class ModelLoadGenerator(ModelFit):
 			'label_dim': (self.t_len,self.patch_len,self.patch_len,1),
 			'batch_size': self.batch['train']['size'],
 #			'n_classes': self.class_n,
-			'n_classes': 6, # is it 6 or 5
+			'n_classes': self.class_n + 1, # is it 6 or 5
 
 			'n_channels': 2,
-			'shuffle': True}
+			'shuffle': True,
+			'augm': True}
 
 		training_generator = DataGenerator(data.patches['train']['in'], data.patches['train']['label'], **params_train)
 
@@ -3495,10 +3499,45 @@ class ModelLoadGenerator(ModelFit):
 			epochs = 70, 
 			validation_data=(data.patches['val']['in'], data.patches['val']['label']),
 #			callbacks = [es])
-			callbacks = [Monitor(
+			callbacks = [MonitorNPY(
 				validation=(data.patches['val']['in'], data.patches['val']['label']),
-				patience=10, classes=5)]
+				patience=10, classes=self.class_n)]
 			)
+		return history
+class ModelLoadGeneratorDebug(ModelFit):
+	def applyFitMethod(self,data):
+		params_train = {
+			'dim': (self.t_len,self.patch_len,self.patch_len),
+			'label_dim': (self.t_len,self.patch_len,self.patch_len,1),
+			'batch_size': self.batch['train']['size'],
+#			'n_classes': self.class_n,
+			'n_classes': self.class_n + 1, # is it 6 or 5
+
+			'n_channels': 2,
+			'shuffle': True}
+
+		training_generator = DataGenerator(data.patches['train']['in'], data.patches['train']['label'], **params_train)
+
+		history = self.graph.fit(data.patches['train']['in'], data.patches['train']['label'],
+			batch_size = self.batch['train']['size'], 
+			epochs = 3, 
+			validation_data=(data.patches['val']['in'], data.patches['val']['label']),
+#			callbacks = [es])
+			callbacks = [MonitorNPY(
+				validation=(data.patches['val']['in'], data.patches['val']['label']),
+				patience=10, classes=self.class_n)]
+			)
+		
+		history = self.graph.fit_generator(generator = training_generator,
+#			batch_size = self.batch['train']['size'], 
+			epochs = 3, 
+			validation_data=(data.patches['val']['in'], data.patches['val']['label']),
+#			callbacks = [es])
+			callbacks = [MonitorNPY(
+				validation=(data.patches['val']['in'], data.patches['val']['label']),
+				patience=10, classes=self.class_n)]
+			)
+		pdb.set_trace()
 		return history
 class ModelLoadGeneratorWithCoords(ModelFit):
 	def applyFitMethod(self,data):
@@ -3663,7 +3702,10 @@ if __name__ == '__main__':
 ##	modelClass = ModelFit
 ##	modelClass = ModelLoadGenerator
 	if paramsTrain.sliceFromCoords == False:
-		modelClass = NetModel
+		#modelClass = NetModel
+		#modelClass = ModelFit
+		modelClass = ModelLoadGenerator
+#		modelClass = ModelLoadGeneratorDebug
 	else:
 		modelClass = ModelLoadGeneratorWithCoords
 	model = modelClass(epochs=args.epochs, patch_len=args.patch_len,
