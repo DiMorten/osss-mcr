@@ -3461,14 +3461,14 @@ class ModelFit(NetModel):
 		self.graph.save('model_best_fit2.h5')		
 
 	def applyFitMethod(self, data):
-		
+		'''
 		first_batch_in = data.patches['train']['in'][0:16]
 		ic(np.min(first_batch_in), np.average(first_batch_in), np.max(first_batch_in))
 		first_batch_label = data.patches['train']['label'][0:16]
 		ic(first_batch_label.shape)
 		ic(np.unique(first_batch_label, return_counts=True))
 		pdb.set_trace()
-
+		'''
 		history = self.graph.fit(data.patches['train']['in'], data.patches['train']['label'],
 			batch_size = self.batch['train']['size'], 
 			epochs = 70, 
@@ -3499,7 +3499,7 @@ class ModelLoadGenerator(ModelFit):
 
 			'n_channels': 2,
 			'shuffle': False,
-			'augm': False}
+			'augm': True}
 
 		training_generator = DataGenerator(data.patches['train']['in'], data.patches['train']['label'], **params_train)
 
@@ -3713,8 +3713,8 @@ if __name__ == '__main__':
 ##	modelClass = ModelLoadGenerator
 	if paramsTrain.sliceFromCoords == False:
 		#modelClass = NetModel
-		modelClass = ModelFit
-#		modelClass = ModelLoadGenerator
+#		modelClass = ModelFit
+		modelClass = ModelLoadGenerator
 #		modelClass = ModelLoadGeneratorDebug
 	else:
 		modelClass = ModelLoadGeneratorWithCoords
