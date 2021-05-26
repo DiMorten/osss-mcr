@@ -3461,6 +3461,14 @@ class ModelFit(NetModel):
 		self.graph.save('model_best_fit2.h5')		
 
 	def applyFitMethod(self, data):
+		
+		first_batch_in = data.patches['train']['in'][0:16]
+		ic(np.min(first_batch_in), np.average(first_batch_in), np.max(first_batch_in))
+		first_batch_label = data.patches['train']['label'][0:16]
+		ic(first_batch_label.shape)
+		ic(np.unique(first_batch_label, return_counts=True))
+		pdb.set_trace()
+
 		history = self.graph.fit(data.patches['train']['in'], data.patches['train']['label'],
 			batch_size = self.batch['train']['size'], 
 			epochs = 70, 
@@ -3468,7 +3476,8 @@ class ModelFit(NetModel):
 #			callbacks = [es])
 			callbacks = [MonitorNPY(
 				validation=(data.patches['val']['in'], data.patches['val']['label']),
-				patience=10, classes=self.class_n)]
+				patience=10, classes=self.class_n)],
+			shuffle = False
 			)
 		return history
 
@@ -3489,8 +3498,8 @@ class ModelLoadGenerator(ModelFit):
 			'n_classes': self.class_n + 1, # is it 6 or 5
 
 			'n_channels': 2,
-			'shuffle': True,
-			'augm': True}
+			'shuffle': False,
+			'augm': False}
 
 		training_generator = DataGenerator(data.patches['train']['in'], data.patches['train']['label'], **params_train)
 
@@ -3501,7 +3510,8 @@ class ModelLoadGenerator(ModelFit):
 #			callbacks = [es])
 			callbacks = [MonitorNPY(
 				validation=(data.patches['val']['in'], data.patches['val']['label']),
-				patience=10, classes=self.class_n)]
+				patience=10, classes=self.class_n)],
+			shuffle = False
 			)
 		return history
 class ModelLoadGeneratorDebug(ModelFit):
@@ -3703,8 +3713,8 @@ if __name__ == '__main__':
 ##	modelClass = ModelLoadGenerator
 	if paramsTrain.sliceFromCoords == False:
 		#modelClass = NetModel
-		#modelClass = ModelFit
-		modelClass = ModelLoadGenerator
+		modelClass = ModelFit
+#		modelClass = ModelLoadGenerator
 #		modelClass = ModelLoadGeneratorDebug
 	else:
 		modelClass = ModelLoadGeneratorWithCoords
@@ -3736,11 +3746,12 @@ if __name__ == '__main__':
 			
 			deb.prints(data.patches['val']['label'].shape)
 			
-		print("=== AUGMENTING TRAINING DATA")
 
 		#balancing=False
 		
 		if paramsTrain.balancing==True:
+			print("=== AUGMENTING TRAINING DATA")
+
 			if args.seq_mode=='fixed' or args.seq_mode=='fixed_label_len':
 				label_type = 'Nto1'
 			elif args.seq_mode=='var' or args.seq_mode=='var_label':	

@@ -111,6 +111,12 @@ class DataGenerator(keras.utils.Sequence):
 
 		pdb.set_trace()
 		'''
+		ic(X.shape)
+		ic(np.min(X), np.average(X), np.max(X))
+		ic(Y.shape)
+		ic(np.unique(Y, return_counts=True))
+
+		pdb.set_trace()
 
 	  # You: Uncomment this for N-to-N (Classify all frames)
 			#Y[i] = np.load('labels/' + ID + '.npy').astype(np.float32)/255.

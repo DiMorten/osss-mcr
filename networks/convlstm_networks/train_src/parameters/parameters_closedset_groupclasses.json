@@ -2,7 +2,7 @@
     "train": true,
     "model_load": false,
     "open_set": false,
-    "balancing": true,
+    "balancing": false,
     "val_set": true,
     "store_patches": true,
     "select_kept_classes_flag": false,
