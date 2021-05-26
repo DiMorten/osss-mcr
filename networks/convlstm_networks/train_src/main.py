@@ -438,6 +438,7 @@ class Dataset(NetObject):
 
 		self.labels2new_labels = dict((c, i) for i, c in enumerate(self.classes))
 		self.new_labels2labels = dict((i, c) for i, c in enumerate(self.classes))
+		ic(self.labels2new_labels, self.new_labels2labels)
 		for j in range(len(self.classes)):
 			self.patches['train']['label'][tmp_tr == self.classes[j]] = self.labels2new_labels[self.classes[j]]
 			self.patches['test']['label'][tmp_tst == self.classes[j]] = self.labels2new_labels[self.classes[j]]
@@ -992,7 +993,6 @@ class Dataset(NetObject):
 		#deb.prints(data.patches['train']['label'].shape)
 	def semantic_balance(self,samples_per_class=500,label_type='Nto1'): # samples mean sequence of patches. Keep
 		print("data.semantic_balance")
-		
 		# Count test
 		patch_count=np.zeros(self.class_n)
 		if label_type == 'NtoN':
@@ -1108,8 +1108,10 @@ class Dataset(NetObject):
 		idx = np.random.permutation(balance["out_labels"].shape[0])
 		self.patches['train']['in'] = balance["out_in"][idx]
 		self.patches['train']['label'] = balance["out_labels"][idx]
-
-		deb.prints(np.unique(self.patches['train']['label'],return_counts=True))
+		
+		print("Balanced train unique (Patches):")
+		deb.prints(self.patches['train']['label'].shape)
+		deb.prints(np.unique(self.patches['train']['label'].argmax(axis=-1),return_counts=True))
 		# Replicate
 		#balance={}
 		#for clss in range(1,self.class_n):
@@ -1153,9 +1155,11 @@ class DatasetWithCoords(Dataset):
 
 		tmp_tr = self.full_label_train.copy()
 		ic(self.classes)
+		print("Transforming labels2new_labels...")
 		for j in range(len(self.classes)):
 			#ic(j, self.classes[j], self.labels2new_labels[self.classes[j]])
 			self.full_label_train[tmp_tr == self.classes[j]] = self.labels2new_labels[self.classes[j]]
+		print("Transformed labels2new_labels. Moving bcknd to last...")
 
 		# bcknd to last class
 		ic(np.unique(self.full_label_train, return_counts=True))
@@ -1163,6 +1167,7 @@ class DatasetWithCoords(Dataset):
 		unique = np.unique(self.full_label_train)
 		self.full_label_train = self.full_label_train - 1
 		self.full_label_train[self.full_label_train == 255] = unique[-1]
+		print("Moved bcknd to last")
 		ic(np.unique(self.full_label_train, return_counts=True))
 #		pdb.set_trace()
 		'''
@@ -1351,8 +1356,9 @@ class DatasetWithCoords(Dataset):
 		self.patches['train']['in'] = balance["out_in"][idx]
 		self.patches['train']['label'] = balance["out_labels"][idx]
 		self.patches['train']['coords'] = balance["coords"][idx]
-
-		deb.prints(np.unique(self.patches['train']['label'],return_counts=True))
+		print("Balanced train unique (coords):")
+		deb.prints(self.patches['train']['label'].shape)
+		deb.prints(np.unique(self.patches['train']['label'].argmax(axis=-1),return_counts=True))
 
 # ========== NetModel object implements model graph definition, train/testing, early stopping ================ #
 
@@ -3496,12 +3502,14 @@ class ModelLoadGenerator(ModelFit):
 		return history
 class ModelLoadGeneratorWithCoords(ModelFit):
 	def applyFitMethod(self,data):
+		ic(self.class_n)
+		#pdb.set_trace()
 		params_train = {
 			'dim': (self.t_len,self.patch_len,self.patch_len),
 			'label_dim': (self.patch_len,self.patch_len),
 			'batch_size': self.batch['train']['size'],
 #			'n_classes': self.class_n,
-			'n_classes': 6, # is it 6 or 5
+			'n_classes': self.class_n + 1, # it was 6. Now it is 13 + 1 = 14
 
 			'n_channels': 2,
 			'shuffle': True,
@@ -3513,7 +3521,7 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 			'label_dim': (self.patch_len,self.patch_len),
 			'batch_size': self.batch['train']['size'],
 #			'n_classes': self.class_n,
-			'n_classes': 6, # is it 6 or 5
+			'n_classes': self.class_n + 1, # it was 6
 			'n_channels': 2,
 			'shuffle': False,
 			'printCoords': False,
@@ -3544,7 +3552,7 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 #				validation=((data.patches['val']['in'], data.patches['val']['label']),validation_generator),
 #				validation=(data.patches['val']['in'], data.patches['val']['label']),				
 				validation=validation_generator,
-				patience=10, classes=5)]
+				patience=10, classes=self.class_n)] # it was 5
 			)
 
 		return history
@@ -3696,6 +3704,9 @@ if __name__ == '__main__':
 			elif args.seq_mode=='var' or args.seq_mode=='var_label':	
 				label_type = 'NtoN'
 			deb.prints(label_type)
+			print("Before balancing:")
+			deb.prints(np.unique(data.patches['train']['label'].argmax(axis=-1),return_counts=True))
+
 #			data.semantic_balance(500,label_type = label_type) #Less for fixed i guess
 #			data.semantic_balance(700,label_type = label_type) #More for seq2seq
 #			data.semantic_balance(2000,label_type = label_type) #More for known classes few. Compare with 500 later
