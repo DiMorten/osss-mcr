@@ -31,7 +31,7 @@ import deb
 class DataGenerator(keras.utils.Sequence):
 	'Generates data for Keras'
 	def __init__(self, inputs, labels, batch_size=16, dim=(20,128,128), label_dim=(128,128),
-				n_channels=3, n_classes=2, shuffle=True, center_pixel = False,
+				n_channels=3, n_classes=2, shuffle=False, center_pixel = False,
 				augm = False):
 		'Initialization'
 		self.inputs = inputs
@@ -65,7 +65,8 @@ class DataGenerator(keras.utils.Sequence):
 #		list_IDs_temp = [self.list_IDs[k] for k in indexes]
 		inputs_batch = self.inputs[indexes]
 		labels_batch = self.labels[indexes]
-
+		
+		ic(index)
 		# Generate data
 		X, y = self.__data_generation(inputs_batch, labels_batch)
 
@@ -111,14 +112,14 @@ class DataGenerator(keras.utils.Sequence):
 
 		pdb.set_trace()
 		'''
-		'''
+		
 		ic(X.shape)
 		ic(np.min(X), np.average(X), np.max(X))
 		ic(Y.shape)
 		ic(np.unique(Y, return_counts=True))
 
 		pdb.set_trace()
-		'''
+		
 	  # You: Uncomment this for N-to-N (Classify all frames)
 			#Y[i] = np.load('labels/' + ID + '.npy').astype(np.float32)/255.
 		if self.augm == True:
@@ -159,7 +160,7 @@ class DataGenerator(keras.utils.Sequence):
 class DataGeneratorWithCoords(keras.utils.Sequence):
 	'Generates data for Keras'
 	def __init__(self, inputs, labels, coords, batch_size=16, dim=(20,128,128), label_dim=(128,128),
-				n_channels=3, n_classes=2, shuffle=True, center_pixel = False, printCoords=False,
+				n_channels=3, n_classes=2, shuffle=False, center_pixel = False, printCoords=False,
 				augm = False):
 		'Initialization'
 		self.inputs = inputs
@@ -195,7 +196,7 @@ class DataGeneratorWithCoords(keras.utils.Sequence):
 		# Find list of IDs
 #		list_IDs_temp = [self.list_IDs[k] for k in indexes]
 		coords_batch = self.coords[indexes]
-
+		ic(index)
 		# Generate data
 		X, y = self.__data_generation(coords_batch)
 
@@ -289,6 +290,8 @@ class DataGeneratorWithCoords(keras.utils.Sequence):
 			#X, Y = self.data_augmentation(X, Y)
 			#ic(X.shape, Y.shape)
 #			self.augm = True
+
+
 			if self.augm == True:
 				transf = np.random.randint(0,6,1)
 				if transf == 0:
@@ -338,5 +341,12 @@ class DataGeneratorWithCoords(keras.utils.Sequence):
 			X[idx] = input_patch
 #			Y[idx] = toOneHot(label_patch)
 			Y[idx] = label_patch
+		ic(coords_batch)
+		ic(X.shape)
+		ic(np.min(X), np.average(X), np.max(X))
+		ic(Y.shape)
+		ic(np.unique(Y, return_counts=True))
 
+		pdb.set_trace()
+		
 		return X, np.expand_dims(Y, axis=-1)
