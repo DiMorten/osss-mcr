@@ -242,6 +242,7 @@ class DataGeneratorWithCoords(keras.utils.Sequence):
 		'Generates data containing batch_size samples' # X : (n_samples, *dim, n_channels)
 		# Initialization
 		X = np.empty((self.batch_size, *self.dim, self.n_channels), dtype=np.float32)
+#		Y = np.empty((self.batch_size, *self.label_dim, self.n_classes), dtype=int)
 		Y = np.empty((self.batch_size, *self.label_dim), dtype=int)
 
 		#deb.prints(coords_batch)
@@ -315,7 +316,27 @@ class DataGeneratorWithCoords(keras.utils.Sequence):
 					input_patch = np.rot90(input_patch,3,(1,2))
 					label_patch = np.rot90(label_patch,3,(0,1))
 
+			'''
+			# convert to one-hot
+			def toOneHot(label):
+				label_shape = label.shape
+				ic(label[0])
+				ic(label_shape)
+#				ic((*label_shape[:-1], -1))
+				label = np.reshape(label, -1)
+				b = np.zeros((label.shape[0], self.n_classes))
+				b[np.arange(label.shape[0], label)] = 1
+				ic(b.shape)
+
+				b = np.reshape(b, label_shape)
+				ic(b.shape)
+				ic(b[0])
+				pdb.set_trace()
+
+				return b
+			'''
 			X[idx] = input_patch
+#			Y[idx] = toOneHot(label_patch)
 			Y[idx] = label_patch
 
-		return X, np.expand_dims(Y,axis=-1)
+		return X, np.expand_dims(Y, axis=-1)

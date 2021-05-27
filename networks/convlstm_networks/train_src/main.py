@@ -1183,7 +1183,7 @@ class DatasetWithCoords(Dataset):
 		class_n_no_bkcnd = len(self.classes)-1
 		self.patches['train']['label'][self.patches['train']['label']==255] = class_n_no_bkcnd
 		'''
-
+	
 	def val_set_get(self,mode='stratified',validation_split=0.2, idxs=None):
 		super().val_set_get()
 		
@@ -3567,20 +3567,14 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 			'n_classes': self.class_n + 1, # it was 6. Now it is 13 + 1 = 14
 
 			'n_channels': 2,
-			'shuffle': True,
+			'shuffle': False,
 			'printCoords': False,
 			'augm': True}
 
-		params_validation = {
-			'dim': (self.t_len,self.patch_len,self.patch_len),
-			'label_dim': (self.patch_len,self.patch_len),
-			'batch_size': self.batch['train']['size'],
-#			'n_classes': self.class_n,
-			'n_classes': self.class_n + 1, # it was 6
-			'n_channels': 2,
-			'shuffle': False,
-			'printCoords': False,
-			'augm': False}
+		params_validation = params_train.copy()
+		params_validation['augm'] = False
+		params_validation['shuffle'] = False
+
 		ic(data.patches['train']['label'].shape)
 		ic(data.patches['train']['label'][0])
 
