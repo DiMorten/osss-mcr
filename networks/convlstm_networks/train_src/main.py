@@ -3778,7 +3778,7 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 
 			'n_channels': 2,
 			'shuffle': False,
-			'printCoords': False,
+#			'printCoords': False,
 			'augm': False}
 
 		params_validation = params_train.copy()
@@ -3791,11 +3791,15 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 		ic(data.patches['train']['coords'].shape)
 		ic(data.patches['train']['coords'][0:16])
 		ic(data.patches['val']['coords'][0:16])
-
-		training_generator = DataGeneratorWithCoords(data.full_ims_train, data.full_label_train, 
-			data.patches['train']['coords'], **params_train)
-		validation_generator = DataGeneratorWithCoords(data.full_ims_train, data.full_label_train, 
-			data.patches['val']['coords'], **params_validation)
+		generator_type="patches"
+		if generator_type=="coords":
+			training_generator = DataGeneratorWithCoords(data.full_ims_train, data.full_label_train, 
+				data.patches['train']['coords'], **params_train)
+			validation_generator = DataGeneratorWithCoords(data.full_ims_train, data.full_label_train, 
+				data.patches['val']['coords'], **params_validation)
+		elif generator_type=="patches":
+			training_generator = DataGenerator(data.patches['train']['in'], data.patches['train']['label'], **params_train)
+			validation_generator = DataGenerator(data.patches['val']['in'], data.patches['val']['label'], **params_validation)
 
 		ic(data.patches['val']['label'].shape)
 		ic(data.patches['val']['coords'].shape)
