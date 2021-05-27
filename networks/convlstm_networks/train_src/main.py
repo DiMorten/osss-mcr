@@ -48,7 +48,7 @@ from collections import Counter
 
 from patches_storage import PatchesStorageEachSample,PatchesStorageAllSamples, PatchesStorageAllSamplesOpenSet
 #from datagenerator import DataGenerator
-from generator import DataGenerator, DataGeneratorWithCoords
+from generator import DataGenerator, DataGeneratorWithCoords, DataGeneratorWithCoordsPatches
 
 import matplotlib.pyplot as plt
 sys.path.append('../../../dataset/dataset/patches_extract_script/')
@@ -58,6 +58,7 @@ from parameters.parameters_reader import ParamsTrain
 
 from icecream import ic
 from monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerator
+import natsort
 
 np.random.seed(2021)
 tf.set_random_seed(2021)
@@ -559,6 +560,9 @@ class Dataset(NetObject):
 
 	def folder_load(self,folder_path): #move to patches_handler
 		paths=glob.glob(folder_path+'*.npy')
+		paths = natsort.natsorted(paths)
+		#ic(paths)
+		#pdb.set_trace()
 		files=[]
 		deb.prints(len(paths))
 		for path in paths:
@@ -1572,7 +1576,21 @@ class DatasetWithCoords(Dataset):
 		print("Balanced train unique (coords):")
 		deb.prints(self.patches['train']['label'].shape)
 		deb.prints(np.unique(self.patches['train']['label'].argmax(axis=-1),return_counts=True))
-
+	def getPatchesFromCoords(self, im, coords):
+		# coords is n, row, col
+		patch_size = 32
+		label_dim = (patch_size, patch_size)
+		Y = np.empty((coords.shape[0], *label_dim), dtype=int)
+		for idx in range(coords.shape[0]):
+			label_patch = im[coords[idx][0]:coords[idx][0]+patch_size,
+						coords[idx][1]:coords[idx][1]+patch_size]
+			Y[idx] = label_patch
+		return Y
+	def comparePatchesCoords(self):
+		Y = self.getPatchesFromCoords(self.full_label_train, self.patches['train']['coords'][0:16])
+		ic(np.unique(self.patches['train']['label'].argmax(axis=-1)[0:16], return_counts=True))
+		ic(np.unique(Y, return_counts=True))
+		pdb.set_trace()
 # ========== NetModel object implements model graph definition, train/testing, early stopping ================ #
 
 class NetModel(NetObject):
@@ -3791,7 +3809,7 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 		ic(data.patches['train']['coords'].shape)
 		ic(data.patches['train']['coords'][0:16])
 		ic(data.patches['val']['coords'][0:16])
-		generator_type="patches"
+		generator_type="coords_patches"
 		if generator_type=="coords":
 			training_generator = DataGeneratorWithCoords(data.full_ims_train, data.full_label_train, 
 				data.patches['train']['coords'], **params_train)
@@ -3800,6 +3818,14 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 		elif generator_type=="patches":
 			training_generator = DataGenerator(data.patches['train']['in'], data.patches['train']['label'], **params_train)
 			validation_generator = DataGenerator(data.patches['val']['in'], data.patches['val']['label'], **params_validation)
+		elif generator_type=="coords_patches":
+			training_generator = DataGeneratorWithCoordsPatches(data.patches['train']['in'], data.patches['train']['label'],
+				data.full_ims_train, data.full_label_train, 
+				data.patches['train']['coords'], **params_train)
+			#validation_generator = DataGeneratorWithCoordsPatches(data.full_ims_train, data.full_label_train, 
+			#	data.patches['val']['coords'], **params_validation)			
+			validation_generator = DataGeneratorWithCoords(data.full_ims_train, data.full_label_train, 
+				data.patches['val']['coords'], **params_validation)
 
 		ic(data.patches['val']['label'].shape)
 		ic(data.patches['val']['coords'].shape)
@@ -3919,7 +3945,10 @@ if __name__ == '__main__':
 		deb.prints(train_label_unique)
 		deb.prints(train_label_count)
 		data.label_unique=test_label_unique.copy()
-		
+	
+	# check coords patch
+
+	data.comparePatchesCoords()
 	#adam = Adam(lr=0.0001, beta_1=0.9)
 	adam = Adam(lr=paramsTrain.learning_rate, beta_1=0.9)
 	
@@ -3980,7 +4009,7 @@ if __name__ == '__main__':
 #			data.semantic_balance(500,label_type = label_type) #Less for fixed i guess
 #			data.semantic_balance(700,label_type = label_type) #More for seq2seq
 #			data.semantic_balance(2000,label_type = label_type) #More for known classes few. Compare with 500 later
-			data.semantic_balance(paramsTrain.samples_per_class,label_type = label_type) #More for known classes few. Compare with 500 later
+#			data.semantic_balance(paramsTrain.samples_per_class,label_type = label_type) #More for known classes few. Compare with 500 later
 						
 
 
