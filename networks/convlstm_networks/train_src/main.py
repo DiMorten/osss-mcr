@@ -916,7 +916,7 @@ class Dataset(NetObject):
 		deb.prints(out.shape)
 		out=cv2.cvtColor(out.astype(np.uint8),cv2.COLOR_RGB2BGR)
 		return out
-	def val_set_get(self,mode='stratified',validation_split=0.2):
+	def val_set_get(self,mode='random',validation_split=0.2):
 		clss_train_unique,clss_train_count=np.unique(self.patches['train']['label'].argmax(axis=-1),return_counts=True)
 		deb.prints(clss_train_count)
 		self.patches['val']={'n':int(self.patches['train']['n']*validation_split)}
@@ -994,6 +994,14 @@ class Dataset(NetObject):
 		self.patches['train']['label']=np.delete(self.patches['train']['label'],self.patches['val']['idx'],axis=0)
 		#deb.prints(data.patches['train']['in'].shape)
 		#deb.prints(data.patches['train']['label'].shape)
+		if mode=='random':
+			self.patches['val']['coords'] =  self.patches['train']['coords'][self.patches['val']['idx']]
+		
+		self.patches['train']['coords']=np.delete(self.patches['train']['coords'],self.patches['val']['idx'],axis=0)
+
+		ic(self.patches['train']['coords'].shape)
+		ic(self.patches['val']['coords'].shape)
+
 	def semantic_balance(self,samples_per_class=500,label_type='Nto1'): # samples mean sequence of patches. Keep
 		print("data.semantic_balance")
 		# Count test
@@ -1184,9 +1192,9 @@ class DatasetWithCoords(Dataset):
 		self.patches['train']['label'][self.patches['train']['label']==255] = class_n_no_bkcnd
 		'''
 	
-	def val_set_get(self,mode='stratified',validation_split=0.2, idxs=None):
-		super().val_set_get()
-		
+	def val_set_get(self,mode='random',validation_split=0.2, idxs=None):
+		super().val_set_get(mode, validation_split)
+		'''
 		if mode=='random':
 			self.patches['val']['coords'] =  self.patches['train']['coords'][self.patches['val']['idx']]
 		
@@ -1194,7 +1202,7 @@ class DatasetWithCoords(Dataset):
 
 		ic(self.patches['train']['coords'].shape)
 		ic(self.patches['val']['coords'].shape)
-	
+		'''
 	def semantic_balance(self,samples_per_class=500,label_type='Nto1'): # samples mean sequence of patches. Keep
 		print("data.semantic_balance")
 		
@@ -1232,12 +1240,27 @@ class DatasetWithCoords(Dataset):
 		labels_flat=np.reshape(label_int,(label_int.shape[0],np.prod(label_int.shape[1:])))
 		k=0
 
+		# get patch count from coords only
+		ic(np.unique(self.full_label_train, return_counts = True))
+		ic(np.unique(label_int, return_counts = True))
+		
+#		pdb.set_trace()
+#		def getClassCountFromCoords():
+#			for idx in range(self.patches['train']['coords'].shape[0]):
+#				coord = self.patches['train']['coords'][idx]
+#				label_patch = self.full_label_train[coord[0]-psize//2:coord[0]+psize//2 + psize%2,coord[1]-psize//2:coord[1]+psize//2 + psize%2]
+#				patchClassCount = Counter(label_patch>0) # es mayor a 0? o el bcknd esta al final?
+#				uniques, count = np.unique(label_patch>0, return_counts = True)				
+#				for unique in uniques:
+#					patch_count[unique] 
+
 		# get patch class
 		classes = np.zeros((self.patches['train']['coords'].shape[0]))
 		ic(classes.shape)
 		unique_train = np.unique(self.full_label_train)
 		ic(unique_train)
 		bcknd_idx = unique_train[-1]
+		ic(bcknd_idx)
 		psize = 32 # 32
 		ic(psize)
 		
@@ -1248,13 +1271,16 @@ class DatasetWithCoords(Dataset):
 				classes[idx] = patch_class
 			elif patch_class == bcknd_idx:
 				label_patch = self.full_label_train[coord[0]-psize//2:coord[0]+psize//2 + psize%2,coord[1]-psize//2:coord[1]+psize//2 + psize%2]
-				no_class = np.sum(label_patch>0)
+				no_class = np.sum(label_patch<bcknd_idx)
 				if no_class>0.05*psize**2:
-					cnt = Counter(label_patch[label_patch>0])
+#					ic(np.unique(label_patch, return_counts = True))
+#					ic(np.unique(label_patch[label_patch<bcknd_idx], return_counts = True))
+					cnt = Counter(label_patch[label_patch<bcknd_idx])
+#					ic(cnt)
 					classes[idx] = max(cnt, key=cnt.get)
 		
 
-		for clss in range(1,self.class_n):
+		for clss in range(0,self.class_n-1):
 			ic(clss)
 			ic(patch_count[clss])
 			patch_count[clss] = np.count_nonzero(np.where(classes == clss))
