@@ -1159,6 +1159,8 @@ class DatasetWithCoords(Dataset):
 		self.full_label_test = np.load(self.path['v']+'full_ims/'+'full_label_test.npy').astype(np.uint8)
 		self.full_label_test = self.full_label_test[-1]
 
+		unique,count=np.unique(self.full_label_train,return_counts=True)
+		self.class_n=unique.shape[0] # plus background
 
 		ic(np.unique(self.full_label_train, return_counts=True))
 		ic(np.unique(self.full_label_test, return_counts=True))
@@ -1204,9 +1206,13 @@ class DatasetWithCoords(Dataset):
 		'''
 	
 	def val_set_get(self,mode='random',validation_split=0.2, idxs=None):
-		super().val_set_get(mode, validation_split)
-		
+		clss_train_unique,clss_train_count=np.unique(self.patches['train']['label'].argmax(axis=-1),return_counts=True)
+		deb.prints(clss_train_count)
+		self.patches['val']={'n':int(self.patches['train']['n']*validation_split)}
+		ic(self.patches['train']['n'], self.patches['val']['n'])
+		#===== CHOOSE VAL IDX
 		if mode=='random':
+			self.patches['val']['idx']=np.random.choice(self.patches['train']['idx'],self.patches['val']['n'],replace=False)
 			self.patches['val']['coords'] =  self.patches['train']['coords'][self.patches['val']['idx']]
 		
 		self.patches['train']['coords']=np.delete(self.patches['train']['coords'],self.patches['val']['idx'],axis=0)
@@ -1225,35 +1231,24 @@ class DatasetWithCoords(Dataset):
 		elif label_type == 'Nto1':	
 			patch_count_axis = (1,2)
 			rotation_axis = (1,2)
-		for clss in range(self.class_n):
-			patch_count[clss]=np.count_nonzero(np.isin(self.patches['test']['label'].argmax(axis=-1),clss).sum(axis=patch_count_axis))
-		deb.prints(patch_count.shape)
-		print("Test",patch_count)
+
 		
 		# Count train
 		patch_count=np.zeros(self.class_n)
 
-		for clss in range(self.class_n):
-			patch_count[clss]=np.count_nonzero(np.isin(self.patches['train']['label'].argmax(axis=-1),clss).sum(axis=patch_count_axis))
-		deb.prints(patch_count.shape)
-		ic("Train",patch_count)
+
 		
 		# Start balancing
 		balance={}
 		balance["out_n"]=(self.class_n-1)*samples_per_class
-		balance["out_in"]=np.zeros((balance["out_n"],) + self.patches["train"]["in"].shape[1::])
 
-		balance["out_labels"]=np.zeros((balance["out_n"],) + self.patches["train"]["label"].shape[1::])
 
 		balance["coords"] = np.zeros((balance["out_n"], *self.patches["train"]["coords"].shape[1:])).astype(np.int)
 		ic(balance["coords"].shape) 
-		label_int=self.patches['train']['label'].argmax(axis=-1)
-		labels_flat=np.reshape(label_int,(label_int.shape[0],np.prod(label_int.shape[1:])))
 		k=0
 
 		# get patch count from coords only
 		ic(np.unique(self.full_label_train, return_counts = True))
-		ic(np.unique(label_int, return_counts = True))
 		
 #		pdb.set_trace()
 
@@ -1270,12 +1265,9 @@ class DatasetWithCoords(Dataset):
 
 		for idx in range(self.patches['train']['coords'].shape[0]):
 			coord = self.patches['train']['coords'][idx]
-
 			label_patch = self.full_label_train[coord[0]:coord[0]+psize,
 				coord[1]:coord[1]+psize]
-#			label_patch = self.full_label_train[coord[0]-psize//2:coord[0]+psize//2 + psize%2,coord[1]-psize//2:coord[1]+psize//2 + psize%2]
 			patchClassCount = Counter(label_patch[label_patch<bcknd_idx]) # es mayor a 0? o el bcknd esta al final?
-#				uniques = np.unique(label_patch<bcknd_idx)				
 			for key in patchClassCount:
 				patch_count[key] = patch_count[key] + 1
 				coords_classes[idx, key] = 1
@@ -1291,23 +1283,15 @@ class DatasetWithCoords(Dataset):
 			#pdb.set_trace()
 			if patch_count[clss]==0:
 				continue
-			ic(labels_flat.shape)
 			ic(clss)
-			#print((np.count_nonzero(np.isin(labels_flat,clss))>0).shape)
-			idxs=np.any(labels_flat==clss,axis=1)
-			ic(idxs.shape,idxs.dtype)
-			ic(np.unique(idxs, return_counts = True))
+
 			idxs = coords_classes[:, clss] == 1
 			ic(idxs.shape,idxs.dtype)
 			ic(np.unique(idxs, return_counts = True))
 			pdb.set_trace()
-			#labels_flat[np.count_nonzero(np.isin(labels_flat,clss))>0]
 
-			balance["in"]=self.patches['train']['in'][idxs]
-			balance["label"]=self.patches['train']['label'][idxs]
 			balance["class_coords"]=self.patches['train']['coords'][idxs]
 
-			ic(balance["in"].shape, balance["label"].shape)
 			ic(balance["class_coords"].shape)
 			ic(samples_per_class)
 			deb.prints(clss)
@@ -1315,86 +1299,45 @@ class DatasetWithCoords(Dataset):
 				replace=False
 				index=range(balance["class_coords"].shape[0])
 				index = np.random.choice(index, samples_per_class, replace=replace)
-				#print(idxs.shape,index.shape)
-				balance["out_labels"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["label"][index]
-				balance["out_in"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["in"][index]
+
 				balance["coords"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["class_coords"][index]
 
 			else:
 
 				augmented_manipulations=False
 				if augmented_manipulations==True:
-					augmented_data = balance["in"]
-					augmented_labels = balance["label"]
+
 					augmented_coords = balance["class_coords"]
 
-					cont_transf = 0
 					for i in range(int(samples_per_class/balance["label"].shape[0] - 1)):                
-						augmented_data_temp = balance["in"]
-						augmented_label_temp = balance["label"]
-						
-						if cont_transf == 0:
-							augmented_data_temp = np.rot90(augmented_data_temp,1,(2,3))
-							augmented_label_temp = np.rot90(augmented_label_temp,1,rotation_axis)
-						
-						elif cont_transf == 1:
-							augmented_data_temp = np.rot90(augmented_data_temp,2,(2,3))
-							augmented_label_temp = np.rot90(augmented_label_temp,2,rotation_axis)
-
-						elif cont_transf == 2:
-							augmented_data_temp = np.flip(augmented_data_temp,2)
-							augmented_label_temp = np.flip(augmented_label_temp,rotation_axis[0])
-							
-						elif cont_transf == 3:
-							augmented_data_temp = np.flip(augmented_data_temp,3)
-							augmented_label_temp = np.flip(augmented_label_temp,rotation_axis[1])
-						
-						elif cont_transf == 4:
-							augmented_data_temp = np.rot90(augmented_data_temp,3,(2,3))
-							augmented_label_temp = np.rot90(augmented_label_temp,3,rotation_axis)
-							
-						elif cont_transf == 5:
-							augmented_data_temp = augmented_data_temp
-							augmented_label_temp = augmented_label_temp
-							
-						cont_transf+=1
-						if cont_transf==6:
-							cont_transf = 0
-						print(augmented_data.shape,augmented_data_temp.shape)
-
-						augmented_data = np.vstack((augmented_data,augmented_data_temp))
-						augmented_labels = np.vstack((augmented_labels,augmented_label_temp))
 						augmented_coords = np.vstack((augmented_coords, balance['class_coords']))
 						
 		#            augmented_labels_temp = np.tile(clss_labels,samples_per_class/num_samples )
-					#print(augmented_data.shape)
-					#print(augmented_labels.shape)
-					index = range(augmented_data.shape[0])
-					ic(augmented_data.shape)
+
+#					index = range(augmented_data.shape[0])
+					index = range(augmented_coords.shape[0])
+
 					ic(augmented_coords.shape)
 					index = np.random.choice(index, samples_per_class, replace=True)
 					ic(index.shape)
-					balance["out_labels"][k*samples_per_class:k*samples_per_class + samples_per_class] = augmented_labels[index]
-					balance["out_in"][k*samples_per_class:k*samples_per_class + samples_per_class] = augmented_data[index]
 					balance["coords"][k*samples_per_class:k*samples_per_class + samples_per_class] = augmented_coords[index]
 
 				else:
 					replace=True
-					index = range(balance["label"].shape[0])
+#					index = range(balance["label"].shape[0])
+					index = range(balance["class_coords"].shape[0])
+
 					index = np.random.choice(index, samples_per_class, replace=replace)
-					balance["out_labels"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["label"][index]
-					balance["out_in"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["in"][index]		
 					balance["coords"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["class_coords"][index]
 
 			k+=1
 		
 		idx = np.random.permutation(balance["coords"].shape[0])
-		self.patches['train']['in'] = balance["out_in"][idx]
-		self.patches['train']['label'] = balance["out_labels"][idx]
+
 		self.patches['train']['coords'] = balance["coords"][idx]
 		print("Balanced train unique (coords):")
-		deb.prints(self.patches['train']['label'].shape)
-		deb.prints(np.unique(self.patches['train']['label'].argmax(axis=-1),return_counts=True))
+		deb.prints(self.patches['train']['coords'].shape)
+##		deb.prints(np.unique(self.patches['train']['label'].argmax(axis=-1),return_counts=True))
 	def getPatchesFromCoords(self, im, coords):
 		# coords is n, row, col
 		patch_size = 32
@@ -3470,22 +3413,8 @@ class ModelFit(NetModel):
 		#========= VAL INIT
 
 
-		if self.val_set:
-			count,unique=np.unique(data.patches['val']['label'].argmax(axis=-1),return_counts=True)
-			print("Val label count,unique",count,unique)
 
-		count,unique=np.unique(data.patches['train']['label'].argmax(axis=-1),return_counts=True)
-		print("Train count,unique",count,unique)
-		
-		count,unique=np.unique(data.patches['test']['label'].argmax(axis=-1),return_counts=True)
-		print("Test count,unique",count,unique)
-		# self.batch['train']['size']
-
-		ic(data.patches['train']['in'].shape)
-		ic(data.patches['train']['label'].shape)
-#		pdb.set_trace()
-		data.patches['train']['label'] = np.expand_dims(data.patches['train']['label'].argmax(axis=-1),axis=-1).astype(np.int8)
-		data.patches['val']['label'] = np.expand_dims(data.patches['val']['label'].argmax(axis=-1),axis=-1).astype(np.int8)
+		ic(data.patches['train']['coords'].shape)
 
 		self.batch['train']['size'] = 16
 
@@ -3603,6 +3532,7 @@ class ModelLoadGeneratorDebug(ModelFit):
 		pdb.set_trace()
 		return history
 class ModelLoadGeneratorWithCoords(ModelFit):
+
 	def applyFitMethod(self,data):
 		ic(self.class_n)
 		#pdb.set_trace()
@@ -3634,20 +3564,7 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 				data.patches['train']['coords'], **params_train)
 			validation_generator = DataGeneratorWithCoords(data.full_ims_train, data.full_label_train, 
 				data.patches['val']['coords'], **params_validation)
-		'''
-		elif generator_type=="patches":
-			training_generator = DataGenerator(data.patches['train']['in'], data.patches['train']['label'], **params_train)
-			validation_generator = DataGenerator(data.patches['val']['in'], data.patches['val']['label'], **params_validation)
-		elif generator_type=="coords_patches":
-			training_generator = DataGeneratorWithCoordsPatches(data.patches['train']['in'], data.patches['train']['label'],
-				data.full_ims_train, data.full_label_train, 
-				data.patches['train']['coords'], **params_train)
-			#validation_generator = DataGeneratorWithCoordsPatches(data.full_ims_train, data.full_label_train, 
-			#	data.patches['val']['coords'], **params_validation)			
-			validation_generator = DataGeneratorWithCoords(data.full_ims_train, data.full_label_train, 
-				data.patches['val']['coords'], **params_validation)
-		'''
-		ic(data.patches['val']['label'].shape)
+
 		ic(data.patches['val']['coords'].shape)
 		ic(data.patches['val']['coords'])
 #		pdb.set_trace()
@@ -3757,17 +3674,7 @@ if __name__ == '__main__':
 
 		data.create_load()
 	
-		deb.prints(data.patches['train']['label'].shape)
-		deb.prints(data.patches['test']['label'].shape)
-		
-		test_label_unique,test_label_count=np.unique(data.patches['test']['label'].argmax(axis=-1),return_counts=True)
-		deb.prints(test_label_unique)
-		deb.prints(test_label_count)
-		train_label_unique,train_label_count=np.unique(data.patches['train']['label'].argmax(axis=-1),return_counts=True)
-		deb.prints(train_label_unique)
-		deb.prints(train_label_count)
-		data.label_unique=test_label_unique.copy()
-	
+			
 	# check coords patch
 
 ##	data.comparePatchesCoords()
@@ -3796,119 +3703,45 @@ if __name__ == '__main__':
 	deb.prints(data.class_n)
 	model.build()
 
-	if premade_split_patches_load==False:
-		model.class_n+=1 # This is used in loss_weights_estimate, val_set_get, semantic_balance (To-do: Eliminate bcknd class)
 
-		print("=== SELECT VALIDATION SET FROM TRAIN SET")
-		 
-		#val_set = False # fix this
-		if paramsTrain.val_set==True:
-			deb.prints(paramsTrain.val_set_mode)
-#			data.val_set_get(val_set_mode,0.15)
-			data.val_set_get(paramsTrain.val_set_mode,0.15)
-		else:
-			data.patches['val']={}
+	model.class_n+=1 # This is used in loss_weights_estimate, val_set_get, semantic_balance (To-do: Eliminate bcknd class)
 
-			data.patches['val']['label']=np.zeros((1,1))
-			data.patches['val']['in']=np.zeros((1,1))
-			
-			deb.prints(data.patches['val']['label'].shape)
-			
-
-		#balancing=False
+	print("=== SELECT VALIDATION SET FROM TRAIN SET")
 		
-		if paramsTrain.balancing==True:
-			print("=== AUGMENTING TRAINING DATA")
-
-			if args.seq_mode=='fixed' or args.seq_mode=='fixed_label_len':
-				label_type = 'Nto1'
-			elif args.seq_mode=='var' or args.seq_mode=='var_label':	
-				label_type = 'NtoN'
-			deb.prints(label_type)
-			print("Before balancing:")
-			deb.prints(np.unique(data.patches['train']['label'].argmax(axis=-1),return_counts=True))
-
-#			data.semantic_balance(500,label_type = label_type) #Less for fixed i guess
-#			data.semantic_balance(700,label_type = label_type) #More for seq2seq
-#			data.semantic_balance(2000,label_type = label_type) #More for known classes few. Compare with 500 later
-			data.semantic_balance(paramsTrain.samples_per_class,label_type = label_type) #More for known classes few. Compare with 500 later
-						
-
-
-		model.loss_weights_estimate(data)
-		pathlib.Path(data.path_patches_bckndfixed).mkdir(parents=True, exist_ok=True)
-		np.save(data.path_patches_bckndfixed+'loss_weights.npy',model.loss_weights)
-		model.class_n-=1
-
-		# Label background from 0 to last. 
-		deb.prints(data.patches['train']['label'].shape)
-
-		#========== this is only for google colab. Ram usage should be lower
-		if randomly_subsample_sets==True:
-			print("# =========== subsampling patches...")
-			data.patches['train']=data.randomly_pick_samples_from_set(data.patches['train'], 2000)
-			data.patches['test']=data.randomly_pick_samples_from_set(data.patches['test'], 2000)
-			deb.prints(data.patches['train']['in'].shape)
-			deb.prints(data.patches['test']['in'].shape)
-	
-
-
+	#val_set = False # fix this
+	if paramsTrain.val_set==True:
+		deb.prints(paramsTrain.val_set_mode)
+		data.val_set_get(paramsTrain.val_set_mode,0.15)
 	else:
-		print("===== LOADING PRE-COMPUTED AUGMENTED AND VAL PATCHES... ======")
-		#patchesStorageAllSamples = PatchesStorageAllSamples(self.path['v'])
-		#data.patches={}
-		#data.patches=patchesStorageAllSamples.load(data.patches)
-		data.patches['val']=data.patchesLoad('val_bckndfixed')
-		data.patches['train']=data.patchesLoad('train_bckndfixed')
-		data.patches['test']=data.patchesLoad('test_bckndfixed')
+		data.patches['val']={}
+
+		data.patches['val']['label']=np.zeros((1,1))
+		data.patches['val']['in']=np.zeros((1,1))
+		
 		deb.prints(data.patches['val']['label'].shape)
-		model.loss_weights=np.load(data.path_patches_bckndfixed+'loss_weights.npy')
-
-	#store_patches=True
-	store_patches_each_sample=False
-	if paramsTrain.store_patches==True and store_patches_each_sample==True:
-		patchesStorageEachSample = PatchesStorageEachSample(data.path['v'])
-	
-		print("===== STORING THE LOADED PATCHES AS EACH SAMPLE IN SEPARATE FILE ======")
 		
-		patchesStorageEachSample.store(data.patches)
-
-		print("======== ASSERT THE patchesStorageEachSample.load() IS THE SAME AS data.patches")
+	#balancing=False
 	
-		assert data.patches['train']['in'].all()==patchesStorageEachSample.load()['train']['in'].all()
-		assert data.patches['test']['in'].all()==patchesStorageEachSample.load()['test']['in'].all()
-		assert data.patches['val']['in'].all()==patchesStorageEachSample.load()['val']['in'].all()
-		print("================== PATCHES WERE STORED =====================")
+	if paramsTrain.balancing==True:
+		print("=== AUGMENTING TRAINING DATA")
 
-	elif paramsTrain.store_patches==True and store_patches_each_sample==False:
-		patchesStorage = PatchesStorageAllSamplesOpenSet(paramsTrain, data.path['v'], args.seq_mode, args.seq_date)
-	
-		print("===== STORING THE LOADED PATCHES AS ALL SAMPLES IN A SINGLE FILE ======")
-		
-		patchesStorage.store(data.patches)
-		#patchesStorage.storeSplit(data.patches['train'],'train_bckndfixed')
-		#patchesStorage.storeSplit(data.patches['test'],'test_bckndfixed')
-		#patchesStorage.storeSplit(data.patches['test_loco_class'],'test_loco_class')
-#		np.save()
-#self.patches['test']['label_with_loco_class']
+		if args.seq_mode=='fixed' or args.seq_mode=='fixed_label_len':
+			label_type = 'Nto1'
+		elif args.seq_mode=='var' or args.seq_mode=='var_label':	
+			label_type = 'NtoN'
+		deb.prints(label_type)
+		print("Before balancing:")
 
+		data.semantic_balance(paramsTrain.samples_per_class,label_type = label_type) #More for known classes few. Compare with 500 later
+					
+	model.class_n-=1
 
-		print("================== PATCHES WERE STORED =====================")
-
-	if args.save_patches_only==True:
-		sys.exit("Stored patches and exited")
-
-	deb.prints(data.patches['train']['label'].shape)
-
-	#deb.prints_vars_memory()
-	##print(data.patches['train']['in'].nbytes,data.patches['val']['in'].nbytes,data.patches['test']['in'].nbytes)
-	##pdb.set_trace()
+	# Label background from 0 to last. 
+	deb.prints(data.patches['train']['coords'].shape)
 
 	#=========== End of moving bcknd label from 0 to last value
 
 	metrics=['accuracy']
-	#metrics=['accuracy',fmeasure,categorical_accuracy]
-
 
 	#loss=weighted_categorical_crossentropy_ignoring_last_label(model.loss_weights_ones)
 	loss=categorical_focal_ignoring_last_label(alpha=0.25,gamma=2)
@@ -3917,11 +3750,8 @@ if __name__ == '__main__':
 
 #	paramsTrain.model_load=False
 	if paramsTrain.model_load:
-#		model=load_model('/home/lvc/Documents/Jorg/sbsr/fcn_model/results/seq2_true_norm/models/model_1000.h5')
 		
 		model.graph=load_model('model_best_fit2.h5', compile=False)		
-#		model.graph.compile(loss=loss,
-#					optimizer=adam, metrics=metrics)
 
 	else:
 		model.graph.compile(loss=loss,
@@ -3929,11 +3759,5 @@ if __name__ == '__main__':
 
 		model.train(data)
 	
-	if args.debug:
-		deb.prints(np.unique(data.patches['train']['label']))
-		deb.prints(data.patches['train']['label'].shape)
-        
-	#pdb.set_trace()
-#	model.train(data)
 	model.evaluate(data)
 

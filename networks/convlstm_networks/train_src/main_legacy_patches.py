@@ -1258,8 +1258,8 @@ class DatasetWithCoords(Dataset):
 #		pdb.set_trace()
 
 		# get patch class
-		classes = np.zeros((self.patches['train']['coords'].shape[0]))
-		ic(classes.shape)
+		coords_classes = np.zeros((self.patches['train']['coords'].shape[0], self.class_n))
+		ic(coords_classes.shape)
 		unique_train = np.unique(self.full_label_train)
 		ic(unique_train)
 		bcknd_idx = unique_train[-1]
@@ -1267,205 +1267,18 @@ class DatasetWithCoords(Dataset):
 		psize = 32 # 32
 		ic(psize)
 
-#		def getClassCountFromCoords():
-		for idx in range(self.patches['train']['coords'].shape[0]):
-			coord = self.patches['train']['coords'][idx]
-			label_patch = self.full_label_train[coord[0]-psize//2:coord[0]+psize//2 + psize%2,coord[1]-psize//2:coord[1]+psize//2 + psize%2]
-			patchClassCount = Counter(label_patch<bcknd_idx) # es mayor a 0? o el bcknd esta al final?
-#				uniques = np.unique(label_patch<bcknd_idx)				
-			for key in patchClassCount:
-				patch_count[key] = patch_count[key] + 1
-
-#		getClassCountFromCoords()
-
 
 		for idx in range(self.patches['train']['coords'].shape[0]):
 			coord = self.patches['train']['coords'][idx]
-			patch_class = self.full_label_train[coord[0], coord[1]]
-			if patch_class!= bcknd_idx:
-				classes[idx] = patch_class
-			elif patch_class == bcknd_idx:
-				label_patch = self.full_label_train[coord[0]-psize//2:coord[0]+psize//2 + psize%2,coord[1]-psize//2:coord[1]+psize//2 + psize%2]
-				no_class = np.sum(label_patch<bcknd_idx)
-				if no_class>0.05*psize**2:
-#					ic(np.unique(label_patch, return_counts = True))
-#					ic(np.unique(label_patch[label_patch<bcknd_idx], return_counts = True))
-					cnt = Counter(label_patch[label_patch<bcknd_idx])
-#					ic(cnt)
-					classes[idx] = max(cnt, key=cnt.get)
-		
 
-		for clss in range(0,self.class_n-1):
-			ic(clss)
-			ic(patch_count[clss])
-			patch_count[clss] = np.count_nonzero(np.where(classes == clss))
-
-			ic(patch_count[clss])
-			#pdb.set_trace()
-			if patch_count[clss]==0:
-				continue
-			ic(labels_flat.shape)
-			ic(clss)
-			#print((np.count_nonzero(np.isin(labels_flat,clss))>0).shape)
-			idxs=np.any(labels_flat==clss,axis=1)
-			ic(idxs.shape,idxs.dtype)
-			#labels_flat[np.count_nonzero(np.isin(labels_flat,clss))>0]
-
-			balance["in"]=self.patches['train']['in'][idxs]
-			balance["label"]=self.patches['train']['label'][idxs]
-			balance["class_coords"]=self.patches['train']['coords'][idxs]
-
-			ic(balance["in"].shape, balance["label"].shape)
-			ic(balance["class_coords"].shape)
-			ic(samples_per_class)
-			deb.prints(clss)
-			if balance["class_coords"].shape[0]>samples_per_class:
-				replace=False
-				index=range(balance["class_coords"].shape[0])
-				index = np.random.choice(index, samples_per_class, replace=replace)
-				#print(idxs.shape,index.shape)
-				balance["out_labels"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["label"][index]
-				balance["out_in"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["in"][index]
-				balance["coords"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["class_coords"][index]
-
-			else:
-
-				augmented_manipulations=True
-				if augmented_manipulations==True:
-					augmented_data = balance["in"]
-					augmented_labels = balance["label"]
-					augmented_coords = balance["class_coords"]
-
-					cont_transf = 0
-					for i in range(int(samples_per_class/balance["label"].shape[0] - 1)):                
-						augmented_data_temp = balance["in"]
-						augmented_label_temp = balance["label"]
-						
-						if cont_transf == 0:
-							augmented_data_temp = np.rot90(augmented_data_temp,1,(2,3))
-							augmented_label_temp = np.rot90(augmented_label_temp,1,rotation_axis)
-						
-						elif cont_transf == 1:
-							augmented_data_temp = np.rot90(augmented_data_temp,2,(2,3))
-							augmented_label_temp = np.rot90(augmented_label_temp,2,rotation_axis)
-
-						elif cont_transf == 2:
-							augmented_data_temp = np.flip(augmented_data_temp,2)
-							augmented_label_temp = np.flip(augmented_label_temp,rotation_axis[0])
-							
-						elif cont_transf == 3:
-							augmented_data_temp = np.flip(augmented_data_temp,3)
-							augmented_label_temp = np.flip(augmented_label_temp,rotation_axis[1])
-						
-						elif cont_transf == 4:
-							augmented_data_temp = np.rot90(augmented_data_temp,3,(2,3))
-							augmented_label_temp = np.rot90(augmented_label_temp,3,rotation_axis)
-							
-						elif cont_transf == 5:
-							augmented_data_temp = augmented_data_temp
-							augmented_label_temp = augmented_label_temp
-							
-						cont_transf+=1
-						if cont_transf==6:
-							cont_transf = 0
-						print(augmented_data.shape,augmented_data_temp.shape)
-
-						augmented_data = np.vstack((augmented_data,augmented_data_temp))
-						augmented_labels = np.vstack((augmented_labels,augmented_label_temp))
-						augmented_coords = np.vstack((augmented_coords, balance['class_coords']))
-						
-		#            augmented_labels_temp = np.tile(clss_labels,samples_per_class/num_samples )
-					#print(augmented_data.shape)
-					#print(augmented_labels.shape)
-					index = range(augmented_data.shape[0])
-					ic(augmented_data.shape)
-					ic(augmented_coords.shape)
-					index = np.random.choice(index, samples_per_class, replace=True)
-					ic(index.shape)
-					balance["out_labels"][k*samples_per_class:k*samples_per_class + samples_per_class] = augmented_labels[index]
-					balance["out_in"][k*samples_per_class:k*samples_per_class + samples_per_class] = augmented_data[index]
-					balance["coords"][k*samples_per_class:k*samples_per_class + samples_per_class] = augmented_coords[index]
-
-				else:
-					replace=True
-					index = range(balance["label"].shape[0])
-					index = np.random.choice(index, samples_per_class, replace=replace)
-					balance["out_labels"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["label"][index]
-					balance["out_in"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["in"][index]		
-					balance["coords"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["class_coords"][index]
-
-			k+=1
-		
-		idx = np.random.permutation(balance["coords"].shape[0])
-		self.patches['train']['in'] = balance["out_in"][idx]
-		self.patches['train']['label'] = balance["out_labels"][idx]
-		self.patches['train']['coords'] = balance["coords"][idx]
-		print("Balanced train unique (coords):")
-		deb.prints(self.patches['train']['label'].shape)
-		deb.prints(np.unique(self.patches['train']['label'].argmax(axis=-1),return_counts=True))
-
-	def semantic_balance(self,samples_per_class=500,label_type='Nto1'): # samples mean sequence of patches. Keep
-		print("data.semantic_balance")
-		
-		# Count test
-		patch_count=np.zeros(self.class_n)
-		if label_type == 'NtoN':
-			patch_count_axis = (1,2,3)
-			rotation_axis = (2,3)
-		elif label_type == 'Nto1':	
-			patch_count_axis = (1,2)
-			rotation_axis = (1,2)
-		for clss in range(self.class_n):
-			patch_count[clss]=np.count_nonzero(np.isin(self.patches['test']['label'].argmax(axis=-1),clss).sum(axis=patch_count_axis))
-		deb.prints(patch_count.shape)
-		print("Test",patch_count)
-		
-		# Count train
-		patch_count=np.zeros(self.class_n)
-
-		for clss in range(self.class_n):
-			patch_count[clss]=np.count_nonzero(np.isin(self.patches['train']['label'].argmax(axis=-1),clss).sum(axis=patch_count_axis))
-		deb.prints(patch_count.shape)
-		ic("Train",patch_count)
-		
-		# Start balancing
-		balance={}
-		balance["out_n"]=(self.class_n-1)*samples_per_class
-		balance["out_in"]=np.zeros((balance["out_n"],) + self.patches["train"]["in"].shape[1::])
-
-		balance["out_labels"]=np.zeros((balance["out_n"],) + self.patches["train"]["label"].shape[1::])
-
-		balance["coords"] = np.zeros((balance["out_n"], *self.patches["train"]["coords"].shape[1:])).astype(np.int)
-		ic(balance["coords"].shape) 
-		label_int=self.patches['train']['label'].argmax(axis=-1)
-		labels_flat=np.reshape(label_int,(label_int.shape[0],np.prod(label_int.shape[1:])))
-		k=0
-
-		# get patch count from coords only
-		ic(np.unique(self.full_label_train, return_counts = True))
-		ic(np.unique(label_int, return_counts = True))
-		
-#		pdb.set_trace()
-
-		# get patch class
-		classes = np.zeros((self.patches['train']['coords'].shape[0]))
-		ic(classes.shape)
-		unique_train = np.unique(self.full_label_train)
-		ic(unique_train)
-		bcknd_idx = unique_train[-1]
-		ic(bcknd_idx)
-		psize = 32 # 32
-		ic(psize)
-
-#		def getClassCountFromCoords():
-		
-		for idx in range(self.patches['train']['coords'].shape[0]):
-			coord = self.patches['train']['coords'][idx]
-			label_patch = self.full_label_train[coord[0]-psize//2:coord[0]+psize//2 + psize%2,coord[1]-psize//2:coord[1]+psize//2 + psize%2]
+			label_patch = self.full_label_train[coord[0]:coord[0]+psize,
+				coord[1]:coord[1]+psize]
+#			label_patch = self.full_label_train[coord[0]-psize//2:coord[0]+psize//2 + psize%2,coord[1]-psize//2:coord[1]+psize//2 + psize%2]
 			patchClassCount = Counter(label_patch[label_patch<bcknd_idx]) # es mayor a 0? o el bcknd esta al final?
 #				uniques = np.unique(label_patch<bcknd_idx)				
 			for key in patchClassCount:
 				patch_count[key] = patch_count[key] + 1
+				coords_classes[idx, key] = 1
 		
 #		getClassCountFromCoords()
 		ic(patch_count)
@@ -1483,6 +1296,11 @@ class DatasetWithCoords(Dataset):
 			#print((np.count_nonzero(np.isin(labels_flat,clss))>0).shape)
 			idxs=np.any(labels_flat==clss,axis=1)
 			ic(idxs.shape,idxs.dtype)
+			ic(np.unique(idxs, return_counts = True))
+			idxs = coords_classes[:, clss] == 1
+			ic(idxs.shape,idxs.dtype)
+			ic(np.unique(idxs, return_counts = True))
+			pdb.set_trace()
 			#labels_flat[np.count_nonzero(np.isin(labels_flat,clss))>0]
 
 			balance["in"]=self.patches['train']['in'][idxs]
@@ -3834,7 +3652,7 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 		ic(data.patches['val']['coords'])
 #		pdb.set_trace()
 
-		pdb.set_trace()
+#		pdb.set_trace()
 		history = self.graph.fit_generator(generator = training_generator,
 #			batch_size = self.batch['train']['size'], 
 			epochs = 70, 
