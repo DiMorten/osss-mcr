@@ -998,14 +998,14 @@ class Dataset(NetObject):
 		self.patches['train']['label']=np.delete(self.patches['train']['label'],self.patches['val']['idx'],axis=0)
 		#deb.prints(data.patches['train']['in'].shape)
 		#deb.prints(data.patches['train']['label'].shape)
-		
-		if mode=='random':
-			self.patches['val']['coords'] =  self.patches['train']['coords'][self.patches['val']['idx']]
-		
-		self.patches['train']['coords']=np.delete(self.patches['train']['coords'],self.patches['val']['idx'],axis=0)
+		if type(self) is DatasetWithCoords:
+			if mode=='random':
+				self.patches['val']['coords'] =  self.patches['train']['coords'][self.patches['val']['idx']]
+			
+			self.patches['train']['coords']=np.delete(self.patches['train']['coords'],self.patches['val']['idx'],axis=0)
 
-		ic(self.patches['train']['coords'].shape)
-		ic(self.patches['val']['coords'].shape)
+			ic(self.patches['train']['coords'].shape)
+			ic(self.patches['val']['coords'].shape)
 		
 	def semantic_balance(self,samples_per_class=500,label_type='Nto1'): # samples mean sequence of patches. Keep
 		print("data.semantic_balance")
@@ -3809,7 +3809,7 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 		ic(data.patches['train']['coords'].shape)
 		ic(data.patches['train']['coords'][0:16])
 		ic(data.patches['val']['coords'][0:16])
-		generator_type="coords_patches"
+		generator_type="coords"
 		if generator_type=="coords":
 			training_generator = DataGeneratorWithCoords(data.full_ims_train, data.full_label_train, 
 				data.patches['train']['coords'], **params_train)
@@ -3948,7 +3948,7 @@ if __name__ == '__main__':
 	
 	# check coords patch
 
-	data.comparePatchesCoords()
+##	data.comparePatchesCoords()
 	#adam = Adam(lr=0.0001, beta_1=0.9)
 	adam = Adam(lr=paramsTrain.learning_rate, beta_1=0.9)
 	
@@ -4009,7 +4009,7 @@ if __name__ == '__main__':
 #			data.semantic_balance(500,label_type = label_type) #Less for fixed i guess
 #			data.semantic_balance(700,label_type = label_type) #More for seq2seq
 #			data.semantic_balance(2000,label_type = label_type) #More for known classes few. Compare with 500 later
-#			data.semantic_balance(paramsTrain.samples_per_class,label_type = label_type) #More for known classes few. Compare with 500 later
+			data.semantic_balance(paramsTrain.samples_per_class,label_type = label_type) #More for known classes few. Compare with 500 later
 						
 
 

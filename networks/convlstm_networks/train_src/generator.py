@@ -66,7 +66,6 @@ class DataGenerator(keras.utils.Sequence):
 		inputs_batch = self.inputs[indexes]
 		labels_batch = self.labels[indexes]
 		
-		ic(index)
 		# Generate data
 		X, y = self.__data_generation(inputs_batch, labels_batch)
 
@@ -112,13 +111,14 @@ class DataGenerator(keras.utils.Sequence):
 
 		pdb.set_trace()
 		'''
-		
-		ic(X.shape)
-		ic(np.min(X), np.average(X), np.max(X))
-		ic(Y.shape)
-		ic(np.unique(Y, return_counts=True))
+		coords_print = False
+		if coords_print == True:		
+			ic(X.shape)
+			ic(np.min(X), np.average(X), np.max(X))
+			ic(Y.shape)
+			ic(np.unique(Y, return_counts=True))
 
-		pdb.set_trace()
+			pdb.set_trace()
 		
 	  # You: Uncomment this for N-to-N (Classify all frames)
 			#Y[i] = np.load('labels/' + ID + '.npy').astype(np.float32)/255.
@@ -196,7 +196,6 @@ class DataGeneratorWithCoords(keras.utils.Sequence):
 		# Find list of IDs
 #		list_IDs_temp = [self.list_IDs[k] for k in indexes]
 		coords_batch = self.coords[indexes]
-		ic(index)
 		# Generate data
 		X, y = self.__data_generation(coords_batch)
 
@@ -341,13 +340,14 @@ class DataGeneratorWithCoords(keras.utils.Sequence):
 			X[idx] = input_patch
 #			Y[idx] = toOneHot(label_patch)
 			Y[idx] = label_patch
-		ic(coords_batch)
-		ic(X.shape)
-		ic(np.min(X), np.average(X), np.max(X))
-		ic(Y.shape)
-		ic(np.unique(Y, return_counts=True))
-
-#		pdb.set_trace()
+		coords_print = False
+		if coords_print == True:
+			ic(coords_batch)
+			ic(X.shape)
+			ic(np.min(X), np.average(X), np.max(X))
+			ic(Y.shape)
+			ic(np.unique(Y, return_counts=True))
+			pdb.set_trace()
 		
 		return X, np.expand_dims(Y, axis=-1)
 
@@ -470,11 +470,14 @@ class DataGeneratorWithCoordsPatches(DataGeneratorWithCoords):
 			X[idx] = input_patch
 #			Y[idx] = toOneHot(label_patch)
 			Y[idx] = label_patch
-		ic(coords_batch)
-		ic(X.shape)
-		ic(np.min(X), np.average(X), np.max(X))
-		ic(Y.shape)
-		ic(np.unique(Y, return_counts=True))
+		coords_print = False
+		if coords_print == True:
+			ic(coords_batch)
+			ic(X.shape)
+			ic(np.min(X), np.average(X), np.max(X))
+			ic(Y.shape)
+			ic(np.unique(Y, return_counts=True))
+			pdb.set_trace()
 
 		Y = np.expand_dims(Y,axis=-1)
 		X_patches = np.empty((self.batch_size, *self.dim, self.n_channels), dtype=np.float32)
