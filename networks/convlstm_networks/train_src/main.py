@@ -1270,7 +1270,10 @@ class DatasetWithCoords(Dataset):
 
 		for idx in range(self.patches['train']['coords'].shape[0]):
 			coord = self.patches['train']['coords'][idx]
-			label_patch = self.full_label_train[coord[0]-psize//2:coord[0]+psize//2 + psize%2,coord[1]-psize//2:coord[1]+psize//2 + psize%2]
+
+			label_patch = self.full_label_train[coord[0]:coord[0]+psize,
+				coord[1]:coord[1]+psize]
+#			label_patch = self.full_label_train[coord[0]-psize//2:coord[0]+psize//2 + psize%2,coord[1]-psize//2:coord[1]+psize//2 + psize%2]
 			patchClassCount = Counter(label_patch[label_patch<bcknd_idx]) # es mayor a 0? o el bcknd esta al final?
 #				uniques = np.unique(label_patch<bcknd_idx)				
 			for key in patchClassCount:
@@ -1294,10 +1297,10 @@ class DatasetWithCoords(Dataset):
 			idxs=np.any(labels_flat==clss,axis=1)
 			ic(idxs.shape,idxs.dtype)
 			ic(np.unique(idxs, return_counts = True))
-			#idxs = coords_classes[:, clss] == 1
-			#ic(idxs.shape,idxs.dtype)
-			#ic(np.unique(idxs, return_counts = True))
-			#pdb.set_trace()
+			idxs = coords_classes[:, clss] == 1
+			ic(idxs.shape,idxs.dtype)
+			ic(np.unique(idxs, return_counts = True))
+			pdb.set_trace()
 			#labels_flat[np.count_nonzero(np.isin(labels_flat,clss))>0]
 
 			balance["in"]=self.patches['train']['in'][idxs]
