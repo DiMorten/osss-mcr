@@ -998,6 +998,7 @@ class Dataset(NetObject):
 		self.patches['train']['label']=np.delete(self.patches['train']['label'],self.patches['val']['idx'],axis=0)
 		#deb.prints(data.patches['train']['in'].shape)
 		#deb.prints(data.patches['train']['label'].shape)
+		'''
 		if type(self) is DatasetWithCoords:
 			if mode=='random':
 				self.patches['val']['coords'] =  self.patches['train']['coords'][self.patches['val']['idx']]
@@ -1006,7 +1007,7 @@ class Dataset(NetObject):
 
 			ic(self.patches['train']['coords'].shape)
 			ic(self.patches['val']['coords'].shape)
-		
+		'''
 	def semantic_balance(self,samples_per_class=500,label_type='Nto1'): # samples mean sequence of patches. Keep
 		print("data.semantic_balance")
 		# Count test
@@ -1204,7 +1205,7 @@ class DatasetWithCoords(Dataset):
 	
 	def val_set_get(self,mode='random',validation_split=0.2, idxs=None):
 		super().val_set_get(mode, validation_split)
-		'''
+		
 		if mode=='random':
 			self.patches['val']['coords'] =  self.patches['train']['coords'][self.patches['val']['idx']]
 		
@@ -1212,7 +1213,7 @@ class DatasetWithCoords(Dataset):
 
 		ic(self.patches['train']['coords'].shape)
 		ic(self.patches['val']['coords'].shape)
-		'''
+		
 	def semantic_balance(self,samples_per_class=500,label_type='Nto1'): # samples mean sequence of patches. Keep
 		print("data.semantic_balance")
 		
