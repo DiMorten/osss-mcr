@@ -3815,6 +3815,7 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 				data.patches['train']['coords'], **params_train)
 			validation_generator = DataGeneratorWithCoords(data.full_ims_train, data.full_label_train, 
 				data.patches['val']['coords'], **params_validation)
+		'''
 		elif generator_type=="patches":
 			training_generator = DataGenerator(data.patches['train']['in'], data.patches['train']['label'], **params_train)
 			validation_generator = DataGenerator(data.patches['val']['in'], data.patches['val']['label'], **params_validation)
@@ -3826,11 +3827,13 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 			#	data.patches['val']['coords'], **params_validation)			
 			validation_generator = DataGeneratorWithCoords(data.full_ims_train, data.full_label_train, 
 				data.patches['val']['coords'], **params_validation)
-
+		'''
 		ic(data.patches['val']['label'].shape)
 		ic(data.patches['val']['coords'].shape)
 		ic(data.patches['val']['coords'])
 #		pdb.set_trace()
+
+		pdb.set_trace()
 		history = self.graph.fit_generator(generator = training_generator,
 #			batch_size = self.batch['train']['size'], 
 			epochs = 70, 
