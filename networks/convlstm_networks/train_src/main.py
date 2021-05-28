@@ -3797,7 +3797,7 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 			'n_channels': 2,
 			'shuffle': False,
 #			'printCoords': False,
-			'augm': False}
+			'augm': True}
 
 		params_validation = params_train.copy()
 		params_validation['augm'] = False
