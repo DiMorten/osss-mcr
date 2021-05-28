@@ -1457,7 +1457,7 @@ class DatasetWithCoords(Dataset):
 		ic(psize)
 
 #		def getClassCountFromCoords():
-		'''
+		
 		for idx in range(self.patches['train']['coords'].shape[0]):
 			coord = self.patches['train']['coords'][idx]
 			label_patch = self.full_label_train[coord[0]-psize//2:coord[0]+psize//2 + psize%2,coord[1]-psize//2:coord[1]+psize//2 + psize%2]
@@ -1465,7 +1465,7 @@ class DatasetWithCoords(Dataset):
 #				uniques = np.unique(label_patch<bcknd_idx)				
 			for key in patchClassCount:
 				patch_count[key] = patch_count[key] + 1
-		'''
+		
 #		getClassCountFromCoords()
 		ic(patch_count)
 		for clss in range(0,self.class_n-1):
