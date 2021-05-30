@@ -1300,7 +1300,7 @@ class DatasetWithCoords(Dataset):
 			idxs = coords_classes[:, clss] == 1
 			ic(idxs.shape,idxs.dtype)
 			ic(np.unique(idxs, return_counts = True))
-			pdb.set_trace()
+			#pdb.set_trace()
 			#labels_flat[np.count_nonzero(np.isin(labels_flat,clss))>0]
 
 			balance["in"]=self.patches['train']['in'][idxs]

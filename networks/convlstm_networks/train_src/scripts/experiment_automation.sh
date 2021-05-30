@@ -64,7 +64,7 @@ stop_epoch=1 # promote to lv2?
 # #model='ConvLSTM_seq2seq_bi' # russworm bi .
 # # ============== EXECUTE EXPERIMENT ===============
 cd ..
-python main.py --stop_epoch=$stop_epoch -pl=32 -pstr=32 -psts=32 -bstr=16 -bsts=16 -path=$dataset_path -tl=$sequence_len -cn=$class_n -chn=$channel_n -mdl=$model
+python main_legacy_patches.py --stop_epoch=$stop_epoch -pl=32 -pstr=32 -psts=32 -bstr=16 -bsts=16 -path=$dataset_path -tl=$sequence_len -cn=$class_n -chn=$channel_n -mdl=$model
 # #python main_hdd.py -pl=32 -pstr=32 -psts=32 -path=$dataset_path -tl=$sequence_len -cn=$class_n -chn=2 -mdl=$model
 echo "${filename}_${model}_${id}"
 

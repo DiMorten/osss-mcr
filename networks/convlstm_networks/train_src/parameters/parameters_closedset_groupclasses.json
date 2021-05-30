@@ -1,6 +1,6 @@
 {
-    "train": true,
-    "model_load": false,
+    "train": false,
+    "model_load": true,
     "open_set": false,
     "balancing": true,
     "val_set": true,

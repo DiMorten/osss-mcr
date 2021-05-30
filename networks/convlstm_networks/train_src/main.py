@@ -1148,10 +1148,11 @@ class Dataset(NetObject):
 
 class DatasetWithCoords(Dataset):
 	def create_load(self):
-		super().create_load()
+#		super().create_load()
 		self.patches['train']['coords'] = np.load(self.path['v']+'coords_train.npy').astype(np.int)
 		self.patches['test']['coords'] = np.load(self.path['v']+'coords_test.npy').astype(np.int)
-
+		ic(self.patches['train']['coords'].shape)
+		#pdb.set_trace()
 		self.full_ims_train = np.load(self.path['v']+'full_ims/'+'full_ims_train.npy')
 		self.full_label_train = np.load(self.path['v']+'full_ims/'+'full_label_train.npy').astype(np.uint8)
 		self.full_label_train = self.full_label_train[-1]
@@ -1168,22 +1169,50 @@ class DatasetWithCoords(Dataset):
 #		pdb.set_trace()
 		ic(paramsTrain.known_classes)
 		#ic(self.unknown_classes)
+		
 		if paramsTrain.open_set==True:
+			if paramsTrain.select_kept_classes_flag==False:	
+				self.unknown_classes = paramsTrain.unknown_classes
+			else:
+				all_classes = np.unique(self.full_label_train) # with background
+				all_classes = all_classes[1:] - 1 # no bcknd
+				deb.prints(all_classes)
+				deb.prints(paramsTrain.known_classes)
+				self.unknown_classes = np.setdiff1d(all_classes, paramsTrain.known_classes)
+				deb.prints(self.unknown_classes)
+
 			for clss in self.unknown_classes:
 				self.full_label_train[self.full_label_train==int(clss) + 1] = 0
 		elif paramsTrain.group_bcknd_classes == True:
-
+			all_classes = np.unique(self.full_label_train) # with background
+			all_classes = all_classes[1:] - 1 # no bcknd
+			deb.prints(all_classes)
+			deb.prints(paramsTrain.known_classes)
+			self.unknown_classes = np.setdiff1d(all_classes, paramsTrain.known_classes)
+			deb.prints(self.unknown_classes)
 			for clss in self.unknown_classes:
 				self.full_label_train[self.full_label_train==int(clss) + 1] = 20	
 		ic(np.unique(self.full_label_train, return_counts=True))
-
+		self.classes = np.unique(self.full_label_train)
 		tmp_tr = self.full_label_train.copy()
 		ic(self.classes)
+		deb.prints(np.unique(self.full_label_train, return_counts=True))
+		self.labels2new_labels = dict((c, i) for i, c in enumerate(self.classes))
+		self.new_labels2labels = dict((i, c) for i, c in enumerate(self.classes))
+		ic(self.labels2new_labels, self.new_labels2labels)
 		print("Transforming labels2new_labels...")
 		for j in range(len(self.classes)):
 			#ic(j, self.classes[j], self.labels2new_labels[self.classes[j]])
 			self.full_label_train[tmp_tr == self.classes[j]] = self.labels2new_labels[self.classes[j]]
 		print("Transformed labels2new_labels. Moving bcknd to last...")
+
+		# save dicts
+		dict_filename = "new_labels2labels_"+self.ds.name+"_"+self.ds.im_list[-1]+".pkl" 
+		deb.prints(dict_filename)
+		f = open(dict_filename, "wb")
+		pickle.dump(self.new_labels2labels, f)
+		f.close()
+		deb.prints(self.new_labels2labels)
 
 		# bcknd to last class
 		ic(np.unique(self.full_label_train, return_counts=True))
@@ -1193,6 +1222,10 @@ class DatasetWithCoords(Dataset):
 		self.full_label_train[self.full_label_train == 255] = unique[-1]
 		print("Moved bcknd to last")
 		ic(np.unique(self.full_label_train, return_counts=True))
+
+		self.patches['train']['n'] = self.patches['train']['coords'].shape[0]
+		self.patches['train']['idx']=range(self.patches['train']['n'])
+
 #		pdb.set_trace()
 		'''
 		self.patches['train']['label'] = self.patches['train']['label']-1
@@ -1206,8 +1239,7 @@ class DatasetWithCoords(Dataset):
 		'''
 	
 	def val_set_get(self,mode='random',validation_split=0.2, idxs=None):
-		clss_train_unique,clss_train_count=np.unique(self.patches['train']['label'].argmax(axis=-1),return_counts=True)
-		deb.prints(clss_train_count)
+
 		self.patches['val']={'n':int(self.patches['train']['n']*validation_split)}
 		ic(self.patches['train']['n'], self.patches['val']['n'])
 		#===== CHOOSE VAL IDX
@@ -1288,7 +1320,7 @@ class DatasetWithCoords(Dataset):
 			idxs = coords_classes[:, clss] == 1
 			ic(idxs.shape,idxs.dtype)
 			ic(np.unique(idxs, return_counts = True))
-			pdb.set_trace()
+			#pdb.set_trace()
 
 			balance["class_coords"]=self.patches['train']['coords'][idxs]
 
@@ -3552,8 +3584,6 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 		params_validation['augm'] = False
 		params_validation['shuffle'] = False
 
-		ic(data.patches['train']['label'].shape)
-		ic(data.patches['train']['label'][0])
 
 		ic(data.patches['train']['coords'].shape)
 		ic(data.patches['train']['coords'][0:16])
