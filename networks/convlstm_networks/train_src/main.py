@@ -774,7 +774,8 @@ class Dataset(NetObject):
 		deb.prints(prediction.shape)
 		prediction=np.reshape(prediction,-1) #convertir en un vector
 		deb.prints(prediction.shape)
-		label=label.argmax(axis=np.ndim(label)-1) #igualmente, sacar el maximo valor de los labels (se pierde la ultima dimension; saca el valor maximo del one hot encoding es decir convierte a int)
+		if len(label.shape) > 3:
+			label=label.argmax(axis=np.ndim(label)-1) #igualmente, sacar el maximo valor de los labels (se pierde la ultima dimension; saca el valor maximo del one hot encoding es decir convierte a int)
 		label=np.reshape(label,-1) #flatten
 		prediction=prediction[label<class_n] #logic
 		label=label[label<class_n] #logic
@@ -1154,6 +1155,8 @@ class DatasetWithCoords(Dataset):
 		ic(self.patches['train']['coords'].shape)
 		#pdb.set_trace()
 		self.full_ims_train = np.load(self.path['v']+'full_ims/'+'full_ims_train.npy')
+		self.full_ims_test = np.load(self.path['v']+'full_ims/'+'full_ims_test.npy')
+		
 		self.full_label_train = np.load(self.path['v']+'full_ims/'+'full_label_train.npy').astype(np.uint8)
 		self.full_label_train = self.full_label_train[-1]
 
@@ -1183,6 +1186,8 @@ class DatasetWithCoords(Dataset):
 
 			for clss in self.unknown_classes:
 				self.full_label_train[self.full_label_train==int(clss) + 1] = 0
+				self.full_label_test[self.full_label_test==int(clss) + 1] = 0
+
 		elif paramsTrain.group_bcknd_classes == True:
 			all_classes = np.unique(self.full_label_train) # with background
 			all_classes = all_classes[1:] - 1 # no bcknd
@@ -1192,9 +1197,13 @@ class DatasetWithCoords(Dataset):
 			deb.prints(self.unknown_classes)
 			for clss in self.unknown_classes:
 				self.full_label_train[self.full_label_train==int(clss) + 1] = 20	
+				self.full_label_test[self.full_label_test==int(clss) + 1] = 20	
 		ic(np.unique(self.full_label_train, return_counts=True))
 		self.classes = np.unique(self.full_label_train)
+
 		tmp_tr = self.full_label_train.copy()
+		tmp_tst = self.full_label_test.copy()
+
 		ic(self.classes)
 		deb.prints(np.unique(self.full_label_train, return_counts=True))
 		self.labels2new_labels = dict((c, i) for i, c in enumerate(self.classes))
@@ -1204,6 +1213,8 @@ class DatasetWithCoords(Dataset):
 		for j in range(len(self.classes)):
 			#ic(j, self.classes[j], self.labels2new_labels[self.classes[j]])
 			self.full_label_train[tmp_tr == self.classes[j]] = self.labels2new_labels[self.classes[j]]
+			self.full_label_test[tmp_tst == self.classes[j]] = self.labels2new_labels[self.classes[j]]
+	
 		print("Transformed labels2new_labels. Moving bcknd to last...")
 
 		# save dicts
@@ -1219,9 +1230,13 @@ class DatasetWithCoords(Dataset):
 
 		unique = np.unique(self.full_label_train)
 		self.full_label_train = self.full_label_train - 1
+		self.full_label_test = self.full_label_test - 1
 		self.full_label_train[self.full_label_train == 255] = unique[-1]
+		self.full_label_test[self.full_label_test == 255] = unique[-1]
+
 		print("Moved bcknd to last")
 		ic(np.unique(self.full_label_train, return_counts=True))
+		ic(np.unique(self.full_label_test, return_counts=True))
 
 		self.patches['train']['n'] = self.patches['train']['coords'].shape[0]
 		self.patches['train']['idx']=range(self.patches['train']['n'])
@@ -3617,7 +3632,27 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 			)
 
 		return history
+	def evaluate(self, data):	
+		params_test = {
+			'dim': (self.t_len,self.patch_len,self.patch_len),
+			'label_dim': (self.patch_len,self.patch_len),
+			'batch_size': 1,
+#			'n_classes': self.class_n,
+			'n_classes': self.class_n + 1, # it was 6. Now it is 13 + 1 = 14
 
+			'n_channels': 2,
+			'shuffle': False,
+#			'printCoords': False,
+			'augm': False}	
+		data.getPatchesFromCoords(data.full_label_test, data.patches['test']['coords'])
+		test_generator = DataGeneratorWithCoords(data.full_ims_test, data.full_label_test, 
+				data.patches['test']['coords'], **params_test)
+		data.patches['test']['prediction'] = self.graph.predict_generator(test_generator)
+		data.patches['test']['label'] = data.getPatchesFromCoords(
+			data.full_label_test, data.patches['test']['coords'])
+		metrics_test=data.metrics_get(data.patches['test']['prediction'],
+			data.patches['test']['label'],debug=2)
+		deb.prints(metrics_test)
 class ModelLoadEachBatch(NetModel):
 	def train(self,data):
 
