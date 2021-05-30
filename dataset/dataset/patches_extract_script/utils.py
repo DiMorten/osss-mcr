@@ -337,8 +337,11 @@ class DataForNet(object):
 		print("============ Beginning masking ============")
 		print("Channels to mask:",self.dataset.getChannelsToMask())
 		#pdb.set_trace()
-	
-		self.full_ims_train,self.full_ims_test=self.im_seq_mask(patch["full_ims"],patch["train_mask"],channels_to_mask=self.dataset.getChannelsToMask())
+		masking = False
+		if masking == True:
+			self.full_ims_train,self.full_ims_test=self.im_seq_mask(patch["full_ims"],patch["train_mask"],channels_to_mask=self.dataset.getChannelsToMask())
+		else:
+			self.full_ims_train,self.full_ims_test = (patch["full_ims"], patch["full_ims"])
 		patch["full_ims"]=[]
 		
 		#print("============ Beginning humidity ============")
