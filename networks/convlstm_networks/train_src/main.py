@@ -1158,9 +1158,37 @@ class DatasetWithCoords(Dataset):
 		self.full_ims_test = np.load(self.path['v']+'full_ims/'+'full_ims_test.npy')
 		
 		self.full_label_train = np.load(self.path['v']+'full_ims/'+'full_label_train.npy').astype(np.uint8)
-		self.full_label_train = self.full_label_train[-1]
-
 		self.full_label_test = np.load(self.path['v']+'full_ims/'+'full_label_test.npy').astype(np.uint8)
+
+		self.labelPreprocess()
+
+		self.patches['train']['n'] = self.patches['train']['coords'].shape[0]
+		self.patches['train']['idx']=range(self.patches['train']['n'])
+
+		self.patches['test']['label'] = self.getPatchesFromCoords(
+			self.full_label_test, self.patches['test']['coords'])
+		self.patches['train']['label'] = self.getPatchesFromCoords(
+			self.full_label_train, self.patches['train']['coords'])
+
+		self.patches['test']['in'] = self.getSequencePatchesFromCoords(
+			self.full_ims_test, self.patches['test']['coords'])
+		self.patches['train']['in'] = self.getSequencePatchesFromCoords(
+			self.full_ims_train, self.patches['train']['coords'])
+
+
+#		pdb.set_trace()
+		'''
+		self.patches['train']['label'] = self.patches['train']['label']-1
+		self.patches['test']['label'] = self.patches['test']['label']-1
+
+		deb.prints(np.unique(self.patches['train']['label'], return_counts=True))
+		
+##            labels_val = labels_val-1
+		class_n_no_bkcnd = len(self.classes)-1
+		self.patches['train']['label'][self.patches['train']['label']==255] = class_n_no_bkcnd
+		'''
+	def labelPreprocess(self):
+		self.full_label_train = self.full_label_train[-1]
 		self.full_label_test = self.full_label_test[-1]
 
 		unique,count=np.unique(self.full_label_train,return_counts=True)
@@ -1238,21 +1266,7 @@ class DatasetWithCoords(Dataset):
 		ic(np.unique(self.full_label_train, return_counts=True))
 		ic(np.unique(self.full_label_test, return_counts=True))
 
-		self.patches['train']['n'] = self.patches['train']['coords'].shape[0]
-		self.patches['train']['idx']=range(self.patches['train']['n'])
 
-#		pdb.set_trace()
-		'''
-		self.patches['train']['label'] = self.patches['train']['label']-1
-		self.patches['test']['label'] = self.patches['test']['label']-1
-
-		deb.prints(np.unique(self.patches['train']['label'], return_counts=True))
-		
-##            labels_val = labels_val-1
-		class_n_no_bkcnd = len(self.classes)-1
-		self.patches['train']['label'][self.patches['train']['label']==255] = class_n_no_bkcnd
-		'''
-	
 	def val_set_get(self,mode='random',validation_split=0.2, idxs=None):
 
 		self.patches['val']={'n':int(self.patches['train']['n']*validation_split)}
@@ -1387,13 +1401,25 @@ class DatasetWithCoords(Dataset):
 ##		deb.prints(np.unique(self.patches['train']['label'].argmax(axis=-1),return_counts=True))
 	def getPatchesFromCoords(self, im, coords):
 		# coords is n, row, col
-		patch_size = 32
-		label_dim = (patch_size, patch_size)
-		Y = np.empty((coords.shape[0], *label_dim), dtype=int)
+		patch_size = self.patch_len
+		# patch_size = 32
+		patch_dim = (patch_size, patch_size)
+		Y = np.empty((coords.shape[0], *patch_dim), dtype=int)
 		for idx in range(coords.shape[0]):
-			label_patch = im[coords[idx][0]:coords[idx][0]+patch_size,
+			patch = im[coords[idx][0]:coords[idx][0]+patch_size,
 						coords[idx][1]:coords[idx][1]+patch_size]
-			Y[idx] = label_patch
+			Y[idx] = patch
+		return Y
+	def getSequencePatchesFromCoords(self, ims, coords):
+		patch_size = self.patch_len #32
+		# t_len = 12
+		# channel_n = 2
+		patch_dim = (self.t_len, patch_size, patch_size, self.channel_n)
+		Y = np.empty((coords.shape[0], *patch_dim), dtype=np.float16)
+		for idx in range(coords.shape[0]):
+			patch = ims[:, coords[idx][0]:coords[idx][0]+patch_size,
+						coords[idx][1]:coords[idx][1]+patch_size]
+			Y[idx] = patch
 		return Y
 	def comparePatchesCoords(self):
 		Y = self.getPatchesFromCoords(self.full_label_train, self.patches['train']['coords'][0:16])
