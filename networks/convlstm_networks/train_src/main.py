@@ -1187,7 +1187,7 @@ class DatasetWithCoords(Dataset):
 		class_n_no_bkcnd = len(self.classes)-1
 		self.patches['train']['label'][self.patches['train']['label']==255] = class_n_no_bkcnd
 		'''
-	def labelPreprocess(self):
+	def labelPreprocess(self, saveDicts = True):
 		self.full_label_train = self.full_label_train[-1]
 		self.full_label_test = self.full_label_test[-1]
 
@@ -1246,11 +1246,12 @@ class DatasetWithCoords(Dataset):
 		print("Transformed labels2new_labels. Moving bcknd to last...")
 
 		# save dicts
-		dict_filename = "new_labels2labels_"+self.ds.name+"_"+self.ds.im_list[-1]+".pkl" 
-		deb.prints(dict_filename)
-		f = open(dict_filename, "wb")
-		pickle.dump(self.new_labels2labels, f)
-		f.close()
+		if saveDicts == True:
+			dict_filename = "new_labels2labels_"+self.ds.name+"_"+self.ds.im_list[-1]+".pkl" 
+			deb.prints(dict_filename)
+			f = open(dict_filename, "wb")
+			pickle.dump(self.new_labels2labels, f)
+			f.close()
 		deb.prints(self.new_labels2labels)
 
 		# bcknd to last class

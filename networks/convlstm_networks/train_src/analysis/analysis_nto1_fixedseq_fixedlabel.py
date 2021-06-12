@@ -445,6 +445,13 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 				predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabel(path_test, dataset=dataset)
 			deb.prints(args.seq_date in additionalTestClsses)
 		else:
+			data = DatasetWithCoords()
+			data.patches['test']['coords'] = np.load(data.path['v']+'coords_test.npy').astype(np.int)
+			data.full_ims_test = np.load(data.path['v']+'full_ims/'+'full_ims_test.npy')
+			data.full_ims_test = np.load(data.path['v']+'full_ims/'+'full_ims_test.npy')
+			data.full_label_test = np.load(data.path['v']+'full_ims/'+'full_label_test.npy').astype(np.uint8)
+			data.full_label_train = np.load(data.path['v']+'full_ims/'+'full_label_train.npy').astype(np.uint8)
+			data.labelPreprocess(saveDicts = False)
 #			predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabel(path_test, dataset=dataset)
 #			predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset, loco_class=8)
 			predictionsLoaderTrain = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_train, dataset=dataset, seq_len = paramsTrain.seq_len)
