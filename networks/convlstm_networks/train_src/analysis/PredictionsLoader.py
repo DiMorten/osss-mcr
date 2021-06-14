@@ -419,20 +419,22 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSetCoords(PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet):
 	def __init__(self, path_test, dataset, seq_len=12):
 		super().__init__(path_test, dataset, seq_len)
-		self.full_ims_path = self.path['v']+'full_ims/'+'full_ims_test.npy'
-		self.full_label_path = self.path['v']+'full_ims/'+'full_label_test.npy'
-		self.coords = np.load(self.path['v']+'coords_test.npy').astype(np.int)
-	def setData(self, data):
+	def setData(self, data, set_):
 		self.data = data # set data!!
+		self.full_ims_path = self.data.path['v']+'full_ims/'+'full_ims_'+set_+'.npy'
+		self.full_label_path = self.data.path['v']+'full_ims/'+'full_label_'+set_+'.npy'
+		self.coords = np.load(self.data.path['v']+'coords_'+set_+'.npy').astype(np.int)
+
 	def npyLoadPredictions(self, seq_date):
 
 		self.data.full_ims = np.load(self.full_ims_path).astype(np.uint8) 		
 		self.data.full_label = np.load(self.full_label_path).astype(np.uint8) 
 		self.data.labelPreprocess(loadDicts = True) # new version which only applies (not extract dicts), loading dicts, thus its equal for train and test
-		batch['in'] = self.getSequencePatchesFromCoords(
-			self.full_ims, self.coords) # test coords is called self.coords, make custom init in this class. self.full_ims is also set independent
-		batch['label'] = self.getPatchesFromCoords(
-			self.full_label, self.coords)
+		batch = {}
+		batch['in'] = self.data.getSequencePatchesFromCoords(
+			self.data.full_ims, self.coords) # test coords is called self.coords, make custom init in this class. self.full_ims is also set independent
+		batch['label'] = self.data.getPatchesFromCoords(
+			self.data.full_label, self.coords)
 
 
 #class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModelNto1FixedSeqFixedLabel):

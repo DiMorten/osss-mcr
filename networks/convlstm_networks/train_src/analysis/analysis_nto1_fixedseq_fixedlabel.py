@@ -17,7 +17,7 @@ import cv2
 import pdb
 file_id="importantclasses"
 
-from PredictionsLoader import PredictionsLoaderNPY, PredictionsLoaderModel, PredictionsLoaderModelNto1, PredictionsLoaderModelNto1FixedSeqFixedLabel, PredictionsLoaderModelNto1FixedSeqFixedLabelAdditionalTestClsses, PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet
+from PredictionsLoader import PredictionsLoaderNPY, PredictionsLoaderModel, PredictionsLoaderModelNto1, PredictionsLoaderModelNto1FixedSeqFixedLabel, PredictionsLoaderModelNto1FixedSeqFixedLabelAdditionalTestClsses, PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSetCoords, PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet
 from colorama import init
 init()
 save_bar_flag=True
@@ -25,12 +25,17 @@ sys.path.append('../')
 import deb
 deb.prints(deb.__file__)
 from open_set import SoftmaxThresholding, OpenPCS, OpenGMMS
+from main import Dataset, DatasetWithCoords
 import argparse
 from parameters.parameters_reader import ParamsTrain, ParamsAnalysis
 import time
 from metrics import Metrics
 from scipy import optimize
 from icecream import ic
+
+from dataSource import DataSource, SARSource, OpticalSource, Dataset, LEM, LEM2, CampoVerde, OpticalSourceWithClouds, Humidity
+
+
 paramsTrain = ParamsTrain('../parameters/')
 paramsAnalysis = ParamsAnalysis('parameters_analysis/')
 
@@ -445,18 +450,53 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 				predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabel(path_test, dataset=dataset)
 			deb.prints(args.seq_date in additionalTestClsses)
 		else:
-			data = DatasetWithCoords()
-			data.patches['test']['coords'] = np.load(data.path['v']+'coords_test.npy').astype(np.int)
-			data.full_ims_test = np.load(data.path['v']+'full_ims/'+'full_ims_test.npy')
-			data.full_ims_test = np.load(data.path['v']+'full_ims/'+'full_ims_test.npy')
-			data.full_label_test = np.load(data.path['v']+'full_ims/'+'full_label_test.npy').astype(np.uint8)
-			data.full_label_train = np.load(data.path['v']+'full_ims/'+'full_label_train.npy').astype(np.uint8)
-			data.labelPreprocess(saveDicts = False)
+			useCoords = True
+			if useCoords == True:
+				if paramsTrain.dataset=='lm':
+					ds=LEM(args.seq_mode, args.seq_date, paramsTrain.seq_len)
+				elif paramsTrain.dataset=='l2':
+					ds=LEM2(args.seq_mode, args.seq_date, paramsTrain.seq_len)
+				elif paramsTrain.dataset=='cv':
+					ds=CampoVerde(args.seq_mode, args.seq_date, paramsTrain.seq_len)
+
+				deb.prints(ds)
+				dataSource = SARSource()
+				ds.addDataSource(dataSource)
+				time_delta = ds.getTimeDelta(delta=True,format='days')
+				dotys, dotys_sin_cos = ds.getDayOfTheYear()
+				
+				args = object
+				args.patch_len = 32
+				args.patch_step_train = 32
+				args.patch_step_test = 32
+				args.exp_id = 'dummy'
+				args.path = '../../../../dataset/dataset/lm_data/'
+				#ds.t_len = paramsTrain.seq_len
+				args.class_n = 15
+				args.channel_n = 2
+				datasetClass = DatasetWithCoords
+				data = datasetClass(patch_len=args.patch_len, patch_step_train=args.patch_step_train,
+					patch_step_test=args.patch_step_test,exp_id=args.exp_id,
+					path=args.path, t_len=ds.t_len, class_n=args.class_n, channel_n = args.channel_n,
+					dotys_sin_cos = dotys_sin_cos, ds = ds)
+					
+				data.create_load()
+				pdb.set_trace()
+#				data.patches['test']['coords'] = np.load(data.path['v']+'coords_test.npy').astype(np.int)
+#				data.full_ims_test = np.load(data.path['v']+'full_ims/'+'full_ims_test.npy')
+#				data.full_ims_test = np.load(data.path['v']+'full_ims/'+'full_ims_test.npy')
+#				data.full_label_test = np.load(data.path['v']+'full_ims/'+'full_label_test.npy').astype(np.uint8)
+#				data.full_label_train = np.load(data.path['v']+'full_ims/'+'full_label_train.npy').astype(np.uint8)
+			##data.labelPreprocess(saveDicts = False)
 #			predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabel(path_test, dataset=dataset)
 #			predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset, loco_class=8)
 			predictionsLoaderTrain = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_train, dataset=dataset, seq_len = paramsTrain.seq_len)
 			predictionsLoaderTest = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset, seq_len = paramsTrain.seq_len)
-
+			if useCoords == True:
+				predictionsLoaderTrain = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSetCoords(path_train, dataset=dataset, seq_len = paramsTrain.seq_len)
+				predictionsLoaderTest = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSetCoords(path_test, dataset=dataset, seq_len = paramsTrain.seq_len)
+				predictionsLoaderTrain.setData(data, 'train')
+				predictionsLoaderTest.setData(data, 'test')
 
 		deb.prints(predictionsLoaderTest)
 		deb.prints(model_path)

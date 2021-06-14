@@ -11,5 +11,6 @@
     "val_set_mode": "random",
     "seq_date": "jun",
     "dataset": "cv",
-    "seq_len": 12      
+    "seq_len": 12,
+    "seq_mode": "fixed"      
 }
