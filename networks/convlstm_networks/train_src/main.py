@@ -204,10 +204,53 @@ class NetObject(object):
 		self.dotys_sin_cos = np.repeat(self.dotys_sin_cos,16,axis=0)
 		self.ds = ds
 # ================= Dataset class implements data loading, patch extraction, metric calculation and image reconstruction =======#
-class Dataset(NetObject):
+class Dataset(object):
 
-	def __init__(self, *args, **kwargs):
-		super().__init__(*args, **kwargs)
+	def __init__(self, paramsTrain, ds, *args, **kwargs):
+
+		print("Initializing object...")
+		print(paramsTrain.t_len, paramsTrain.channel_n)
+		self.patch_len = paramsTrain.patch_len
+		self.path = {"v": paramsTrain.path, 'train': {}, 'test': {}}
+		self.image = {'train': {}, 'test': {}}
+		self.patches = {'train': {}, 'test': {}}
+
+		self.patches['train']['step']=paramsTrain.patch_step_train
+		self.patches['test']['step']=paramsTrain.patch_step_test 
+      
+		self.path['train']['in'] = paramsTrain.path + 'train_test/train/ims/'
+		self.path['test']['in'] = paramsTrain.path + 'train_test/test/ims/'
+		self.path['train']['label'] = paramsTrain.path + 'train_test/train/labels/'
+		self.path['test']['label'] = paramsTrain.path + 'train_test/test/labels/'
+
+		# in these paths, the augmented train set and validation set are stored
+		# they can be loaded after (flag decides whether estimating these values and storing,
+		# or loading the precomputed ones)
+		self.path_patches_bckndfixed = paramsTrain.path + 'patches_bckndfixed/' 
+		self.path['train_bckndfixed']=self.path_patches_bckndfixed+'train/'
+		self.path['val_bckndfixed']=self.path_patches_bckndfixed+'val/'
+		self.path['test_bckndfixed']=self.path_patches_bckndfixed+'test/'
+		self.path['test_loco'] = self.path_patches_bckndfixed+'test_loco/'
+
+		self.channel_n = paramsTrain.channel_n
+		deb.prints(self.channel_n)
+		self.debug = paramsTrain.debug
+		self.class_n = paramsTrain.class_n
+		self.report={'best':{}, 'val':{}}
+		self.report['exp_id']=paramsTrain.exp_id
+		self.report['best']['text_name']='result_'+paramsTrain.exp_id+'.txt'
+		self.report['best']['text_path']='../results/'+self.report['best']['text_name']
+		self.report['best']['text_history_path']='../results/'+'history.txt'
+		self.report['val']['history_path']='../results/'+'history_val.txt'
+		
+		self.t_len=paramsTrain.t_len
+		deb.prints(self.t_len)
+		self.dotys_sin_cos = dotys_sin_cos
+		self.dotys_sin_cos = np.expand_dims(self.dotys_sin_cos,axis=0) # add batch dimension
+		self.dotys_sin_cos = np.repeat(self.dotys_sin_cos,16,axis=0)
+		self.ds = ds
+
+#		super().__init__(*args, **kwargs)
 		self.im_gray_idx_to_rgb_table=[[0,[0,0,255],29],
 									[1,[0,255,0],150],
 									[2,[0,255,255],179],
@@ -1367,7 +1410,7 @@ class DatasetWithCoords(Dataset):
 # ========== NetModel object implements model graph definition, train/testing, early stopping ================ #
 
 class NetModel(object):
-	def __init__(self, paramsTrain, dotys_sin_cos=None,
+	def __init__(self, paramsTrain, ds, 
 		*args, **kwargs):
 
 		print("Initializing object...")
@@ -3722,10 +3765,8 @@ if __name__ == '__main__':
 		datasetClass = Dataset
 	else:
 		datasetClass = DatasetWithCoords
-	data = datasetClass(patch_len=paramsTrain.patch_len, patch_step_train=paramsTrain.patch_step_train,
-		patch_step_test=paramsTrain.patch_step_test,exp_id=paramsTrain.exp_id,
-		path=paramsTrain.path, t_len=ds.t_len, class_n=paramsTrain.class_n, channel_n = paramsTrain.channel_n,
-		dotys_sin_cos = dotys_sin_cos, ds = ds)
+	data = datasetClass(paramsTrain = paramsTrain, ds = ds,
+		dotys_sin_cos = dotys_sin_cos)
 	#t_len=paramsTrain.t_len
 
 	
@@ -3764,7 +3805,7 @@ if __name__ == '__main__':
 		modelClass = ModelLoadGeneratorWithCoords
 
 	paramsTrain.t_len = ds.t_len # modified?
-	model = modelClass(paramsTrain = paramsTrain, 
+	model = modelClass(paramsTrain = paramsTrain, ds = ds, 
 					 dotys_sin_cos=dotys_sin_cos)
 
 	model.class_n=data.class_n-1 # Model is designed without background class
