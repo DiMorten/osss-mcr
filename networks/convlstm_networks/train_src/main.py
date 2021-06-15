@@ -1366,29 +1366,69 @@ class DatasetWithCoords(Dataset):
 		pdb.set_trace()
 # ========== NetModel object implements model graph definition, train/testing, early stopping ================ #
 
-class NetModel(NetObject):
-	def __init__(self, batch_size_train=32, batch_size_test=200, epochs=30000, 
-		patience=10, eval_mode='metrics', val_set=False,
-		model_type='DenseNet', time_measure=False, stop_epoch=0, dotys_sin_cos=None, mim=MIMFixed(), 
+class NetModel(object):
+	def __init__(self, paramsTrain, dotys_sin_cos=None,
 		*args, **kwargs):
 
-		super().__init__(*args, **kwargs)
+		print("Initializing object...")
+		print(paramsTrain.t_len, paramsTrain.channel_n)
+		self.patch_len = paramsTrain.patch_len
+		self.path = {"v": paramsTrain.path, 'train': {}, 'test': {}}
+		self.image = {'train': {}, 'test': {}}
+		self.patches = {'train': {}, 'test': {}}
+
+		self.patches['train']['step']=paramsTrain.patch_step_train
+		self.patches['test']['step']=paramsTrain.patch_step_test 
+      
+		self.path['train']['in'] = paramsTrain.path + 'train_test/train/ims/'
+		self.path['test']['in'] = paramsTrain.path + 'train_test/test/ims/'
+		self.path['train']['label'] = paramsTrain.path + 'train_test/train/labels/'
+		self.path['test']['label'] = paramsTrain.path + 'train_test/test/labels/'
+
+		# in these paths, the augmented train set and validation set are stored
+		# they can be loaded after (flag decides whether estimating these values and storing,
+		# or loading the precomputed ones)
+		self.path_patches_bckndfixed = paramsTrain.path + 'patches_bckndfixed/' 
+		self.path['train_bckndfixed']=self.path_patches_bckndfixed+'train/'
+		self.path['val_bckndfixed']=self.path_patches_bckndfixed+'val/'
+		self.path['test_bckndfixed']=self.path_patches_bckndfixed+'test/'
+		self.path['test_loco'] = self.path_patches_bckndfixed+'test_loco/'
+
+		self.channel_n = paramsTrain.channel_n
+		deb.prints(self.channel_n)
+		self.debug = paramsTrain.debug
+		self.class_n = paramsTrain.class_n
+		self.report={'best':{}, 'val':{}}
+		self.report['exp_id']=paramsTrain.exp_id
+		self.report['best']['text_name']='result_'+paramsTrain.exp_id+'.txt'
+		self.report['best']['text_path']='../results/'+self.report['best']['text_name']
+		self.report['best']['text_history_path']='../results/'+'history.txt'
+		self.report['val']['history_path']='../results/'+'history_val.txt'
+		
+		self.t_len=paramsTrain.t_len
+		deb.prints(self.t_len)
+		self.dotys_sin_cos = dotys_sin_cos
+		self.dotys_sin_cos = np.expand_dims(self.dotys_sin_cos,axis=0) # add batch dimension
+		self.dotys_sin_cos = np.repeat(self.dotys_sin_cos,16,axis=0)
+		self.ds = ds
+
+#		super().__init__(*args, **kwargs)
 		if self.debug >= 1:
 			print("Initializing Model instance")
-		self.val_set=val_set
+		self.val_set = paramsTrain.val_set
 		self.metrics = {'train': {}, 'test': {}, 'val':{}}
 		self.batch = {'train': {}, 'test': {}, 'val':{}}
-		self.batch['train']['size'] = batch_size_train
-		self.batch['test']['size'] = batch_size_test
-		self.batch['val']['size'] = batch_size_test
+		self.batch['train']['size'] = paramsTrain.batch_size_train
+		self.batch['test']['size'] = paramsTrain.batch_size_test
+		self.batch['val']['size'] = paramsTrain.batch_size_test
 		
-		self.eval_mode = eval_mode
-		self.epochs = epochs
+		self.eval_mode = paramsTrain.eval_mode # legacy
+		self.epochs = paramsTrain.epochs # legacy?
 		self.early_stop={'best':0,
 					'count':0,
 					'signal':False,
-					'patience':patience}
-		self.model_type=model_type
+					'patience':paramsTrain.patience}
+		self.model_type=paramsTrain.model_type
 		if self.model_type == 'UUnet4ConvLSTM_doty':		
 			self.doty_flag = True
 		else:
@@ -1400,14 +1440,14 @@ class NetModel(NetObject):
 			text_file.write("epoch,oa,aa,f1,class_acc\n")
 
 		self.model_save=True
-		self.time_measure=time_measure
+		self.time_measure=paramsTrain.time_measure
 		self.mp=load_obj('model_params')
 		deb.prints(self.mp)
-		self.stop_epoch=stop_epoch
+		self.stop_epoch = paramsTrain.stop_epoch
 		deb.prints(self.stop_epoch)
 
 		self.model_t_len = paramsTrain.seq_len
-		self.mim = mim
+		self.mim = paramsTrain.mim
 	def transition_down(self, pipe, filters):
 		pipe = Conv2D(filters, (3, 3), strides=(2, 2), padding='same')(pipe)
 		pipe = keras.layers.BatchNormalization(axis=3)(pipe)
@@ -3722,12 +3762,11 @@ if __name__ == '__main__':
 #		modelClass = ModelLoadGeneratorDebug
 	else:
 		modelClass = ModelLoadGeneratorWithCoords
-	model = modelClass(epochs=paramsTrain.epochs, patch_len=paramsTrain.patch_len,
-					 patch_step_train=paramsTrain.patch_step_train, eval_mode=paramsTrain.eval_mode,
-					 batch_size_train=paramsTrain.batch_size_train,batch_size_test=paramsTrain.batch_size_test,
-					 patience=paramsTrain.patience,t_len=ds.t_len,class_n=paramsTrain.class_n,channel_n=paramsTrain.channel_n,path=paramsTrain.path,
-					 val_set=paramsTrain.val_set,model_type=paramsTrain.model_type, time_measure=time_measure, stop_epoch=paramsTrain.stop_epoch,
-					 dotys_sin_cos=dotys_sin_cos, mim = paramsTrain.mim)
+
+	paramsTrain.t_len = ds.t_len # modified?
+	model = modelClass(paramsTrain = paramsTrain, 
+					 dotys_sin_cos=dotys_sin_cos)
+
 	model.class_n=data.class_n-1 # Model is designed without background class
 	deb.prints(data.class_n)
 	model.build()

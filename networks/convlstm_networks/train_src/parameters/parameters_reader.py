@@ -94,6 +94,8 @@ class ParamsTrain(Params):
         self.exp_id = "default" # legacy.
         self.save_patches_only = False # legacy bc of coords
 
+        self.time_measure = False
+
 
         # General params (common to open set and closed set and group classes)
 
@@ -125,6 +127,7 @@ class ParamsTrain(Params):
         #self.seq_date = "mar"
         self.id = "dummy"
         self.loco_class = 8 # legacy. delete
+
         
 
 
