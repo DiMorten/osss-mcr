@@ -1,3 +1,4 @@
+
 from colorama import init
 init()
 from utils import *
@@ -60,10 +61,57 @@ from icecream import ic
 from monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerator
 import natsort
 
-class Dataset(NetObject):
 
-	def __init__(self, *args, **kwargs):
-		super().__init__(*args, **kwargs)
+# ================= Dataset class implements data loading, patch extraction, metric calculation and image reconstruction =======#
+class Dataset(object):
+
+	def __init__(self, paramsTrain, ds, *args, **kwargs):
+
+		print("Initializing object...")
+		print(paramsTrain.t_len, paramsTrain.channel_n)
+		self.paramsTrain = paramsTrain
+		
+		self.patch_len = self.paramsTrain.patch_len
+		self.path = {"v": self.paramsTrain.path, 'train': {}, 'test': {}}
+		self.image = {'train': {}, 'test': {}}
+		self.patches = {'train': {}, 'test': {}}
+
+		self.patches['train']['step']=self.paramsTrain.patch_step_train
+		self.patches['test']['step']=self.paramsTrain.patch_step_test 
+	  
+		self.path['train']['in'] = self.paramsTrain.path + 'train_test/train/ims/'
+		self.path['test']['in'] = self.paramsTrain.path + 'train_test/test/ims/'
+		self.path['train']['label'] = self.paramsTrain.path + 'train_test/train/labels/'
+		self.path['test']['label'] = self.paramsTrain.path + 'train_test/test/labels/'
+
+		# in these paths, the augmented train set and validation set are stored
+		# they can be loaded after (flag decides whether estimating these values and storing,
+		# or loading the precomputed ones)
+		self.path_patches_bckndfixed = self.paramsTrain.path + 'patches_bckndfixed/' 
+		self.path['train_bckndfixed']=self.path_patches_bckndfixed+'train/'
+		self.path['val_bckndfixed']=self.path_patches_bckndfixed+'val/'
+		self.path['test_bckndfixed']=self.path_patches_bckndfixed+'test/'
+		self.path['test_loco'] = self.path_patches_bckndfixed+'test_loco/'
+
+		self.channel_n = self.paramsTrain.channel_n
+		deb.prints(self.channel_n)
+		self.debug = self.paramsTrain.debug
+		self.class_n = self.paramsTrain.class_n
+		self.report={'best':{}, 'val':{}}
+		self.report['exp_id']=self.paramsTrain.exp_id
+		self.report['best']['text_name']='result_'+self.paramsTrain.exp_id+'.txt'
+		self.report['best']['text_path']='../results/'+self.report['best']['text_name']
+		self.report['best']['text_history_path']='../results/'+'history.txt'
+		self.report['val']['history_path']='../results/'+'history_val.txt'
+		
+		self.t_len=self.paramsTrain.t_len
+		deb.prints(self.t_len)
+		self.dotys_sin_cos = self.paramsTrain.dotys_sin_cos
+		self.dotys_sin_cos = np.expand_dims(self.dotys_sin_cos,axis=0) # add batch dimension
+		self.dotys_sin_cos = np.repeat(self.dotys_sin_cos,16,axis=0)
+		self.ds = ds
+
+#		super().__init__(*args, **kwargs)
 		self.im_gray_idx_to_rgb_table=[[0,[0,0,255],29],
 									[1,[0,255,0],150],
 									[2,[0,255,255],179],
@@ -133,21 +181,21 @@ class Dataset(NetObject):
 
 
 		# ========================================= pick label for N to 1
-		deb.prints(args.seq_mode)
+		deb.prints(self.paramsTrain.seq_mode)
 		print('*'*20, 'Selecting date label')
-		if args.seq_mode == 'fixed':
-			args.seq_label = -1
-			self.patches['train']['label'] = self.patches['train']['label'][:,args.seq_label]
-			self.patches['test']['label'] = self.patches['test']['label'][:,args.seq_label]
+		if self.paramsTrain.seq_mode == 'fixed':
+			self.paramsTrain.seq_label = -1
+			self.patches['train']['label'] = self.patches['train']['label'][:,self.paramsTrain.seq_label]
+			self.patches['test']['label'] = self.patches['test']['label'][:,self.paramsTrain.seq_label]
 			self.labeled_dates = 1
-		elif args.seq_mode == 'fixed_label_len':
-			args.seq_label = -5
-			self.patches['train']['label'] = self.patches['train']['label'][:,args.seq_label]
-			self.patches['test']['label'] = self.patches['test']['label'][:,args.seq_label]
+		elif self.paramsTrain.seq_mode == 'fixed_label_len':
+			self.paramsTrain.seq_label = -5
+			self.patches['train']['label'] = self.patches['train']['label'][:,self.paramsTrain.seq_label]
+			self.patches['test']['label'] = self.patches['test']['label'][:,self.paramsTrain.seq_label]
 			self.labeled_dates = 1
-		elif args.seq_mode == 'var' or args.seq_mode == 'var_label':
+		elif self.paramsTrain.seq_mode == 'var' or self.paramsTrain.seq_mode == 'var_label':
 
-			self.labeled_dates = paramsTrain.seq_len
+			self.labeled_dates = self.paramsTrain.seq_len
 
 			self.patches['train']['label'] = self.patches['train']['label'][:, -self.labeled_dates:]
 			self.patches['test']['label'] = self.patches['test']['label'][:, -self.labeled_dates:]
@@ -155,7 +203,7 @@ class Dataset(NetObject):
 		deb.prints(np.unique(self.patches['test']['label'],return_counts=True))
 			
 		self.class_n=unique.shape[0] #10 plus background
-		if paramsTrain.open_set==True:
+		if self.paramsTrain.open_set==True:
 
 			print('*'*20, 'Open set - ignoring class')
 		
@@ -164,33 +212,33 @@ class Dataset(NetObject):
 			self.patches['train']['label_with_loco_class'] = self.patches['train']['label'].copy()
 
 			deb.prints(np.unique(self.patches['train']['label'],return_counts=True))
-			deb.prints(args.loco_class)
+			deb.prints(self.paramsTrain.loco_class)
 
 			#select_kept_classes_flag = True
-			if paramsTrain.select_kept_classes_flag==False:	
-				self.unknown_classes = paramsTrain.unknown_classes
+			if self.paramsTrain.select_kept_classes_flag==False:	
+				self.unknown_classes = self.paramsTrain.unknown_classes
 
-				#self.patches['train']['label'][self.patches['train']['label']==int(args.loco_class) + 1] = 0
-				#self.patches['test']['label'][self.patches['test']['label']==int(args.loco_class) + 1] = 0
-			#	self.patches['train']['label'] = openSetConfig.deleteLocoClass(self.patches['train']['label'], args.loco_class)
-			#	self.patches['test']['label'] = openSetConfig.deleteLocoClass(self.patches['test']['label'], args.loco_class)
+				#self.patches['train']['label'][self.patches['train']['label']==int(self.paramsTrain.loco_class) + 1] = 0
+				#self.patches['test']['label'][self.patches['test']['label']==int(self.paramsTrain.loco_class) + 1] = 0
+			#	self.patches['train']['label'] = openSetConfig.deleteLocoClass(self.patches['train']['label'], self.paramsTrain.loco_class)
+			#	self.patches['test']['label'] = openSetConfig.deleteLocoClass(self.patches['test']['label'], self.paramsTrain.loco_class)
 			else:
 				all_classes = np.unique(self.patches['train']['label']) # with background
 				all_classes = all_classes[1:] - 1 # no bcknd
 				deb.prints(all_classes)
-				deb.prints(paramsTrain.known_classes)
-				self.unknown_classes = np.setdiff1d(all_classes, paramsTrain.known_classes)
+				deb.prints(self.paramsTrain.known_classes)
+				self.unknown_classes = np.setdiff1d(all_classes, self.paramsTrain.known_classes)
 				deb.prints(self.unknown_classes)
 			for clss in self.unknown_classes:
 				self.patches['train']['label'][self.patches['train']['label']==int(clss) + 1] = 0
 				self.patches['test']['label'][self.patches['test']['label']==int(clss) + 1] = 0
-		elif paramsTrain.group_bcknd_classes == True:
+		elif self.paramsTrain.group_bcknd_classes == True:
 			print('*'*20, 'Open set - grouping bcknd class')
 			all_classes = np.unique(self.patches['train']['label']) # with background
 			all_classes = all_classes[1:] - 1 # no bcknd
 			deb.prints(all_classes)
-			deb.prints(paramsTrain.known_classes)
-			self.unknown_classes = np.setdiff1d(all_classes, paramsTrain.known_classes)
+			deb.prints(self.paramsTrain.known_classes)
+			self.unknown_classes = np.setdiff1d(all_classes, self.paramsTrain.known_classes)
 			deb.prints(self.unknown_classes)
 			for clss in self.unknown_classes:
 				self.patches['train']['label'][self.patches['train']['label']==int(clss) + 1] = 20
@@ -209,7 +257,7 @@ class Dataset(NetObject):
 		deb.prints(np.unique(self.patches['train']['label'], return_counts=True))
 		
 
-##            labels_val[labels_val==255] = paramsTrain.classes
+##            labels_val[labels_val==255] = self.paramsTrain.classes
 		tmp_tr = self.patches['train']['label'].copy()
 		tmp_tst = self.patches['test']['label'].copy()
 		
@@ -220,7 +268,7 @@ class Dataset(NetObject):
 		deb.prints(np.unique(self.patches['test']['label'], return_counts=True))
 
 		# ===== test extra classes in fixed mode
-		if args.seq_mode == 'fixed':
+		if self.paramsTrain.seq_mode == 'fixed':
 			unique_train = np.unique(self.patches['train']['label'])
 			unique_test = np.unique(self.patches['test']['label'])
 			test_additional_classes=[]
@@ -273,7 +321,7 @@ class Dataset(NetObject):
 		deb.prints(np.unique(self.patches['test']['label'],return_counts=True))    
 		self.class_n=class_n_no_bkcnd+1 # counting bccknd
 
-		if args.seq_mode == 'fixed' and len(test_additional_classes)>0:
+		if self.paramsTrain.seq_mode == 'fixed' and len(test_additional_classes)>0:
 			save_test_patches = True
 		else:
 			save_test_patches = False
@@ -284,13 +332,13 @@ class Dataset(NetObject):
 			# path_patches = path + 'patches_bckndfixed/'
 			# path = path_patches+'test/'
 
-			patchesStorage = PatchesStorageAllSamples(path, args.seq_mode, args.seq_date)
+			patchesStorage = PatchesStorageAllSamples(path, self.paramsTrain.seq_mode, self.paramsTrain.seq_date)
 		
 			print("===== STORING THE LOADED PATCHES AS ALL SAMPLES IN A SINGLE FILE ======")
 			
 			patchesStorage.storeSplit(self.patches['test'], split='test_bckndfixed')
 			deb.prints(np.unique(self.patches['test']['label'],return_counts=True))
-			if args.save_patches_only==True:
+			if self.paramsTrain.save_patches_only==True:
 				sys.exit("Test bckndfixed patches were saved")
 
 		# ======================================= end fix labels
@@ -595,7 +643,7 @@ class Dataset(NetObject):
 		metrics['average_acc']=np.average(metrics['per_class_acc'][~np.isnan(metrics['per_class_acc'])])
 
 		# open set metrics
-		if paramsTrain.group_bcknd_classes == True:
+		if self.paramsTrain.group_bcknd_classes == True:
 			metrics['f1_score_known'] = np.average(metrics['f1_score_noavg'][:-1])
 			metrics['f1_score_unknown'] = metrics['f1_score_noavg'][-1]
 			
@@ -991,30 +1039,30 @@ class DatasetWithCoords(Dataset):
 		ic(np.unique(self.full_label_test, return_counts=True))
 
 #		pdb.set_trace()
-		ic(paramsTrain.known_classes)
+		ic(self.paramsTrain.known_classes)
 		#ic(self.unknown_classes)
 		
-		if paramsTrain.open_set==True:
-			if paramsTrain.select_kept_classes_flag==False:	
-				self.unknown_classes = paramsTrain.unknown_classes
+		if self.paramsTrain.open_set==True:
+			if self.paramsTrain.select_kept_classes_flag==False:	
+				self.unknown_classes = self.paramsTrain.unknown_classes
 			else:
 				all_classes = np.unique(self.full_label_train) # with background
 				all_classes = all_classes[1:] - 1 # no bcknd
 				deb.prints(all_classes)
-				deb.prints(paramsTrain.known_classes)
-				self.unknown_classes = np.setdiff1d(all_classes, paramsTrain.known_classes)
+				deb.prints(self.paramsTrain.known_classes)
+				self.unknown_classes = np.setdiff1d(all_classes, self.paramsTrain.known_classes)
 				deb.prints(self.unknown_classes)
 
 			for clss in self.unknown_classes:
 				self.full_label_train[self.full_label_train==int(clss) + 1] = 0
 				self.full_label_test[self.full_label_test==int(clss) + 1] = 0
 
-		elif paramsTrain.group_bcknd_classes == True:
+		elif self.paramsTrain.group_bcknd_classes == True:
 			all_classes = np.unique(self.full_label_train) # with background
 			all_classes = all_classes[1:] - 1 # no bcknd
 			deb.prints(all_classes)
-			deb.prints(paramsTrain.known_classes)
-			self.unknown_classes = np.setdiff1d(all_classes, paramsTrain.known_classes)
+			deb.prints(self.paramsTrain.known_classes)
+			self.unknown_classes = np.setdiff1d(all_classes, self.paramsTrain.known_classes)
 			deb.prints(self.unknown_classes)
 			for clss in self.unknown_classes:
 				self.full_label_train[self.full_label_train==int(clss) + 1] = 20	
