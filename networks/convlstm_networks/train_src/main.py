@@ -59,109 +59,46 @@ from parameters.parameters_reader import ParamsTrain
 from icecream import ic
 from monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerator
 import natsort
-from dataset import Dataset, DatasetWithCoords
+
 np.random.seed(2021)
 tf.set_random_seed(2021)
 
-parser = argparse.ArgumentParser(description='')
-parser.add_argument('-tl', '--t_len', dest='t_len',
-					type=int, default=7, help='t len')
-parser.add_argument('-cn', '--class_n', dest='class_n',
-					type=int, default=12, help='class_n')
-parser.add_argument('-chn', '--channel_n', dest='channel_n',
-					type=int, default=2, help='channel number')
 
-parser.add_argument('-pl', '--patch_len', dest='patch_len',
-					type=int, default=32, help='patch len')
-parser.add_argument('-pstr', '--patch_step_train', dest='patch_step_train',
-					type=int, default=32, help='patch len')
-parser.add_argument('-psts', '--patch_step_test', dest='patch_step_test',
-					type=int, default=None, help='patch len')
+paramsTrain = ParamsTrain('parameters/')
+#paramsTrain.seq_mode = 'var_label'
 
-parser.add_argument('-db', '--debug', dest='debug',
-					type=int, default=1, help='patch len')
-parser.add_argument('-ep', '--epochs', dest='epochs',
-					type=int, default=8000, help='patch len')
-parser.add_argument('-pt', '--patience', dest='patience',
-					type=int, default=10, help='patience')
-
-parser.add_argument('-bstr', '--batch_size_train', dest='batch_size_train',
-					type=int, default=16, help='patch len')
-parser.add_argument('-bsts', '--batch_size_test', dest='batch_size_test',
-					type=int, default=16, help='patch len')
-
-parser.add_argument('-em', '--eval_mode', dest='eval_mode',
-					default='metrics', help='Test evaluate mode: metrics or predict')
-parser.add_argument('-is', '--im_store', dest='im_store',
-					default=True, help='Store sample test predicted images')
-parser.add_argument('-eid', '--exp_id', dest='exp_id',
-					default='default', help='Experiment id')
-
-parser.add_argument('-path', '--path', dest='path',
-					default='../data/', help='Experiment id')
-parser.add_argument('-mdl', '--model_type', dest='model_type',
-					default='DenseNet', help='Experiment id')
-parser.add_argument('-ste', '--stop_epoch', dest='stop_epoch',
-					type=int, default=-1, help='Stop epoch. If 0, no fixed stop epoch.')
-parser.add_argument('-seq_mode', '--seq_mode', dest='seq_mode',
-					type=str, default='fixed', help='Sequence len type. variable or fixed')
-parser.add_argument('-seq_date', '--seq_date', dest='seq_date',
-					type=str, default='dec', help='seq_date')
-
-parser.add_argument('-ds', '--dataset', dest='dataset',
-					type=str, default='lm', help='Dataset name')
-
-parser.add_argument('-save_patches_only', '--save_patches_only', dest='save_patches_only',
-					type=bool, default=False, help='Dataset name')
-
-parser.add_argument('-id', '--id', dest='id',
-					type=str, default='default_id', help='id')
-
-parser.add_argument('-loco_class', '--loco_class', dest='loco_class',
-					type=str, default='0', help='loco_class')
-
-args = parser.parse_args()
-
-if args.patch_step_test==None:
-	args.patch_step_test=args.patch_len
-
-deb.prints(args.patch_step_test)
-
-#args.seq_mode = 'var_label'
-
-#args.seq_mode = 'var_label'
-args.seq_mode = 'fixed'
+#paramsTrain.seq_mode = 'var_label'
+paramsTrain.seq_mode = 'fixed'
 
 
-if args.seq_mode == 'var_label':
-	#args.mim = MIMVarLabel()
-	args.mim = MIMVarLabel_PaddedSeq()
-elif args.seq_mode == 'var':
-	args.mim = MIMVarSeqLabel()
-elif args.seq_mode == 'fixed_label_len':
-	args.mim = MIMVarLabel()
-	args.mim =MIMFixedLabelAllLabels()
+if paramsTrain.seq_mode == 'var_label':
+	#paramsTrain.mim = MIMVarLabel()
+	paramsTrain.mim = MIMVarLabel_PaddedSeq()
+elif paramsTrain.seq_mode == 'var':
+	paramsTrain.mim = MIMVarSeqLabel()
+elif paramsTrain.seq_mode == 'fixed_label_len':
+	paramsTrain.mim = MIMVarLabel()
+	paramsTrain.mim =MIMFixedLabelAllLabels()
 else:
-	#args.mim = MIMFixed()
-	args.mim = MIMFixed_PaddedSeq()
+	#paramsTrain.mim = MIMFixed()
+	paramsTrain.mim = MIMFixed_PaddedSeq()
 
-deb.prints(args.seq_mode)
-deb.prints(args.mim)
+deb.prints(paramsTrain.seq_mode)
+deb.prints(paramsTrain.mim)
 
-dataset = args.dataset
+dataset = paramsTrain.dataset
 
-#args.known_classes = [0, 1, 10, 12] # soybean, maize, cerrado, soil
+#paramsTrain.known_classes = [0, 1, 10, 12] # soybean, maize, cerrado, soil
 
 
 
 #paramsTrain = Params(parameters_path)
 
-paramsTrain = ParamsTrain('parameters/')
 
 #========= overwrite for direct execution of this py file
 direct_execution=False
 if direct_execution==True:
-	args.stop_epoch=-1
+	paramsTrain.stop_epoch=-1
 
 	#dataset='cv'
 	dataset='cv'
@@ -171,33 +108,33 @@ if direct_execution==True:
 	sensor_source='SAR'
 
 	if dataset=='cv':
-		args.class_n=12
-		args.path="../../../dataset/dataset/cv_data/"
+		paramsTrain.class_n=12
+		paramsTrain.path="../../../dataset/dataset/cv_data/"
 		if sensor_source=='SAR':
-			args.t_len=14
+			paramsTrain.t_len=14
 			
 	elif dataset=='lm':
-		args.path="../../../dataset/dataset/lm_data/"
+		paramsTrain.path="../../../dataset/dataset/lm_data/"
 		
-		args.class_n=15
+		paramsTrain.class_n=15
 		if sensor_source=='SAR':
-			args.channel_n=2
-			args.t_len=13
+			paramsTrain.channel_n=2
+			paramsTrain.t_len=13
 		elif sensor_source=='Optical':
-			args.channel_n=3
-			args.t_len=11
+			paramsTrain.channel_n=3
+			paramsTrain.t_len=11
 		elif sensor_source=='OpticalWithClouds':
-			args.channel_n=3
-			args.t_len=13
+			paramsTrain.channel_n=3
+			paramsTrain.t_len=13
 
-	args.model_type='BUnet4ConvLSTM'
-	#args.model_type='ConvLSTM_seq2seq'
-	#args.model_type='ConvLSTM_seq2seq_bi'
-	#args.model_type='DenseNetTimeDistributed_128x2'
-	#args.model_type='BAtrousGAPConvLSTM'
-	#args.model_type='Unet3D'
-	#args.model_type='BUnet6ConvLSTM'
-	#args.model_type='BUnet4ConvLSTM_SkipLSTM'
+	paramsTrain.model_type='BUnet4ConvLSTM'
+	#paramsTrain.model_type='ConvLSTM_seq2seq'
+	#paramsTrain.model_type='ConvLSTM_seq2seq_bi'
+	#paramsTrain.model_type='DenseNetTimeDistributed_128x2'
+	#paramsTrain.model_type='BAtrousGAPConvLSTM'
+	#paramsTrain.model_type='Unet3D'
+	#paramsTrain.model_type='BUnet6ConvLSTM'
+	#paramsTrain.model_type='BUnet4ConvLSTM_SkipLSTM'
 
 
 def model_summary_print(s):
@@ -266,6 +203,1167 @@ class NetObject(object):
 		self.dotys_sin_cos = np.expand_dims(self.dotys_sin_cos,axis=0) # add batch dimension
 		self.dotys_sin_cos = np.repeat(self.dotys_sin_cos,16,axis=0)
 		self.ds = ds
+# ================= Dataset class implements data loading, patch extraction, metric calculation and image reconstruction =======#
+class Dataset(NetObject):
+
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		self.im_gray_idx_to_rgb_table=[[0,[0,0,255],29],
+									[1,[0,255,0],150],
+									[2,[0,255,255],179],
+									[3,[255,255,0],226],
+									[4,[255,255,255],255]]
+		if self.debug >= 1:
+			print("Initializing Dataset instance")
+		
+		#should be in another object
+		self.padded_dates = []
+		
+	def create(self):
+		self.image["train"], self.patches["train"] = self.subset_create(
+			self.path['train'],self.patches["train"]['step'])
+		self.image["test"], self.patches["test"] = self.subset_create(
+			self.path['test'],self.patches["test"]['step'])
+
+		if self.debug:
+			deb.prints(self.image["train"]['in'].shape)
+			deb.prints(self.image["train"]['label'].shape)
+
+			deb.prints(self.image["test"]['in'].shape)
+			deb.prints(self.image["test"]['label'].shape)
+
+	def create_load(self):
+
+		self.patches_list={'train':{},'test':{}}
+		#self.patches_list['train']['ims']=glob.glob(self.path['train']['in']+'*.npy')
+		#self.patches_list['train']['label']=glob.glob(self.path['train']['label']+'*.npy')
+
+		#self.patches_list['test']['ims']=glob.glob(self.path['test']['in']+'*.npy')
+		#self.patches_list['test']['label']=glob.glob(self.path['test']['label']+'*.npy')
+		self.patches['test']['label'],self.patches_list['test']['label']=self.folder_load(self.path['test']['label'])
+		
+		self.patches['train']['in'],self.patches_list['train']['ims']=self.folder_load(self.path['train']['in'])
+		self.patches['train']['label'],self.patches_list['train']['label']=self.folder_load(self.path['train']['label'])
+		self.patches['test']['in'],self.patches_list['test']['ims']=self.folder_load(self.path['test']['in'])
+		deb.prints(self.patches['train']['in'].shape)
+		deb.prints(self.patches['test']['in'].shape)
+		deb.prints(self.patches['train']['label'].shape)
+		# for lem2
+		#if self.ds.name =='l2':
+		#	self.patches['train']['label'] = self.patches['test']['label'].copy()
+		#	self.patches['train']['in'] = self.patches['test']['in'].copy() 
+		'''
+		if self.ds.name == 'lm':
+			self.patches['train']['in'] = np.concatenate((self.patches['train']['in'],
+							self.patches['test']['in']), axis=0)
+			self.patches['train']['label'] = np.concatenate((self.patches['train']['label'],
+							self.patches['test']['label']), axis=0)
+
+			self.patches['test']['in'] = np.expand_dims(
+							np.zeros(self.patches['test']['in'].shape[1:]),
+							axis = 0)
+			self.patches['test']['label'] = np.expand_dims(
+							np.zeros(self.patches['test']['label'].shape[1:]),
+							axis = 0)
+		'''
+		self.dataset=None
+		unique,count=np.unique(self.patches['train']['label'],return_counts=True)
+		deb.prints(np.unique(self.patches['train']['label'],return_counts=True))
+		deb.prints(np.unique(self.patches['test']['label'],return_counts=True))
+		#pdb.set_trace()
+		deb.prints(count)
+
+		self.dataset='seq1'
+
+
+		# ========================================= pick label for N to 1
+		deb.prints(paramsTrain.seq_mode)
+		print('*'*20, 'Selecting date label')
+		if paramsTrain.seq_mode == 'fixed':
+			paramsTrain.seq_label = -1
+			self.patches['train']['label'] = self.patches['train']['label'][:,paramsTrain.seq_label]
+			self.patches['test']['label'] = self.patches['test']['label'][:,paramsTrain.seq_label]
+			self.labeled_dates = 1
+		elif paramsTrain.seq_mode == 'fixed_label_len':
+			paramsTrain.seq_label = -5
+			self.patches['train']['label'] = self.patches['train']['label'][:,paramsTrain.seq_label]
+			self.patches['test']['label'] = self.patches['test']['label'][:,paramsTrain.seq_label]
+			self.labeled_dates = 1
+		elif paramsTrain.seq_mode == 'var' or paramsTrain.seq_mode == 'var_label':
+
+			self.labeled_dates = paramsTrain.seq_len
+
+			self.patches['train']['label'] = self.patches['train']['label'][:, -self.labeled_dates:]
+			self.patches['test']['label'] = self.patches['test']['label'][:, -self.labeled_dates:]
+		ic(np.unique(self.patches['train']['label'],return_counts=True))
+		deb.prints(np.unique(self.patches['test']['label'],return_counts=True))
+			
+		self.class_n=unique.shape[0] #10 plus background
+		if paramsTrain.open_set==True:
+
+			print('*'*20, 'Open set - ignoring class')
+		
+			# making label with loco class copy
+			self.patches['test']['label_with_loco_class'] = self.patches['test']['label'].copy()
+			self.patches['train']['label_with_loco_class'] = self.patches['train']['label'].copy()
+
+			deb.prints(np.unique(self.patches['train']['label'],return_counts=True))
+			deb.prints(paramsTrain.loco_class)
+
+			#select_kept_classes_flag = True
+			if paramsTrain.select_kept_classes_flag==False:	
+				self.unknown_classes = paramsTrain.unknown_classes
+
+				#self.patches['train']['label'][self.patches['train']['label']==int(paramsTrain.loco_class) + 1] = 0
+				#self.patches['test']['label'][self.patches['test']['label']==int(paramsTrain.loco_class) + 1] = 0
+			#	self.patches['train']['label'] = openSetConfig.deleteLocoClass(self.patches['train']['label'], paramsTrain.loco_class)
+			#	self.patches['test']['label'] = openSetConfig.deleteLocoClass(self.patches['test']['label'], paramsTrain.loco_class)
+			else:
+				all_classes = np.unique(self.patches['train']['label']) # with background
+				all_classes = all_classes[1:] - 1 # no bcknd
+				deb.prints(all_classes)
+				deb.prints(paramsTrain.known_classes)
+				self.unknown_classes = np.setdiff1d(all_classes, paramsTrain.known_classes)
+				deb.prints(self.unknown_classes)
+			for clss in self.unknown_classes:
+				self.patches['train']['label'][self.patches['train']['label']==int(clss) + 1] = 0
+				self.patches['test']['label'][self.patches['test']['label']==int(clss) + 1] = 0
+		elif paramsTrain.group_bcknd_classes == True:
+			print('*'*20, 'Open set - grouping bcknd class')
+			all_classes = np.unique(self.patches['train']['label']) # with background
+			all_classes = all_classes[1:] - 1 # no bcknd
+			deb.prints(all_classes)
+			deb.prints(paramsTrain.known_classes)
+			self.unknown_classes = np.setdiff1d(all_classes, paramsTrain.known_classes)
+			deb.prints(self.unknown_classes)
+			for clss in self.unknown_classes:
+				self.patches['train']['label'][self.patches['train']['label']==int(clss) + 1] = 20
+				self.patches['test']['label'][self.patches['test']['label']==int(clss) + 1] = 20			
+
+			
+			ic(np.unique(self.patches['train']['label'],return_counts=True))
+
+			#pdb.set_trace()
+
+			print('*'*20, 'End open set - ignoring class')
+
+		# ======================================= fix labels before one hot
+		print("===== preprocessing labels")
+		self.classes = np.unique(self.patches['train']['label'])
+		deb.prints(np.unique(self.patches['train']['label'], return_counts=True))
+		
+
+##            labels_val[labels_val==255] = paramsTrain.classes
+		tmp_tr = self.patches['train']['label'].copy()
+		tmp_tst = self.patches['test']['label'].copy()
+		
+##            tmp_val = labels_val.copy()
+
+		deb.prints(self.patches['train']['label'].shape)
+		deb.prints(np.unique(self.patches['train']['label'],return_counts=True))  
+		deb.prints(np.unique(self.patches['test']['label'], return_counts=True))
+
+		# ===== test extra classes in fixed mode
+		if paramsTrain.seq_mode == 'fixed':
+			unique_train = np.unique(self.patches['train']['label'])
+			unique_test = np.unique(self.patches['test']['label'])
+			test_additional_classes=[]
+			for value in unique_test:
+				if value not in unique_train:
+#					self.patches['test']['label'][self.patches['test']['label'] == value] = 30 + value + 1 # if class is 3, it becomes 33 after subtracting 1
+					self.patches['test']['label'][self.patches['test']['label'] == value] = 30 + 1 # if class is 3, it becomes 33 after subtracting 1
+					test_additional_classes.append(value)
+			deb.prints(test_additional_classes)
+		
+		deb.prints(np.unique(self.patches['test']['label'], return_counts=True))
+
+		self.labels2new_labels = dict((c, i) for i, c in enumerate(self.classes))
+		self.new_labels2labels = dict((i, c) for i, c in enumerate(self.classes))
+		ic(self.labels2new_labels, self.new_labels2labels)
+		for j in range(len(self.classes)):
+			self.patches['train']['label'][tmp_tr == self.classes[j]] = self.labels2new_labels[self.classes[j]]
+			self.patches['test']['label'][tmp_tst == self.classes[j]] = self.labels2new_labels[self.classes[j]]
+
+		# save dicts
+		dict_filename = "new_labels2labels_"+self.ds.name+"_"+self.ds.im_list[-1]+".pkl" 
+		deb.prints(dict_filename)
+		f = open(dict_filename, "wb")
+		pickle.dump(self.new_labels2labels, f)
+		f.close()
+		deb.prints(self.new_labels2labels)
+
+		##pdb.set_trace()
+
+		self.patches['train']['label'] = self.patches['train']['label']-1
+		self.patches['test']['label'] = self.patches['test']['label']-1
+
+		deb.prints(np.unique(self.patches['train']['label'], return_counts=True))
+		
+##            labels_val = labels_val-1
+		class_n_no_bkcnd = len(self.classes)-1
+		self.patches['train']['label'][self.patches['train']['label']==255] = class_n_no_bkcnd
+		self.patches['test']['label'][self.patches['test']['label']==255] = class_n_no_bkcnd
+
+#		self.classes = 
+		deb.prints(np.unique(self.patches['train']['label']))
+		deb.prints(np.unique(self.patches['train']['label'], return_counts=True))
+		#pdb.set_trace()
+
+##                labels_val[tmp_val == classes[j]] = self.labels2new_labels[classes[j]]
+		deb.prints(self.patches['train']['label'].shape)
+		deb.prints(np.unique(self.patches['train']['label'],return_counts=True))    
+
+		deb.prints(self.patches['test']['label'].shape)
+		deb.prints(np.unique(self.patches['test']['label'],return_counts=True))    
+		self.class_n=class_n_no_bkcnd+1 # counting bccknd
+
+		if paramsTrain.seq_mode == 'fixed' and len(test_additional_classes)>0:
+			save_test_patches = True
+		else:
+			save_test_patches = False
+
+		deb.prints(save_test_patches)
+		if save_test_patches==True:
+			path="../../../dataset/dataset/l2_data/"
+			# path_patches = path + 'patches_bckndfixed/'
+			# path = path_patches+'test/'
+
+			patchesStorage = PatchesStorageAllSamples(path, paramsTrain.seq_mode, paramsTrain.seq_date)
+		
+			print("===== STORING THE LOADED PATCHES AS ALL SAMPLES IN A SINGLE FILE ======")
+			
+			patchesStorage.storeSplit(self.patches['test'], split='test_bckndfixed')
+			deb.prints(np.unique(self.patches['test']['label'],return_counts=True))
+			if paramsTrain.save_patches_only==True:
+				sys.exit("Test bckndfixed patches were saved")
+
+		# ======================================= end fix labels
+
+
+
+		print("Switching to one hot")
+		self.patches['train']['label']=self.batch_label_to_one_hot(self.patches['train']['label'])
+		self.patches['test']['label']=self.batch_label_to_one_hot(self.patches['test']['label'])
+		deb.prints(self.patches['train']['label'].shape)
+		#pdb.set_trace()
+		self.patches['train']['in']=self.patches['train']['in'].astype(np.float16)
+		self.patches['test']['in']=self.patches['test']['in'].astype(np.float16)
+
+		self.patches['train']['label']=self.patches['train']['label'].astype(np.int8)
+		self.patches['test']['label']=self.patches['test']['label'].astype(np.int8)
+		
+		deb.prints(len(self.patches_list['test']['label']))
+		deb.prints(len(self.patches_list['test']['ims']))
+		deb.prints(self.patches['train']['in'].shape)
+		deb.prints(self.patches['train']['in'].dtype)
+		
+		deb.prints(self.patches['train']['label'].shape)
+		deb.prints(self.patches['test']['label'].shape)
+		unique,count = np.unique(self.patches['test']['label'],return_counts=True)
+		print_pixel_count = False
+		if print_pixel_count == True:
+			for t_step in range(self.patches['test']['label'].shape[1]):
+				deb.prints(t_step)
+				deb.prints(np.unique(self.patches['train']['label'].argmax(axis=-1)[:,t_step],return_counts=True))
+			print("Test label unique: ",unique,count)
+
+			for t_step in range(self.patches['test']['label'].shape[1]):
+				deb.prints(t_step)
+				deb.prints(np.unique(self.patches['test']['label'].argmax(axis=-1)[:,t_step],return_counts=True))
+			
+		self.patches['train']['n']=self.patches['train']['label'].shape[0]
+		self.patches['train']['idx']=range(self.patches['train']['n'])
+		np.save('labels_beginning.npy',self.patches['test']['label'])
+
+		deb.prints(self.patches['train']['label'].shape)
+
+
+		unique,count=np.unique(self.patches['train']['label'].argmax(axis=-1),return_counts=True)
+		deb.prints(unique)
+		deb.prints(count)
+
+		unique,count=np.unique(self.patches['test']['label'].argmax(axis=-1),return_counts=True)
+		deb.prints(unique)
+		deb.prints(count)
+
+
+	def batch_label_to_one_hot(self,im):
+		im_one_hot=np.zeros(im.shape+(self.class_n,))
+		print(im_one_hot.shape)
+		print(im.shape)
+		for clss in range(0,self.class_n):
+			im_one_hot[..., clss][im == clss] = 1
+		return im_one_hot
+
+	def folder_load(self,folder_path): #move to patches_handler
+		paths=glob.glob(folder_path+'*.npy')
+		paths = natsort.natsorted(paths)
+		#ic(paths)
+		#pdb.set_trace()
+		files=[]
+		deb.prints(len(paths))
+		for path in paths:
+			#print(path)
+			files.append(np.load(path))
+		return np.asarray(files),paths
+	def subset_create(self, path,patch_step):
+		image = self.image_load(path)
+		image['label_rgb']=image['label'].copy()
+		image['label'] = self.label2idx(image['label'])
+		patches = self.patches_extract(image,patch_step)
+		return image, patches
+
+	def image_load(self, path):
+		image = {}
+		image['in'] = cv2.imread(path['in'], -1)
+		image['label'] = np.expand_dims(cv2.imread(path['label'], 0), axis=2)
+		count,unique=np.unique(image['label'],return_counts=True)
+		print("label count,unique",count,unique)
+		image['label_rgb']=cv2.imread(path['label'], -1)
+		return image
+
+	def patches_extract(self, image, patch_step):
+
+		patches = {}
+		patches['in'],_ = self.view_as_windows_multichannel(
+			image['in'], (self.patch_len, self.patch_len, self.channel_n), step=patch_step)
+		patches['label'],patches['label_partitioned_shape'] = self.view_as_windows_multichannel(
+			image['label'], (self.patch_len, self.patch_len, 1), step=patch_step)
+
+		# ===================== Switch labels to one-hot ===============#
+
+		if self.debug >= 2:
+			deb.prints(patches['label'].shape)
+
+		if flag['label_one_hot']:
+
+			# Get the vectorized integer label
+			patches['label_h'] = np.reshape(
+				patches['label'], (patches['label'].shape[0], patches['label'].shape[1]*patches['label'].shape[2]))
+			deb.prints(patches['label_h'].shape)
+
+			# Init the one-hot vectorized label
+			patches['label_h2'] = np.zeros(
+				(patches['label_h'].shape[0], patches['label_h'].shape[1], self.class_n))
+
+			# Get the one-hot vectorized label
+			for sample_idx in range(0, patches['label_h'].shape[0]):
+				for loc_idx in range(0, patches['label_h'].shape[1]):
+					patches['label_h2'][sample_idx, loc_idx,
+										patches['label_h'][sample_idx][loc_idx]] = 1
+
+			# Get the image one-hot labels
+			patches['label'] = np.reshape(patches['label_h2'], (patches['label_h2'].shape[0],
+																patches['label'].shape[1], patches['label'].shape[2], self.class_n))
+
+			if self.debug >= 2:
+				deb.prints(patches['label_h2'].shape)
+
+		# ============== End switch labels to one-hot =============#
+		if self.debug:
+			deb.prints(patches['label'].shape)
+			deb.prints(patches['in'].shape)
+
+		return patches
+
+	def label2idx(self, image_label):
+		unique = np.unique(image_label)
+		idxs = np.array(range(0, unique.shape[0]))
+		for val, idx in zip(unique, idxs):
+			image_label[image_label == val] = idx
+		return image_label
+
+	def view_as_windows_multichannel(self, arr_in, window_shape, step=1):
+		out = np.squeeze(view_as_windows(arr_in, window_shape, step=step))
+		partitioned_shape=out.shape
+
+		deb.prints(out.shape)
+		out = np.reshape(out, (out.shape[0] * out.shape[1],) + out.shape[2::])
+		return out,partitioned_shape
+# ==== add doty
+
+	def addDoty(self, input_, bounds=None):
+		if self.doty_flag==True:
+			if bounds!=None:
+				dotys_sin_cos = self.dotys_sin_cos[:,bounds[0]:bounds[1] if bounds[1]!=0 else None]
+			else:
+				dotys_sin_cos = self.dotys_sin_cos
+
+			input_ = [input_, dotys_sin_cos]
+		return input_	
+	def addDotyPadded(self, input_, bounds=None, seq_len=12, sample_n = 16):
+		if self.doty_flag==True:
+			if bounds!=None:
+#				deb.prints(bounds)
+				dotys_sin_cos = self.dotys_sin_cos[:,bounds[0]:bounds[1] if bounds[1]!=0 else None]
+#				deb.prints(self.dotys_sin_cos.shape)
+#				deb.prints(dotys_sin_cos.shape)
+			else:
+				dotys_sin_cos = self.dotys_sin_cos.copy()
+			dotys_sin_cos_padded = np.zeros((16, seq_len, 2))
+			dotys_sin_cos_padded[:, -dotys_sin_cos.shape[1]:] = dotys_sin_cos
+			input_ = [input_, dotys_sin_cos_padded]
+		return input_	
+
+
+#=============== PATCHES STORE ==========================#
+
+	def patchesStore(self, patches, split='train_bckndfixed'):
+		pathlib.Path(self.path[split]).mkdir(parents=True, exist_ok=True) 
+
+		
+		np.save(self.path[split]/'patches_in.npy', patches['in']) #to-do: add polymorphism for other types of input 
+		
+		#pathlib.Path(self.path[split]['label']).mkdir(parents=True, exist_ok=True) 
+		np.save(self.path[split]/'patches_label.npy', patches['label']) #to-do: add polymorphism for other types of input 
+
+	def patchesLoad(self, split='train'):
+		out={}
+		out['in']=np.load(self.path[split]/'patches_in.npy',mmap_mode='r')
+		out['label']=np.load(self.path[split]/'patches_label.npy')
+		#pdb.set_trace()
+		return out
+
+	def randomly_pick_samples_from_set(self,patches, out_n):
+		patches_n=patches['in'].shape[0]
+		selected_idxs=np.random.choice(patches_n, size=out_n)
+		patches['in']=patches['in'][selected_idxs]
+		patches['label']=patches['label'][selected_idxs]
+
+		return patches
+
+#=============== METRICS CALCULATION ====================#
+	def ims_flatten(self,ims):
+		return np.reshape(ims,(np.prod(ims.shape[0:-1]),ims.shape[-1]))
+
+	def average_acc(self,y_pred,y_true):
+		correct_per_class=np.zeros(self.class_n)
+		correct_all=y_pred.argmax(axis=1)[y_pred.argmax(axis=1)==y_true.argmax(axis=1)]
+		for clss in range(0,self.class_n):
+			correct_per_class[clss]=correct_all[correct_all==clss].shape[0]
+		if self.debug>=1:
+			deb.prints(correct_per_class)
+
+		pred_unique,pred_class_count=np.unique(y_pred.argmax(axis=1),return_counts=True)
+		deb.prints(pred_class_count)
+		deb.prints(pred_unique+1)
+
+
+		unique,per_class_count=np.unique(y_true.argmax(axis=1),return_counts=True)
+		deb.prints(per_class_count)
+		deb.prints(unique+1)
+		per_class_count_all=np.zeros(self.class_n)
+		for clss,count in zip(unique,per_class_count):
+			per_class_count_all[clss]=count
+		per_class_acc=np.divide(correct_per_class[1:].astype('float32'),per_class_count_all[1:].astype('float32'))
+		average_acc=np.average(per_class_acc)
+		return average_acc,per_class_acc
+	def flattened_to_im(self,data_h,im_shape):
+		return np.reshape(data_h,im_shape)
+
+	def probabilities_to_one_hot(self,vals):
+		out=np.zeros_like(vals)
+		out[np.arange(len(vals)), vals.argmax(1)] = 1
+		return out
+	def assert_equal(self,val1,val2):
+		return np.equal(val1,val2)
+	def int2one_hot(self,x,class_n):
+		out = np.zeros((x.shape[0], class_n))
+		out[np.arange(x.shape[0]),x] = 1
+		return out
+
+	def label_bcknd_from_last_eliminate(self,label):
+		out=np.zeros_like(label)
+		label_shape=label.shape
+		label=np.reshape(label,(label.shape[0],-1))
+		out=label[label!=label_shape[-1]-1,:] # label whose value is the last (bcknd)
+		out=np.reshape(out,((out.shape[0],)+label_shape[1:]))
+		return out
+	def my_f1_score(self,label,prediction):
+		f1_values=f1_score(label,prediction,average=None)
+
+		#label_unique=np.unique(label) # [0 1 2 3 5]
+		#prediction_unique=np.unique(prediction.argmax(axis-1)) # [0 1 2 3 4]
+		#[ 0.8 0.8 0.8 0 0.7 0.7]
+
+		f1_value=np.sum(f1_values)/len(np.unique(label))
+
+		#print("f1_values",f1_values," f1_value:",f1_value)
+		return f1_value
+	def metrics_get(self,prediction, label,ignore_bcknd=True,debug=2): #requires batch['prediction'],batch['label']
+		print("======================= METRICS GET")
+		class_n=prediction.shape[-1]
+		#print("label unque at start of metrics_get",
+		#	np.unique(label.argmax(axis=4),return_counts=True))
+		
+
+		#label[label[:,],:,:,:,:]
+		#data['label_copy']=data['label_copy'][:,:,:,:,:-1] # Eliminate bcknd dimension after having eliminated bcknd samples
+		
+		#print("label_copy unque at start of metrics_get",
+	#		np.unique(data['label_copy'].argmax(axis=4),return_counts=True))
+		deb.prints(prediction.shape,debug,2)
+		deb.prints(label.shape,debug,2)
+		#deb.prints(data['label_copy'].shape,debug,2)
+
+
+		prediction=prediction.argmax(axis=np.ndim(prediction)-1) #argmax de las predicciones. Softmax no es necesario aqui.
+		deb.prints(prediction.shape)
+		prediction=np.reshape(prediction,-1) #convertir en un vector
+		deb.prints(prediction.shape)
+		if len(label.shape) > 3:
+			label=label.argmax(axis=np.ndim(label)-1) #igualmente, sacar el maximo valor de los labels (se pierde la ultima dimension; saca el valor maximo del one hot encoding es decir convierte a int)
+		label=np.reshape(label,-1) #flatten
+		prediction=prediction[label<class_n] #logic
+		label=label[label<class_n] #logic
+
+		#============= TEST UNIQUE PRINTING==================#
+		unique,count=np.unique(label,return_counts=True)
+		print("Metric real unique+1,count",unique+1,count)
+		unique,count=np.unique(prediction,return_counts=True)
+		print("Metric prediction unique+1,count",unique+1,count)
+		
+		#========================METRICS GET================================================#
+
+		metrics={}
+#		metrics['f1_score']=f1_score(label,prediction,average='macro')
+		metrics['f1_score'] = self.my_f1_score(label,prediction)
+		metrics['f1_score_weighted']=f1_score(label,prediction,average='weighted')
+		metrics['f1_score_noavg']=f1_score(label,prediction,average=None)
+		metrics['overall_acc']=accuracy_score(label,prediction)
+		metrics['confusion_matrix']=confusion_matrix(label,prediction)
+		#print(confusion_matrix_)
+		metrics['per_class_acc']=(metrics['confusion_matrix'].astype('float') / metrics['confusion_matrix'].sum(axis=1)[:, np.newaxis]).diagonal()
+		acc=metrics['confusion_matrix'].diagonal()/np.sum(metrics['confusion_matrix'],axis=1)
+		acc=acc[~np.isnan(acc)]
+		metrics['average_acc']=np.average(metrics['per_class_acc'][~np.isnan(metrics['per_class_acc'])])
+
+		# open set metrics
+		if paramsTrain.group_bcknd_classes == True:
+			metrics['f1_score_known'] = np.average(metrics['f1_score_noavg'][:-1])
+			metrics['f1_score_unknown'] = metrics['f1_score_noavg'][-1]
+			
+			
+			precision = precision_score(label,prediction, average=None)
+			recall = recall_score(label,prediction, average=None)
+			
+			deb.prints(precision)
+			deb.prints(recall)
+			metrics['precision_known'] = np.average(precision[:-1])
+			metrics['recall_known'] = np.average(recall[:-1])
+			metrics['precision_unknown'] = precision[-1]
+			metrics['recall_unknown'] = recall[-1]
+			
+#		metrics['precision_avg'] = np.average(precision[:-1])
+#		metrics['recall_avg'] = np.average(recall[:-1])
+		return metrics
+
+	def metrics_write_to_txt(self,metrics,loss,epoch=0,path=None):
+		#with open(self.report['best']['text_path'], "w") as text_file:
+		#    text_file.write("Overall_acc,average_acc,f1_score: {0},{1},{2},{3}".format(str(metrics['overall_acc']),str(metrics['average_acc']),str(metrics['f1_score']),str(epoch)))
+		#deb.prints(loss)
+		#deb.prints(loss[0])
+		#deb.prints(loss[1])
+		#dataset='campo_verde'
+		if self.dataset=='hannover':
+			with open(path, "a") as text_file:
+				#text_file.write("{0},{1},{2},{3}\n".format(str(epoch),str(metrics['overall_acc']),str(metrics['average_acc']),str(metrics['f1_score'])))
+				text_file.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14}\n".format(str(epoch),
+					str(metrics['overall_acc']),str(metrics['average_acc']),str(metrics['f1_score']),str(metrics['f1_score_weighted']),str(loss[0]),str(loss[1]),
+					str(metrics['per_class_acc'][0]),str(metrics['per_class_acc'][1]),str(metrics['per_class_acc'][2]),
+					str(metrics['per_class_acc'][3]),str(metrics['per_class_acc'][4]),str(metrics['per_class_acc'][5]),
+					str(metrics['per_class_acc'][6]),str(metrics['per_class_acc'][7])))
+		elif metrics['per_class_acc'].shape[0]==10:
+			with open(path, "a") as text_file:
+				#text_file.write("{0},{1},{2},{3}\n".format(str(epoch),str(metrics['overall_acc']),str(metrics['average_acc']),str(metrics['f1_score'])))
+				text_file.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16}\n".format(str(epoch),
+					str(metrics['overall_acc']),str(metrics['average_acc']),str(metrics['f1_score']),str(metrics['f1_score_weighted']),str(loss[0]),str(loss[1]),
+					str(metrics['per_class_acc'][0]),str(metrics['per_class_acc'][1]),str(metrics['per_class_acc'][2]),
+					str(metrics['per_class_acc'][3]),str(metrics['per_class_acc'][4]),str(metrics['per_class_acc'][5]),
+					str(metrics['per_class_acc'][6]),str(metrics['per_class_acc'][7]),str(metrics['per_class_acc'][8]),
+					str(metrics['per_class_acc'][9])))
+		elif metrics['per_class_acc'].shape[0]==9:
+			with open(path, "a") as text_file:
+				#text_file.write("{0},{1},{2},{3}\n".format(str(epoch),str(metrics['overall_acc']),str(metrics['average_acc']),str(metrics['f1_score'])))
+				text_file.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15}\n".format(str(epoch),
+					str(metrics['overall_acc']),str(metrics['average_acc']),str(metrics['f1_score']),str(metrics['f1_score_weighted']),str(loss[0]),str(loss[1]),
+					str(metrics['per_class_acc'][0]),str(metrics['per_class_acc'][1]),str(metrics['per_class_acc'][2]),
+					str(metrics['per_class_acc'][3]),str(metrics['per_class_acc'][4]),str(metrics['per_class_acc'][5]),
+					str(metrics['per_class_acc'][6]),str(metrics['per_class_acc'][7]),str(metrics['per_class_acc'][8])))
+		elif metrics['per_class_acc'].shape[0]==8:
+			with open(path, "a") as text_file:
+				#text_file.write("{0},{1},{2},{3}\n".format(str(epoch),str(metrics['overall_acc']),str(metrics['average_acc']),str(metrics['f1_score'])))
+				text_file.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14}\n".format(str(epoch),
+					str(metrics['overall_acc']),str(metrics['average_acc']),str(metrics['f1_score']),str(metrics['f1_score_weighted']),str(loss[0]),str(loss[1]),
+					str(metrics['per_class_acc'][0]),str(metrics['per_class_acc'][1]),str(metrics['per_class_acc'][2]),
+					str(metrics['per_class_acc'][3]),str(metrics['per_class_acc'][4]),str(metrics['per_class_acc'][5]),
+					str(metrics['per_class_acc'][6]),str(metrics['per_class_acc'][7])))
+				
+			
+	def metrics_per_class_from_im_get(self,name='im_reconstructed_rgb_test_predictionplen64_3.png',folder='../results/reconstructed/',average=None):
+		data={}
+		metrics={}
+		deb.prints(folder+name)
+		data['prediction']=cv2.imread(folder+name,0)[0:-30,0:-2]
+		data['label']=cv2.imread(folder+'im_reconstructed_rgb_test_labelplen64_3.png',0)[0:-30,0:-2]
+
+		data['prediction']=np.reshape(data['prediction'],-1)
+		data['label']=np.reshape(data['label'],-1)
+		
+		metrics['f1_score_per_class']=f1_score(data['prediction'],data['label'],average=average)
+		print(metrics)
+
+
+# =================== Image reconstruct =======================#
+
+	def im_reconstruct(self,subset='test',mode='prediction'):
+		h,w,_=self.image[subset]['label'].shape
+		print(self.patches[subset]['label_partitioned_shape'])
+		deb.prints(self.patches[subset][mode].shape)
+		
+		h_blocks,w_blocks,patch_len,_=self.patches[subset]['label_partitioned_shape']
+
+		patches_block=np.reshape(self.patches[subset][mode].argmax(axis=3),(h_blocks,w_blocks,patch_len,patch_len))
+
+
+		self.im_reconstructed=np.squeeze(np.zeros_like(self.image[subset]['label']))
+
+		h_block_len=int(self.image[subset]['label'].shape[0]/h_blocks)
+		w_block_len=int(self.image[subset]['label'].shape[1]/w_blocks)
+		
+		count=0
+
+		for w_block in range(0,w_blocks):
+			for h_block in range(0,h_blocks):
+				y=int(h_block*h_block_len)
+				x=int(w_block*w_block_len)
+				#print(y)
+				#print(x)				
+				#deb.prints([y:y+self.patch_len])
+				self.im_reconstructed[y:y+self.patch_len,x:x+self.patch_len]=patches_block[h_block,w_block,:,:]
+				count+=1
+
+		self.im_reconstructed_rgb=self.im_gray_idx_to_rgb(self.im_reconstructed)
+		if self.debug>=3: 
+			deb.prints(count)
+			deb.prints(self.im_reconstructed_rgb.shape)
+
+		cv2.imwrite('../results/reconstructed/im_reconstructed_rgb_'+subset+'_'+mode+self.report['exp_id']+'.png',self.im_reconstructed_rgb.astype(np.uint8))
+
+	def im_gray_idx_to_rgb(self,im):
+		out=np.zeros((im.shape+(3,)))
+		for chan in range(0,3):
+			for clss in range(0,self.class_n):
+				out[:,:,chan][im==clss]=np.array(self.im_gray_idx_to_rgb_table[clss][1][chan])
+		deb.prints(out.shape)
+		out=cv2.cvtColor(out.astype(np.uint8),cv2.COLOR_RGB2BGR)
+		return out
+	def val_set_get(self,mode='random',validation_split=0.2):
+		clss_train_unique,clss_train_count=np.unique(self.patches['train']['label'].argmax(axis=-1),return_counts=True)
+		deb.prints(clss_train_count)
+		self.patches['val']={'n':int(self.patches['train']['n']*validation_split)}
+		ic(self.patches['train']['n'], self.patches['val']['n'])
+		#===== CHOOSE VAL IDX
+		#mode='stratified'
+		if mode=='random':
+			self.patches['val']['idx']=np.random.choice(self.patches['train']['idx'],self.patches['val']['n'],replace=False)
+			
+
+			self.patches['val']['in']=self.patches['train']['in'][self.patches['val']['idx']]
+			self.patches['val']['label']=self.patches['train']['label'][self.patches['val']['idx']]
+		
+		elif mode=='stratified':
+			# self.patches['train']['in'] are the input sequences of images of shape (val_sample_n,t_len,h,w,channel_n)
+			# self.patches['train']['label'] is the ground truth of shape (sample_n,t_len,h,w,class_n)
+			# self.patches['val']['in'] are the input sequences of images of shape (val_sample_n,t_len,h,w,channel_n)
+			# self.patches['val']['label'] is the ground truth of shape (sample_n,t_len,h,w,class_n)
+
+			while True:
+				self.patches['val']['idx']=np.random.choice(self.patches['train']['idx'],self.patches['val']['n'],replace=False)
+				self.patches['val']['in']=self.patches['train']['in'][self.patches['val']['idx']]
+				self.patches['val']['label']=self.patches['train']['label'][self.patches['val']['idx']]
+		
+				clss_val_unique,clss_val_count=np.unique(self.patches['val']['label'].argmax(axis=-1),return_counts=True)
+
+				# If validation set doesn't contain ALL classes from train set, repeat random choice
+				if not np.array_equal(clss_train_unique,clss_val_unique):
+					deb.prints(clss_train_unique)
+					deb.prints(clss_val_unique)
+					pass
+				else:
+					percentages=clss_val_count/clss_train_count
+					deb.prints(percentages)
+
+					# Percentage for each class is equal to: (validation sample number)/(train sample number)*100
+					# If percentage from any class is larger than 20% repeat random choice
+					if np.any(percentages>0.3):
+					
+						pass
+					else:
+						# Else keep the validation set
+						break
+		elif mode=='random_v2':
+			while True:
+
+				self.patches['val']['idx']=np.random.choice(self.patches['train']['idx'],self.patches['val']['n'],replace=False)				
+
+				self.patches['val']['in']=self.patches['train']['in'][self.patches['val']['idx']]
+				self.patches['val']['label']=self.patches['train']['label'][self.patches['val']['idx']]
+				clss_val_unique,clss_val_count=np.unique(self.patches['val']['label'].argmax(axis=3),return_counts=True)
+						
+				deb.prints(clss_train_unique)
+				deb.prints(clss_val_unique)
+
+				deb.prints(clss_train_count)
+				deb.prints(clss_val_count)
+
+				clss_train_count_in_val=clss_train_count[np.isin(clss_train_unique,clss_val_unique)]
+				percentages=clss_val_count/clss_train_count_in_val
+				deb.prints(percentages)
+				#if np.any(percentages<0.1) or np.any(percentages>0.3):
+				if np.any(percentages>0.26):
+					pass
+				else:
+					break				
+
+		deb.prints(self.patches['val']['idx'].shape)
+
+		
+		deb.prints(self.patches['val']['in'].shape)
+		#deb.prints(data.patches['val']['label'].shape)
+		
+		self.patches['train']['in']=np.delete(self.patches['train']['in'],self.patches['val']['idx'],axis=0)
+		self.patches['train']['label']=np.delete(self.patches['train']['label'],self.patches['val']['idx'],axis=0)
+		#deb.prints(data.patches['train']['in'].shape)
+		#deb.prints(data.patches['train']['label'].shape)
+		'''
+		if type(self) is DatasetWithCoords:
+			if mode=='random':
+				self.patches['val']['coords'] =  self.patches['train']['coords'][self.patches['val']['idx']]
+			
+			self.patches['train']['coords']=np.delete(self.patches['train']['coords'],self.patches['val']['idx'],axis=0)
+
+			ic(self.patches['train']['coords'].shape)
+			ic(self.patches['val']['coords'].shape)
+		'''
+	def semantic_balance(self,samples_per_class=500,label_type='Nto1'): # samples mean sequence of patches. Keep
+		print("data.semantic_balance")
+		# Count test
+		patch_count=np.zeros(self.class_n)
+		if label_type == 'NtoN':
+			patch_count_axis = (1,2,3)
+			rotation_axis = (2,3)
+		elif label_type == 'Nto1':	
+			patch_count_axis = (1,2)
+			rotation_axis = (1,2)
+		for clss in range(self.class_n):
+			patch_count[clss]=np.count_nonzero(np.isin(self.patches['test']['label'].argmax(axis=-1),clss).sum(axis=patch_count_axis))
+		deb.prints(patch_count.shape)
+		print("Test",patch_count)
+		
+		# Count train
+		patch_count=np.zeros(self.class_n)
+
+		for clss in range(self.class_n):
+			patch_count[clss]=np.count_nonzero(np.isin(self.patches['train']['label'].argmax(axis=-1),clss).sum(axis=patch_count_axis))
+		deb.prints(patch_count.shape)
+		print("Train",patch_count)
+		
+		# Start balancing
+		balance={}
+		balance["out_n"]=(self.class_n-1)*samples_per_class
+		balance["out_in"]=np.zeros((balance["out_n"],) + self.patches["train"]["in"].shape[1::])
+
+		balance["out_labels"]=np.zeros((balance["out_n"],) + self.patches["train"]["label"].shape[1::])
+
+		label_int=self.patches['train']['label'].argmax(axis=-1)
+		labels_flat=np.reshape(label_int,(label_int.shape[0],np.prod(label_int.shape[1:])))
+		k=0
+
+#		for clss in range(1,self.class_n):
+		for clss in range(0,self.class_n-1):
+
+			ic(patch_count[clss])
+			if patch_count[clss]==0:
+				continue
+			print(labels_flat.shape)
+			print(clss)
+			#print((np.count_nonzero(np.isin(labels_flat,clss))>0).shape)
+			idxs=np.any(labels_flat==clss,axis=1)
+			print(idxs.shape,idxs.dtype)
+			#labels_flat[np.count_nonzero(np.isin(labels_flat,clss))>0]
+
+			balance["in"]=self.patches['train']['in'][idxs]
+			balance["label"]=self.patches['train']['label'][idxs]
+
+
+			deb.prints(clss)
+			if balance["label"].shape[0]>samples_per_class:
+				replace=False
+				index_squeezed=range(balance["label"].shape[0])
+				index_squeezed = np.random.choice(index_squeezed, samples_per_class, replace=replace)
+				#print(idxs.shape,index_squeezed.shape)
+				balance["out_labels"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["label"][index_squeezed]
+				balance["out_in"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["in"][index_squeezed]
+			else:
+
+				augmented_manipulations=False
+				if augmented_manipulations==True:
+					augmented_data = balance["in"]
+					augmented_labels = balance["label"]
+
+					cont_transf = 0
+					for i in range(int(samples_per_class/balance["label"].shape[0] - 1)):                
+						augmented_data_temp = balance["in"]
+						augmented_label_temp = balance["label"]
+						
+						if cont_transf == 0:
+							augmented_data_temp = np.rot90(augmented_data_temp,1,(2,3))
+							augmented_label_temp = np.rot90(augmented_label_temp,1,rotation_axis)
+						
+						elif cont_transf == 1:
+							augmented_data_temp = np.rot90(augmented_data_temp,2,(2,3))
+							augmented_label_temp = np.rot90(augmented_label_temp,2,rotation_axis)
+
+						elif cont_transf == 2:
+							augmented_data_temp = np.flip(augmented_data_temp,2)
+							augmented_label_temp = np.flip(augmented_label_temp,rotation_axis[0])
+							
+						elif cont_transf == 3:
+							augmented_data_temp = np.flip(augmented_data_temp,3)
+							augmented_label_temp = np.flip(augmented_label_temp,rotation_axis[1])
+						
+						elif cont_transf == 4:
+							augmented_data_temp = np.rot90(augmented_data_temp,3,(2,3))
+							augmented_label_temp = np.rot90(augmented_label_temp,3,rotation_axis)
+							
+						elif cont_transf == 5:
+							augmented_data_temp = augmented_data_temp
+							augmented_label_temp = augmented_label_temp
+							
+						cont_transf+=1
+						if cont_transf==6:
+							cont_transf = 0
+						print(augmented_data.shape,augmented_data_temp.shape)				
+						augmented_data = np.vstack((augmented_data,augmented_data_temp))
+						augmented_labels = np.vstack((augmented_labels,augmented_label_temp))
+						
+		#            augmented_labels_temp = np.tile(clss_labels,samples_per_class/num_samples )
+					#print(augmented_data.shape)
+					#print(augmented_labels.shape)
+					index = range(augmented_data.shape[0])
+					index = np.random.choice(index, samples_per_class, replace=True)
+					balance["out_labels"][k*samples_per_class:k*samples_per_class + samples_per_class] = augmented_labels[index]
+					balance["out_in"][k*samples_per_class:k*samples_per_class + samples_per_class] = augmented_data[index]
+				else:
+					#pdb.set_trace()
+					replace=True
+					index = range(balance["label"].shape[0])
+					index = np.random.choice(index, samples_per_class, replace=replace)
+					balance["out_labels"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["label"][index]
+					balance["out_in"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["in"][index]
+
+			k+=1
+		
+		idx = np.random.permutation(balance["out_labels"].shape[0])
+		self.patches['train']['in'] = balance["out_in"][idx]
+		self.patches['train']['label'] = balance["out_labels"][idx]
+		
+		print("Balanced train unique (Patches):")
+		deb.prints(self.patches['train']['label'].shape)
+		deb.prints(np.unique(self.patches['train']['label'].argmax(axis=-1),return_counts=True))
+		# Replicate
+		#balance={}
+		#for clss in range(1,self.class_n):
+		#	balance["data"]=data["train"]["in"][]
+			
+
+		#train_flat=np.reshape(self.patches['train']['label'],(self.patches['train']['label'].shape[0],np.prod(self.patches['train']['label'].shape[1:])))
+		#deb.prints(train_flat.shape)
+
+		#unique,counts=np.unique(train_flat,axis=1,return_counts=True)
+		#print(unique,counts)
+
+class DatasetWithCoords(Dataset):
+	def create_load(self):
+#		super().create_load()
+		self.patches['train']['coords'] = np.load(self.path['v']+'coords_train.npy').astype(np.int)
+		self.patches['test']['coords'] = np.load(self.path['v']+'coords_test.npy').astype(np.int)
+		ic(self.patches['train']['coords'].shape)
+		#pdb.set_trace()
+		self.full_ims_train = np.load(self.path['v']+'full_ims/'+'full_ims_train.npy')
+		self.full_ims_test = np.load(self.path['v']+'full_ims/'+'full_ims_test.npy')
+		
+		self.full_label_train = np.load(self.path['v']+'full_ims/'+'full_label_train.npy').astype(np.uint8)
+		self.full_label_test = np.load(self.path['v']+'full_ims/'+'full_label_test.npy').astype(np.uint8)
+
+		self.labelPreprocess()
+
+		self.patches['train']['n'] = self.patches['train']['coords'].shape[0]
+		self.patches['train']['idx']=range(self.patches['train']['n'])
+
+		self.patches['test']['label'] = self.getPatchesFromCoords(
+			self.full_label_test, self.patches['test']['coords'])
+		self.patches['train']['label'] = self.getPatchesFromCoords(
+			self.full_label_train, self.patches['train']['coords'])
+
+		self.patches['test']['in'] = self.getSequencePatchesFromCoords(
+			self.full_ims_test, self.patches['test']['coords'])
+		self.patches['train']['in'] = self.getSequencePatchesFromCoords(
+			self.full_ims_train, self.patches['train']['coords'])
+
+
+#		pdb.set_trace()
+		'''
+		self.patches['train']['label'] = self.patches['train']['label']-1
+		self.patches['test']['label'] = self.patches['test']['label']-1
+
+		deb.prints(np.unique(self.patches['train']['label'], return_counts=True))
+		
+##            labels_val = labels_val-1
+		class_n_no_bkcnd = len(self.classes)-1
+		self.patches['train']['label'][self.patches['train']['label']==255] = class_n_no_bkcnd
+		'''
+	def labelPreprocess(self, saveDicts = True):
+		self.full_label_train = self.full_label_train[-1]
+		self.full_label_test = self.full_label_test[-1]
+
+		unique,count=np.unique(self.full_label_train,return_counts=True)
+		self.class_n=unique.shape[0] # plus background
+
+		ic(np.unique(self.full_label_train, return_counts=True))
+		ic(np.unique(self.full_label_test, return_counts=True))
+
+#		pdb.set_trace()
+		ic(paramsTrain.known_classes)
+		#ic(self.unknown_classes)
+		
+		if paramsTrain.open_set==True:
+			if paramsTrain.select_kept_classes_flag==False:	
+				self.unknown_classes = paramsTrain.unknown_classes
+			else:
+				all_classes = np.unique(self.full_label_train) # with background
+				all_classes = all_classes[1:] - 1 # no bcknd
+				deb.prints(all_classes)
+				deb.prints(paramsTrain.known_classes)
+				self.unknown_classes = np.setdiff1d(all_classes, paramsTrain.known_classes)
+				deb.prints(self.unknown_classes)
+
+			for clss in self.unknown_classes:
+				self.full_label_train[self.full_label_train==int(clss) + 1] = 0
+				self.full_label_test[self.full_label_test==int(clss) + 1] = 0
+
+		elif paramsTrain.group_bcknd_classes == True:
+			all_classes = np.unique(self.full_label_train) # with background
+			all_classes = all_classes[1:] - 1 # no bcknd
+			deb.prints(all_classes)
+			deb.prints(paramsTrain.known_classes)
+			self.unknown_classes = np.setdiff1d(all_classes, paramsTrain.known_classes)
+			deb.prints(self.unknown_classes)
+			for clss in self.unknown_classes:
+				self.full_label_train[self.full_label_train==int(clss) + 1] = 20	
+				self.full_label_test[self.full_label_test==int(clss) + 1] = 20	
+		ic(np.unique(self.full_label_train, return_counts=True))
+		self.classes = np.unique(self.full_label_train)
+
+		tmp_tr = self.full_label_train.copy()
+		tmp_tst = self.full_label_test.copy()
+
+		ic(self.classes)
+		deb.prints(np.unique(self.full_label_train, return_counts=True))
+		self.labels2new_labels = dict((c, i) for i, c in enumerate(self.classes))
+		self.new_labels2labels = dict((i, c) for i, c in enumerate(self.classes))
+		ic(self.labels2new_labels, self.new_labels2labels)
+		print("Transforming labels2new_labels...")
+		for j in range(len(self.classes)):
+			#ic(j, self.classes[j], self.labels2new_labels[self.classes[j]])
+			self.full_label_train[tmp_tr == self.classes[j]] = self.labels2new_labels[self.classes[j]]
+			self.full_label_test[tmp_tst == self.classes[j]] = self.labels2new_labels[self.classes[j]]
+	
+		print("Transformed labels2new_labels. Moving bcknd to last...")
+
+		# save dicts
+		if saveDicts == True:
+			dict_filename = "new_labels2labels_"+self.ds.name+"_"+self.ds.im_list[-1]+".pkl" 
+			deb.prints(dict_filename)
+			f = open(dict_filename, "wb")
+			pickle.dump(self.new_labels2labels, f)
+			f.close()
+		deb.prints(self.new_labels2labels)
+
+		# bcknd to last class
+		ic(np.unique(self.full_label_train, return_counts=True))
+
+		unique = np.unique(self.full_label_train)
+		self.full_label_train = self.full_label_train - 1
+		self.full_label_test = self.full_label_test - 1
+		self.full_label_train[self.full_label_train == 255] = unique[-1]
+		self.full_label_test[self.full_label_test == 255] = unique[-1]
+
+		print("Moved bcknd to last")
+		ic(np.unique(self.full_label_train, return_counts=True))
+		ic(np.unique(self.full_label_test, return_counts=True))
+
+
+	def val_set_get(self,mode='random',validation_split=0.2, idxs=None):
+
+		self.patches['val']={'n':int(self.patches['train']['n']*validation_split)}
+		ic(self.patches['train']['n'], self.patches['val']['n'])
+		#===== CHOOSE VAL IDX
+		if mode=='random':
+			self.patches['val']['idx']=np.random.choice(self.patches['train']['idx'],self.patches['val']['n'],replace=False)
+			self.patches['val']['coords'] =  self.patches['train']['coords'][self.patches['val']['idx']]
+		
+		self.patches['train']['coords']=np.delete(self.patches['train']['coords'],self.patches['val']['idx'],axis=0)
+
+		ic(self.patches['train']['coords'].shape)
+		ic(self.patches['val']['coords'].shape)
+		
+	def semantic_balance(self,samples_per_class=500,label_type='Nto1'): # samples mean sequence of patches. Keep
+		print("data.semantic_balance")
+		
+		# Count test
+		patch_count=np.zeros(self.class_n)
+		if label_type == 'NtoN':
+			patch_count_axis = (1,2,3)
+			rotation_axis = (2,3)
+		elif label_type == 'Nto1':	
+			patch_count_axis = (1,2)
+			rotation_axis = (1,2)
+
+		
+		# Count train
+		patch_count=np.zeros(self.class_n)
+
+
+		
+		# Start balancing
+		balance={}
+		balance["out_n"]=(self.class_n-1)*samples_per_class
+
+
+		balance["coords"] = np.zeros((balance["out_n"], *self.patches["train"]["coords"].shape[1:])).astype(np.int)
+		ic(balance["coords"].shape) 
+		k=0
+
+		# get patch count from coords only
+		ic(np.unique(self.full_label_train, return_counts = True))
+		
+#		pdb.set_trace()
+
+		# get patch class
+		coords_classes = np.zeros((self.patches['train']['coords'].shape[0], self.class_n))
+		ic(coords_classes.shape)
+		unique_train = np.unique(self.full_label_train)
+		ic(unique_train)
+		bcknd_idx = unique_train[-1]
+		ic(bcknd_idx)
+		psize = 32 # 32
+		ic(psize)
+
+
+		for idx in range(self.patches['train']['coords'].shape[0]):
+			coord = self.patches['train']['coords'][idx]
+			label_patch = self.full_label_train[coord[0]:coord[0]+psize,
+				coord[1]:coord[1]+psize]
+			patchClassCount = Counter(label_patch[label_patch<bcknd_idx]) # es mayor a 0? o el bcknd esta al final?
+			for key in patchClassCount:
+				patch_count[key] = patch_count[key] + 1
+				coords_classes[idx, key] = 1
+		
+#		getClassCountFromCoords()
+		ic(patch_count)
+		for clss in range(0,self.class_n-1):
+#			ic(clss)
+#			ic(patch_count[clss])
+#			patch_count[clss] = np.count_nonzero(np.where(classes == clss))
+
+			ic(patch_count[clss])
+			#pdb.set_trace()
+			if patch_count[clss]==0:
+				continue
+			ic(clss)
+
+			idxs = coords_classes[:, clss] == 1
+			ic(idxs.shape,idxs.dtype)
+			ic(np.unique(idxs, return_counts = True))
+			#pdb.set_trace()
+
+			balance["class_coords"]=self.patches['train']['coords'][idxs]
+
+			ic(balance["class_coords"].shape)
+			ic(samples_per_class)
+			deb.prints(clss)
+			if balance["class_coords"].shape[0]>samples_per_class:
+				replace=False
+				index=range(balance["class_coords"].shape[0])
+				index = np.random.choice(index, samples_per_class, replace=replace)
+
+				balance["coords"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["class_coords"][index]
+
+			else:
+
+				augmented_manipulations=False
+				if augmented_manipulations==True:
+
+					augmented_coords = balance["class_coords"]
+
+					for i in range(int(samples_per_class/balance["label"].shape[0] - 1)):                
+						augmented_coords = np.vstack((augmented_coords, balance['class_coords']))
+						
+		#            augmented_labels_temp = np.tile(clss_labels,samples_per_class/num_samples )
+
+#					index = range(augmented_data.shape[0])
+					index = range(augmented_coords.shape[0])
+
+					ic(augmented_coords.shape)
+					index = np.random.choice(index, samples_per_class, replace=True)
+					ic(index.shape)
+					balance["coords"][k*samples_per_class:k*samples_per_class + samples_per_class] = augmented_coords[index]
+
+				else:
+					replace=True
+#					index = range(balance["label"].shape[0])
+					index = range(balance["class_coords"].shape[0])
+
+					index = np.random.choice(index, samples_per_class, replace=replace)
+					balance["coords"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["class_coords"][index]
+
+			k+=1
+		
+		idx = np.random.permutation(balance["coords"].shape[0])
+
+		self.patches['train']['coords'] = balance["coords"][idx]
+		print("Balanced train unique (coords):")
+		deb.prints(self.patches['train']['coords'].shape)
+##		deb.prints(np.unique(self.patches['train']['label'].argmax(axis=-1),return_counts=True))
+	def getPatchesFromCoords(self, im, coords):
+		# coords is n, row, col
+		patch_size = self.patch_len
+		# patch_size = 32
+		patch_dim = (patch_size, patch_size)
+		Y = np.empty((coords.shape[0], *patch_dim), dtype=int)
+		for idx in range(coords.shape[0]):
+			patch = im[coords[idx][0]:coords[idx][0]+patch_size,
+						coords[idx][1]:coords[idx][1]+patch_size]
+			Y[idx] = patch
+		return Y
+	def getSequencePatchesFromCoords(self, ims, coords):
+		patch_size = self.patch_len #32
+		# t_len = 12
+		# channel_n = 2
+		patch_dim = (self.t_len, patch_size, patch_size, self.channel_n)
+		Y = np.empty((coords.shape[0], *patch_dim), dtype=np.float16)
+		for idx in range(coords.shape[0]):
+			patch = ims[:, coords[idx][0]:coords[idx][0]+patch_size,
+						coords[idx][1]:coords[idx][1]+patch_size]
+			Y[idx] = patch
+		return Y
+	def comparePatchesCoords(self):
+		Y = self.getPatchesFromCoords(self.full_label_train, self.patches['train']['coords'][0:16])
+		ic(np.unique(self.patches['train']['label'].argmax(axis=-1)[0:16], return_counts=True))
+		ic(np.unique(Y, return_counts=True))
+		pdb.set_trace()
 # ========== NetModel object implements model graph definition, train/testing, early stopping ================ #
 
 class NetModel(NetObject):
@@ -2055,7 +3153,7 @@ class NetModel(NetObject):
 
 			# Random shuffle the data
 			##data.patches['train']['in'], data.patches['train']['label'] = shuffle(data.patches['train']['in'], data.patches['train']['label'])
-			if args.seq_mode=='var' or args.seq_mode=='var_label':
+			if paramsTrain.seq_mode=='var' or paramsTrain.seq_mode=='var_label':
 				label_date_id = -data.labeled_dates
 			else:
 				label_date_id = -1 # fixed
@@ -2074,7 +3172,7 @@ class NetModel(NetObject):
 				
 				##deb.prints(batch['train']['in'].shape)
 				# set label N to 1
-				#if args.seq_mode=='var' or args.seq_mode=='var_label':
+				#if paramsTrain.seq_mode=='var' or paramsTrain.seq_mode=='var_label':
 #				batch_seq_len = 12
 				#deb.prints(self.mim)
 				input_ = self.mim.batchTrainPreprocess(batch['train'], data.ds, 
@@ -2084,7 +3182,7 @@ class NetModel(NetObject):
 				##deb.prints(batch['train']['in'].shape)
 				
 				gt = np.expand_dims(batch['train']['label'].argmax(axis=-1),axis=-1).astype(np.int8)
-				if args.seq_mode=='var' or args.seq_mode=='var_label':
+				if paramsTrain.seq_mode=='var' or paramsTrain.seq_mode=='var_label':
 					gt = gt[:, label_date_id] # N to 1 label is selected
 				#print("Debugging len(input_), input_, input_[0].shape, input_[1].shape",
 				#		len(input_), input_, input_[0].shape, input_[1].shape)
@@ -2095,7 +3193,7 @@ class NetModel(NetObject):
 					batch_time=time.time()-start_time
 					print(batch_time)
 					sys.exit('Batch time:')
-				if args.seq_mode=='var' or args.seq_mode=='var_label':
+				if paramsTrain.seq_mode=='var' or paramsTrain.seq_mode=='var_label':
 					if label_date_id < -1: # if -12 to -2, increase 1
 						label_date_id = label_date_id + 1
 					else: # if -1,
@@ -2111,11 +3209,11 @@ class NetModel(NetObject):
 			#================== VAL LOOP=====================#
 			if self.val_set:
 				deb.prints(data.patches['val']['label'].shape)
-#				if args.seq_mode == 'fixed':
+#				if paramsTrain.seq_mode == 'fixed':
 #					data.patches['val']['prediction']=np.zeros_like(data.patches['val']['label'][...,:-1],dtype=prediction_dtype)
-				if args.seq_mode == 'fixed_label_len':
+				if paramsTrain.seq_mode == 'fixed_label_len':
 					data.patches['val']['prediction']=np.zeros_like(data.patches['val']['label'],dtype=prediction_dtype)
-				elif args.seq_mode == 'var' or args.seq_mode =='var_label' or args.seq_mode == 'fixed':
+				elif paramsTrain.seq_mode == 'var' or paramsTrain.seq_mode =='var_label' or paramsTrain.seq_mode == 'fixed':
 					data.patches['val']['prediction']=np.zeros_like(data.patches['val']['label'][...,:-1],dtype=prediction_dtype)
 
 				self.batch_test_stats=False
@@ -2134,7 +3232,7 @@ class NetModel(NetObject):
 						self.metrics['val']['loss'] += self.graph.test_on_batch(
 							input_,
 							np.expand_dims(batch['val']['label'].argmax(axis=-1),axis=-1).astype(np.int8))		# Accumulated epoch
-					if args.seq_mode == 'fixed' or args.seq_mode == 'fixed_label_len':
+					if paramsTrain.seq_mode == 'fixed' or paramsTrain.seq_mode == 'fixed_label_len':
 						input_ = self.mim.batchTrainPreprocess(batch['val'], data.ds,  
 									label_date_id = -1) # tstep is -12 to -1
 
@@ -2142,7 +3240,7 @@ class NetModel(NetObject):
 							input_,
 							batch_size=self.batch['val']['size'])).astype(prediction_dtype) #*13
 					
-					elif args.seq_mode == 'var' or args.seq_mode =='var_label':
+					elif paramsTrain.seq_mode == 'var' or paramsTrain.seq_mode =='var_label':
 						for t_step in range(data.labeled_dates): # 0 to 11
 							batch_val_label = batch['val']['label'][:, t_step]
 							#data.patches['test']['label'] = data.patches['test']['label'][:, label_id]
@@ -2199,7 +3297,7 @@ class NetModel(NetObject):
 
 					if self.batch_test_stats:
 						input_ = batch['test']['in'][:,-paramsTrain.seq_len:].astype(np.float16)
-						if args.seq_mode == 'var_label':
+						if paramsTrain.seq_mode == 'var_label':
 							input_ = self.addDoty(input_, bounds=[-paramsTrain.seq_len, None])
 						else:
 							input_ = self.addDoty(input_)
@@ -2208,14 +3306,14 @@ class NetModel(NetObject):
 							np.expand_dims(batch['test']['label'].argmax(axis=-1),axis=-1).astype(np.int16))		# Accumulated epoch
 
 
-					if args.seq_mode == 'fixed' or args.seq_mode=='fixed_label_len':
+					if paramsTrain.seq_mode == 'fixed' or paramsTrain.seq_mode=='fixed_label_len':
 						input_ = self.mim.batchTrainPreprocess(batch['test'], data.ds,  
 									label_date_id = -1)
 						data.patches['test']['prediction'][idx0:idx1]=(self.graph.predict(
 							input_,
 							batch_size=self.batch['test']['size'])).astype(prediction_dtype) #*13
 					
-					elif args.seq_mode == 'var' or args.seq_mode =='var_label':
+					elif paramsTrain.seq_mode == 'var' or paramsTrain.seq_mode =='var_label':
 						for t_step in range(data.labeled_dates):
 							batch_val_label = batch['test']['label'][:, t_step]
 							#data.patches['test']['label'] = data.patches['test']['label'][:, label_id]
@@ -2309,7 +3407,7 @@ class NetModel(NetObject):
 		training_time=round(time.time()-init_time,2)
 		print("Training time",training_time)
 		metadata = "Timestamp:"+ str(round(time.time(),2))+". Model: "+self.model_type+". Training time: "+str(training_time)
-		metadata = metadata + " args.id " + args.id 
+		metadata = metadata + " paramsTrain.id " + paramsTrain.id 
 		metadata = metadata + " F1: " + str(metrics['f1_score']) 
 		metadata = metadata + " OA: " + str(metrics['overall_acc'])
 		metadata = metadata + " epoch: " + str(epoch)
@@ -2567,11 +3665,11 @@ if __name__ == '__main__':
 #	dataset='l2'
 	#dataset='l2'
 	if dataset=='lm':
-		ds=LEM(args.seq_mode, args.seq_date, paramsTrain.seq_len)
+		ds=LEM(paramsTrain.seq_mode, paramsTrain.seq_date, paramsTrain.seq_len)
 	elif dataset=='l2':
-		ds=LEM2(args.seq_mode, args.seq_date, paramsTrain.seq_len)
+		ds=LEM2(paramsTrain.seq_mode, paramsTrain.seq_date, paramsTrain.seq_len)
 	elif dataset=='cv':
-		ds=CampoVerde(args.seq_mode, args.seq_date, paramsTrain.seq_len)
+		ds=CampoVerde(paramsTrain.seq_mode, paramsTrain.seq_date, paramsTrain.seq_len)
 
 	deb.prints(ds)
 	dataSource = SARSource()
@@ -2584,15 +3682,15 @@ if __name__ == '__main__':
 		datasetClass = Dataset
 	else:
 		datasetClass = DatasetWithCoords
-	data = datasetClass(patch_len=args.patch_len, patch_step_train=args.patch_step_train,
-		patch_step_test=args.patch_step_test,exp_id=args.exp_id,
-		path=args.path, t_len=ds.t_len, class_n=args.class_n, channel_n = args.channel_n,
+	data = datasetClass(patch_len=paramsTrain.patch_len, patch_step_train=paramsTrain.patch_step_train,
+		patch_step_test=paramsTrain.patch_step_test,exp_id=paramsTrain.exp_id,
+		path=paramsTrain.path, t_len=ds.t_len, class_n=paramsTrain.class_n, channel_n = paramsTrain.channel_n,
 		dotys_sin_cos = dotys_sin_cos, ds = ds)
-	#t_len=args.t_len
+	#t_len=paramsTrain.t_len
 
 	
-#	args.patience=30 # more for the Nice paper
-	args.patience=10 # more for the Nice paper
+#	paramsTrain.patience=30 # more for the Nice paper
+	paramsTrain.patience=10 # more for the Nice paper
 
 	#val_set=True
 	#val_set_mode='stratified'
@@ -2613,7 +3711,7 @@ if __name__ == '__main__':
 	adam = Adam(lr=paramsTrain.learning_rate, beta_1=0.9)
 	
 	#adam = Adagrad(0.01)
-	#model = ModelLoadEachBatch(epochs=args.epochs, patch_len=args.patch_len,
+	#model = ModelLoadEachBatch(epochs=paramsTrain.epochs, patch_len=paramsTrain.patch_len,
 ##	modelClass = NetModel
 ##	modelClass = ModelFit
 ##	modelClass = ModelLoadGenerator
@@ -2624,12 +3722,12 @@ if __name__ == '__main__':
 #		modelClass = ModelLoadGeneratorDebug
 	else:
 		modelClass = ModelLoadGeneratorWithCoords
-	model = modelClass(epochs=args.epochs, patch_len=args.patch_len,
-					 patch_step_train=args.patch_step_train, eval_mode=args.eval_mode,
-					 batch_size_train=args.batch_size_train,batch_size_test=args.batch_size_test,
-					 patience=args.patience,t_len=ds.t_len,class_n=args.class_n,channel_n=args.channel_n,path=args.path,
-					 val_set=paramsTrain.val_set,model_type=args.model_type, time_measure=time_measure, stop_epoch=args.stop_epoch,
-					 dotys_sin_cos=dotys_sin_cos, mim = args.mim)
+	model = modelClass(epochs=paramsTrain.epochs, patch_len=paramsTrain.patch_len,
+					 patch_step_train=paramsTrain.patch_step_train, eval_mode=paramsTrain.eval_mode,
+					 batch_size_train=paramsTrain.batch_size_train,batch_size_test=paramsTrain.batch_size_test,
+					 patience=paramsTrain.patience,t_len=ds.t_len,class_n=paramsTrain.class_n,channel_n=paramsTrain.channel_n,path=paramsTrain.path,
+					 val_set=paramsTrain.val_set,model_type=paramsTrain.model_type, time_measure=time_measure, stop_epoch=paramsTrain.stop_epoch,
+					 dotys_sin_cos=dotys_sin_cos, mim = paramsTrain.mim)
 	model.class_n=data.class_n-1 # Model is designed without background class
 	deb.prints(data.class_n)
 	model.build()
@@ -2656,9 +3754,9 @@ if __name__ == '__main__':
 	if paramsTrain.balancing==True:
 		print("=== AUGMENTING TRAINING DATA")
 
-		if args.seq_mode=='fixed' or args.seq_mode=='fixed_label_len':
+		if paramsTrain.seq_mode=='fixed' or paramsTrain.seq_mode=='fixed_label_len':
 			label_type = 'Nto1'
-		elif args.seq_mode=='var' or args.seq_mode=='var_label':	
+		elif paramsTrain.seq_mode=='var' or paramsTrain.seq_mode=='var_label':	
 			label_type = 'NtoN'
 		deb.prints(label_type)
 		print("Before balancing:")

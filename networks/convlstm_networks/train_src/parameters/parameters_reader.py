@@ -40,8 +40,8 @@ class ParamsTrain(Params):
     def __init__(self, folder_path):
         # 4 known classes
 #        json_path = folder_path+'parameters_openset.json'
-#        json_path = folder_path+'parameters_closedset_groupclasses.json'
-        json_path = folder_path+'save_nonaugmented_train_patches.json'
+        json_path = folder_path+'parameters_closedset_groupclasses.json'
+#        json_path = folder_path+'save_nonaugmented_train_patches.json'
 
         # 2 known classes
 #        json_path = folder_path+'twokkc_parameters_openset.json'
@@ -82,6 +82,52 @@ class ParamsTrain(Params):
                 self.known_classes = [1, 2, 8]
 
         print("self.known_classes", self.known_classes)
+
+
+        # default main params
+
+        self.debug = 1
+        self.epochs = 8000
+        self.patience = 10
+        self.eval_mode = "metrics" # legacy
+        self.im_store = True # legacy
+        self.exp_id = "default" # legacy.
+        self.save_patches_only = False # legacy bc of coords
+
+
+        # General params (common to open set and closed set and group classes)
+
+        if self.dataset == 'lm':
+            self.path = "../../../dataset/dataset/lm_data/"
+            self.class_n = 15
+            self.t_len = 19
+        elif self.dataset == 'cv':
+            self.path = "../../../dataset/dataset/cv_data/"
+            self.class_n = 12
+            self.t_len = 14
+        elif self.dataset == 'l2':
+            self.path = "../../../dataset/dataset/l2_data/"
+            self.class_n = 15
+
+        self.channel_n = 2
+
+        self.stop_epoch = 400
+        self.patch_len = 32
+        self.patch_step_train = self.patch_len
+        self.patch_step_test = self.patch_len
+        self.batch_size_train = 16
+        self.batch_size_test = 16  #unused
+        self.t_len = 12 # variable? depends on dataset?
+
+        # usually editable params
+        self.model_type = "UUnet4ConvLSTM"
+        #self.seq_mode = "fixed"
+        #self.seq_date = "mar"
+        self.id = "dummy"
+        self.loco_class = 8 # legacy. delete
+        
+
+
 #        pdb.set_trace()
 class ParamsAnalysis(Params):
     def __init__(self, folder_path):
