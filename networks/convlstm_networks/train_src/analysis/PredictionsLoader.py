@@ -20,6 +20,8 @@ import sys
 import glob
 import pdb
 import pickle
+from icecream import ic
+import os
 
 sys.path.append('../../../../dataset/dataset/patches_extract_script/')
 from dataSource import DataSource, SARSource, OpticalSource, Dataset, LEM, LEM2, CampoVerde, OpticalSourceWithClouds, Humidity
@@ -160,19 +162,28 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 		return batch
 	def loadPredictions(self,path_model,seq_date=None, model_dataset=None):
 		print("============== loading model =============")
+		ic(os.getcwd())
 		model=load_model(path_model, compile=False)
 		print("Model", model)
 		print("Loading in data: ",self.path_test+'patches_in.npy')
 
 		batch = self.npyLoadPredictions(seq_date)
-
+		ic(batch['label'].shape)
+		ic(np.unique(batch['label'], return_counts=True))
+		
+#		pdb.set_trace()
 		self.labeled_dates = 12
 
 		one_hot_label=True
 		if one_hot_label==True:
-			batch['label'] = batch['label'].argmax(axis=-1)
+			if batch['label'].shape[-1] != paramsTrain.patch_len:
+				print("Removing one hot from label")
+				batch['label'] = batch['label'].argmax(axis=-1)
 
-		#pdb.set_trace()
+		ic(batch['label'].shape)
+		ic(np.unique(batch['label'], return_counts=True))
+		
+		
 		
 #		self.mim = MIMVarLabel_PaddedSeq()
 #		self.mim = MIMFixed()
@@ -245,7 +256,8 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 		
 		#pdb.set_trace()
 		print(" shapes", test_predictions.shape, batch['label'].shape)
-		
+		ic(batch['label'].shape)
+#		pdb.set_trace()
 		print("batch['in'][0].shape, batch['label'].shape, test_predictions.shape",batch['in'][0].shape, batch['label'].shape, test_predictions.shape)
 		print("Test predictions dtype",test_predictions.dtype)
 
@@ -349,11 +361,15 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 			deb.prints(self.path_test+'patches_label_fixed_'+seq_date+'.npy')
 			batch['label']=np.load(self.path_test+'patches_label_fixed_'+seq_date+'.npy') # may18
 
+		batch = self.npyPreprocess(batch)
+
+		return batch
+	def npyPreprocess(self, batch):
 		self.loco_class = 8		
 		#+'patches_label_'+self.seq_mode+'_'+self.seq_date+'_unknown.npy',
 
 #		batch['label_with_loco_class']=np.load(self.path_test+'patches_label_fixed_'+seq_date+'_loco'+str(self.loco_class)+'.npy') # may18			
-		batch['label_with_loco_class']=np.load(self.path_test+'patches_label_fixed_'+seq_date+'_unknown.npy') # may18			
+		batch['label_with_loco_class']=np.load(self.path_test+'patches_label_fixed_'+paramsTrain.seq_date+'_unknown.npy') # may18			
 
 		# test label with loco class. 
 		# If loco_class=8, batch['label_with_loco_class'] contains the loco class as 8+1=9 because 0 is the background ID
@@ -421,21 +437,34 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSetCoords(PredictionsLoade
 		super().__init__(path_test, dataset, seq_len)
 	def setData(self, data, set_):
 		self.data = data # set data!!
-		self.full_ims_path = self.data.path['v']+'full_ims/'+'full_ims_'+set_+'.npy'
-		self.full_label_path = self.data.path['v']+'full_ims/'+'full_label_'+set_+'.npy'
-		self.coords = np.load(self.data.path['v']+'coords_'+set_+'.npy').astype(np.int)
+
+		if set_ == "train":
+			self.full_ims = self.data.full_ims_train
+			self.full_label = self.data.full_label_train
+		elif set_ == "test":
+			self.full_ims = self.data.full_ims_test
+			self.full_label = self.data.full_label_test
+
+		self.coords = self.data.patches[set_]['coords']
+
+#		self.full_ims_path = self.data.path['v']+'full_ims/'+'full_ims_'+set_+'.npy'
+#		self.full_label_path = self.data.path['v']+'full_ims/'+'full_label_'+set_+'.npy'
+#		self.coords = np.load(self.data.path['v']+'coords_'+set_+'.npy').astype(np.int)
 
 	def npyLoadPredictions(self, seq_date):
 
-		self.data.full_ims = np.load(self.full_ims_path).astype(np.uint8) 		
-		self.data.full_label = np.load(self.full_label_path).astype(np.uint8) 
-		self.data.labelPreprocess(loadDicts = True) # new version which only applies (not extract dicts), loading dicts, thus its equal for train and test
+#		self.data.full_ims = np.load(self.full_ims_path).astype(np.uint8) 		
+#		self.data.full_label = np.load(self.full_label_path).astype(np.uint8) 
+		##self.data.labelPreprocess(loadDicts = True) # new version which only applies (not extract dicts), loading dicts, thus its equal for train and test
 		batch = {}
 		batch['in'] = self.data.getSequencePatchesFromCoords(
-			self.data.full_ims, self.coords) # test coords is called self.coords, make custom init in this class. self.full_ims is also set independent
+			self.full_ims, self.coords) # test coords is called self.coords, make custom init in this class. self.full_ims is also set independent
 		batch['label'] = self.data.getPatchesFromCoords(
-			self.data.full_label, self.coords)
+			self.full_label, self.coords)
 
+		batch = self.npyPreprocess(batch)
+
+		return batch
 
 #class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModelNto1FixedSeqFixedLabel):
 

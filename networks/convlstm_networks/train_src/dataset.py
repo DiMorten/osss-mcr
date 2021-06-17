@@ -1,4 +1,3 @@
-
 from colorama import init
 init()
 from utils import *
@@ -8,7 +7,7 @@ from keras.optimizers import Adam,Adagrad
 from keras.models import Model
 from keras import backend as K
 import keras
-
+import os
 import numpy as np
 from sklearn.utils import shuffle
 import cv2
@@ -122,19 +121,7 @@ class Dataset(object):
 		
 		#should be in another object
 		self.padded_dates = []
-		
-	def create(self):
-		self.image["train"], self.patches["train"] = self.subset_create(
-			self.path['train'],self.patches["train"]['step'])
-		self.image["test"], self.patches["test"] = self.subset_create(
-			self.path['test'],self.patches["test"]['step'])
 
-		if self.debug:
-			deb.prints(self.image["train"]['in'].shape)
-			deb.prints(self.image["train"]['label'].shape)
-
-			deb.prints(self.image["test"]['in'].shape)
-			deb.prints(self.image["test"]['label'].shape)
 
 	def create_load(self):
 
@@ -410,81 +397,9 @@ class Dataset(object):
 			#print(path)
 			files.append(np.load(path))
 		return np.asarray(files),paths
-	def subset_create(self, path,patch_step):
-		image = self.image_load(path)
-		image['label_rgb']=image['label'].copy()
-		image['label'] = self.label2idx(image['label'])
-		patches = self.patches_extract(image,patch_step)
-		return image, patches
 
-	def image_load(self, path):
-		image = {}
-		image['in'] = cv2.imread(path['in'], -1)
-		image['label'] = np.expand_dims(cv2.imread(path['label'], 0), axis=2)
-		count,unique=np.unique(image['label'],return_counts=True)
-		print("label count,unique",count,unique)
-		image['label_rgb']=cv2.imread(path['label'], -1)
-		return image
 
-	def patches_extract(self, image, patch_step):
 
-		patches = {}
-		patches['in'],_ = self.view_as_windows_multichannel(
-			image['in'], (self.patch_len, self.patch_len, self.channel_n), step=patch_step)
-		patches['label'],patches['label_partitioned_shape'] = self.view_as_windows_multichannel(
-			image['label'], (self.patch_len, self.patch_len, 1), step=patch_step)
-
-		# ===================== Switch labels to one-hot ===============#
-
-		if self.debug >= 2:
-			deb.prints(patches['label'].shape)
-
-		if flag['label_one_hot']:
-
-			# Get the vectorized integer label
-			patches['label_h'] = np.reshape(
-				patches['label'], (patches['label'].shape[0], patches['label'].shape[1]*patches['label'].shape[2]))
-			deb.prints(patches['label_h'].shape)
-
-			# Init the one-hot vectorized label
-			patches['label_h2'] = np.zeros(
-				(patches['label_h'].shape[0], patches['label_h'].shape[1], self.class_n))
-
-			# Get the one-hot vectorized label
-			for sample_idx in range(0, patches['label_h'].shape[0]):
-				for loc_idx in range(0, patches['label_h'].shape[1]):
-					patches['label_h2'][sample_idx, loc_idx,
-										patches['label_h'][sample_idx][loc_idx]] = 1
-
-			# Get the image one-hot labels
-			patches['label'] = np.reshape(patches['label_h2'], (patches['label_h2'].shape[0],
-																patches['label'].shape[1], patches['label'].shape[2], self.class_n))
-
-			if self.debug >= 2:
-				deb.prints(patches['label_h2'].shape)
-
-		# ============== End switch labels to one-hot =============#
-		if self.debug:
-			deb.prints(patches['label'].shape)
-			deb.prints(patches['in'].shape)
-
-		return patches
-
-	def label2idx(self, image_label):
-		unique = np.unique(image_label)
-		idxs = np.array(range(0, unique.shape[0]))
-		for val, idx in zip(unique, idxs):
-			image_label[image_label == val] = idx
-		return image_label
-
-	def view_as_windows_multichannel(self, arr_in, window_shape, step=1):
-		out = np.squeeze(view_as_windows(arr_in, window_shape, step=step))
-		partitioned_shape=out.shape
-
-		deb.prints(out.shape)
-		out = np.reshape(out, (out.shape[0] * out.shape[1],) + out.shape[2::])
-		return out,partitioned_shape
-# ==== add doty
 
 	def addDoty(self, input_, bounds=None):
 		if self.doty_flag==True:
@@ -537,52 +452,8 @@ class Dataset(object):
 		return patches
 
 #=============== METRICS CALCULATION ====================#
-	def ims_flatten(self,ims):
-		return np.reshape(ims,(np.prod(ims.shape[0:-1]),ims.shape[-1]))
-
-	def average_acc(self,y_pred,y_true):
-		correct_per_class=np.zeros(self.class_n)
-		correct_all=y_pred.argmax(axis=1)[y_pred.argmax(axis=1)==y_true.argmax(axis=1)]
-		for clss in range(0,self.class_n):
-			correct_per_class[clss]=correct_all[correct_all==clss].shape[0]
-		if self.debug>=1:
-			deb.prints(correct_per_class)
-
-		pred_unique,pred_class_count=np.unique(y_pred.argmax(axis=1),return_counts=True)
-		deb.prints(pred_class_count)
-		deb.prints(pred_unique+1)
 
 
-		unique,per_class_count=np.unique(y_true.argmax(axis=1),return_counts=True)
-		deb.prints(per_class_count)
-		deb.prints(unique+1)
-		per_class_count_all=np.zeros(self.class_n)
-		for clss,count in zip(unique,per_class_count):
-			per_class_count_all[clss]=count
-		per_class_acc=np.divide(correct_per_class[1:].astype('float32'),per_class_count_all[1:].astype('float32'))
-		average_acc=np.average(per_class_acc)
-		return average_acc,per_class_acc
-	def flattened_to_im(self,data_h,im_shape):
-		return np.reshape(data_h,im_shape)
-
-	def probabilities_to_one_hot(self,vals):
-		out=np.zeros_like(vals)
-		out[np.arange(len(vals)), vals.argmax(1)] = 1
-		return out
-	def assert_equal(self,val1,val2):
-		return np.equal(val1,val2)
-	def int2one_hot(self,x,class_n):
-		out = np.zeros((x.shape[0], class_n))
-		out[np.arange(x.shape[0]),x] = 1
-		return out
-
-	def label_bcknd_from_last_eliminate(self,label):
-		out=np.zeros_like(label)
-		label_shape=label.shape
-		label=np.reshape(label,(label.shape[0],-1))
-		out=label[label!=label_shape[-1]-1,:] # label whose value is the last (bcknd)
-		out=np.reshape(out,((out.shape[0],)+label_shape[1:]))
-		return out
 	def my_f1_score(self,label,prediction):
 		f1_values=f1_score(label,prediction,average=None)
 
@@ -661,107 +532,9 @@ class Dataset(object):
 #		metrics['precision_avg'] = np.average(precision[:-1])
 #		metrics['recall_avg'] = np.average(recall[:-1])
 		return metrics
-
-	def metrics_write_to_txt(self,metrics,loss,epoch=0,path=None):
-		#with open(self.report['best']['text_path'], "w") as text_file:
-		#    text_file.write("Overall_acc,average_acc,f1_score: {0},{1},{2},{3}".format(str(metrics['overall_acc']),str(metrics['average_acc']),str(metrics['f1_score']),str(epoch)))
-		#deb.prints(loss)
-		#deb.prints(loss[0])
-		#deb.prints(loss[1])
-		#dataset='campo_verde'
-		if self.dataset=='hannover':
-			with open(path, "a") as text_file:
-				#text_file.write("{0},{1},{2},{3}\n".format(str(epoch),str(metrics['overall_acc']),str(metrics['average_acc']),str(metrics['f1_score'])))
-				text_file.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14}\n".format(str(epoch),
-					str(metrics['overall_acc']),str(metrics['average_acc']),str(metrics['f1_score']),str(metrics['f1_score_weighted']),str(loss[0]),str(loss[1]),
-					str(metrics['per_class_acc'][0]),str(metrics['per_class_acc'][1]),str(metrics['per_class_acc'][2]),
-					str(metrics['per_class_acc'][3]),str(metrics['per_class_acc'][4]),str(metrics['per_class_acc'][5]),
-					str(metrics['per_class_acc'][6]),str(metrics['per_class_acc'][7])))
-		elif metrics['per_class_acc'].shape[0]==10:
-			with open(path, "a") as text_file:
-				#text_file.write("{0},{1},{2},{3}\n".format(str(epoch),str(metrics['overall_acc']),str(metrics['average_acc']),str(metrics['f1_score'])))
-				text_file.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16}\n".format(str(epoch),
-					str(metrics['overall_acc']),str(metrics['average_acc']),str(metrics['f1_score']),str(metrics['f1_score_weighted']),str(loss[0]),str(loss[1]),
-					str(metrics['per_class_acc'][0]),str(metrics['per_class_acc'][1]),str(metrics['per_class_acc'][2]),
-					str(metrics['per_class_acc'][3]),str(metrics['per_class_acc'][4]),str(metrics['per_class_acc'][5]),
-					str(metrics['per_class_acc'][6]),str(metrics['per_class_acc'][7]),str(metrics['per_class_acc'][8]),
-					str(metrics['per_class_acc'][9])))
-		elif metrics['per_class_acc'].shape[0]==9:
-			with open(path, "a") as text_file:
-				#text_file.write("{0},{1},{2},{3}\n".format(str(epoch),str(metrics['overall_acc']),str(metrics['average_acc']),str(metrics['f1_score'])))
-				text_file.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15}\n".format(str(epoch),
-					str(metrics['overall_acc']),str(metrics['average_acc']),str(metrics['f1_score']),str(metrics['f1_score_weighted']),str(loss[0]),str(loss[1]),
-					str(metrics['per_class_acc'][0]),str(metrics['per_class_acc'][1]),str(metrics['per_class_acc'][2]),
-					str(metrics['per_class_acc'][3]),str(metrics['per_class_acc'][4]),str(metrics['per_class_acc'][5]),
-					str(metrics['per_class_acc'][6]),str(metrics['per_class_acc'][7]),str(metrics['per_class_acc'][8])))
-		elif metrics['per_class_acc'].shape[0]==8:
-			with open(path, "a") as text_file:
-				#text_file.write("{0},{1},{2},{3}\n".format(str(epoch),str(metrics['overall_acc']),str(metrics['average_acc']),str(metrics['f1_score'])))
-				text_file.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14}\n".format(str(epoch),
-					str(metrics['overall_acc']),str(metrics['average_acc']),str(metrics['f1_score']),str(metrics['f1_score_weighted']),str(loss[0]),str(loss[1]),
-					str(metrics['per_class_acc'][0]),str(metrics['per_class_acc'][1]),str(metrics['per_class_acc'][2]),
-					str(metrics['per_class_acc'][3]),str(metrics['per_class_acc'][4]),str(metrics['per_class_acc'][5]),
-					str(metrics['per_class_acc'][6]),str(metrics['per_class_acc'][7])))
-				
 			
-	def metrics_per_class_from_im_get(self,name='im_reconstructed_rgb_test_predictionplen64_3.png',folder='../results/reconstructed/',average=None):
-		data={}
-		metrics={}
-		deb.prints(folder+name)
-		data['prediction']=cv2.imread(folder+name,0)[0:-30,0:-2]
-		data['label']=cv2.imread(folder+'im_reconstructed_rgb_test_labelplen64_3.png',0)[0:-30,0:-2]
+			
 
-		data['prediction']=np.reshape(data['prediction'],-1)
-		data['label']=np.reshape(data['label'],-1)
-		
-		metrics['f1_score_per_class']=f1_score(data['prediction'],data['label'],average=average)
-		print(metrics)
-
-
-# =================== Image reconstruct =======================#
-
-	def im_reconstruct(self,subset='test',mode='prediction'):
-		h,w,_=self.image[subset]['label'].shape
-		print(self.patches[subset]['label_partitioned_shape'])
-		deb.prints(self.patches[subset][mode].shape)
-		
-		h_blocks,w_blocks,patch_len,_=self.patches[subset]['label_partitioned_shape']
-
-		patches_block=np.reshape(self.patches[subset][mode].argmax(axis=3),(h_blocks,w_blocks,patch_len,patch_len))
-
-
-		self.im_reconstructed=np.squeeze(np.zeros_like(self.image[subset]['label']))
-
-		h_block_len=int(self.image[subset]['label'].shape[0]/h_blocks)
-		w_block_len=int(self.image[subset]['label'].shape[1]/w_blocks)
-		
-		count=0
-
-		for w_block in range(0,w_blocks):
-			for h_block in range(0,h_blocks):
-				y=int(h_block*h_block_len)
-				x=int(w_block*w_block_len)
-				#print(y)
-				#print(x)				
-				#deb.prints([y:y+self.patch_len])
-				self.im_reconstructed[y:y+self.patch_len,x:x+self.patch_len]=patches_block[h_block,w_block,:,:]
-				count+=1
-
-		self.im_reconstructed_rgb=self.im_gray_idx_to_rgb(self.im_reconstructed)
-		if self.debug>=3: 
-			deb.prints(count)
-			deb.prints(self.im_reconstructed_rgb.shape)
-
-		cv2.imwrite('../results/reconstructed/im_reconstructed_rgb_'+subset+'_'+mode+self.report['exp_id']+'.png',self.im_reconstructed_rgb.astype(np.uint8))
-
-	def im_gray_idx_to_rgb(self,im):
-		out=np.zeros((im.shape+(3,)))
-		for chan in range(0,3):
-			for clss in range(0,self.class_n):
-				out[:,:,chan][im==clss]=np.array(self.im_gray_idx_to_rgb_table[clss][1][chan])
-		deb.prints(out.shape)
-		out=cv2.cvtColor(out.astype(np.uint8),cv2.COLOR_RGB2BGR)
-		return out
 	def val_set_get(self,mode='random',validation_split=0.2):
 		clss_train_unique,clss_train_count=np.unique(self.patches['train']['label'].argmax(axis=-1),return_counts=True)
 		deb.prints(clss_train_count)
@@ -991,6 +764,9 @@ class Dataset(object):
 class DatasetWithCoords(Dataset):
 	def create_load(self):
 #		super().create_load()
+		ic(os.path.dirname(os.path.abspath(__file__)))
+		ic(os.getcwd())
+		##os.chdir(os.path.dirname(os.path.abspath(__file__)))
 		self.patches['train']['coords'] = np.load(self.path['v']+'coords_train.npy').astype(np.int)
 		self.patches['test']['coords'] = np.load(self.path['v']+'coords_test.npy').astype(np.int)
 		ic(self.patches['train']['coords'].shape)
@@ -1016,6 +792,10 @@ class DatasetWithCoords(Dataset):
 		self.patches['train']['in'] = self.getSequencePatchesFromCoords(
 			self.full_ims_train, self.patches['train']['coords'])
 
+		ic(self.patches['train']['label'].shape)
+		ic(np.unique(self.patches['train']['label'], return_counts = True))
+		ic(self.patches['test']['label'].shape)
+		ic(np.unique(self.patches['test']['label'], return_counts = True))
 
 #		pdb.set_trace()
 		'''

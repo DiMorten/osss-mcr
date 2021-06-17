@@ -23,9 +23,11 @@ init()
 save_bar_flag=True
 sys.path.append('../')
 import deb
+from dataset import Dataset, DatasetWithCoords
+
+
 deb.prints(deb.__file__)
 from open_set import SoftmaxThresholding, OpenPCS, OpenGMMS
-from main import Dataset, DatasetWithCoords
 import argparse
 from parameters.parameters_reader import ParamsTrain, ParamsAnalysis
 import time
@@ -39,19 +41,12 @@ from dataSource import DataSource, SARSource, OpticalSource, Dataset, LEM, LEM2,
 paramsTrain = ParamsTrain('../parameters/')
 paramsAnalysis = ParamsAnalysis('parameters_analysis/')
 
-parser = argparse.ArgumentParser(description='Process some integers.')
+class MyObj(object): pass
+args = MyObj()
 
-parser.add_argument('--seq_date', dest='seq_date', 
-                    default='jun',
-                    help='seq_date')
-parser.add_argument('--dataset', dest='dataset', 
-                    default='l2',
-                    help='dataset')
-parser.add_argument('--model_dataset', dest='model_dataset', 
-                    default='l2',
-                    help='model_dataset')
-
-args = parser.parse_args()
+#paramsTrain.seq_date = paramsTrain.seq_date
+#paramsTrain.dataset = paramsTrain.dataset
+paramsTrain.model_dataset = paramsTrain.dataset
 
 np.random.seed(0)
 
@@ -444,20 +439,20 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 		additionalTestClssesFlag = False
 		if additionalTestClssesFlag==True:
 			additionalTestClsses = ['dec', 'jan', 'mar', 'may', 'aug']
-			if args.seq_date in additionalTestClsses:
+			if paramsTrain.seq_date in additionalTestClsses:
 				predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabelAdditionalTestClsses(path_test, dataset=dataset)
 			else:
 				predictionsLoader = PredictionsLoaderModelNto1FixedSeqFixedLabel(path_test, dataset=dataset)
-			deb.prints(args.seq_date in additionalTestClsses)
+			deb.prints(paramsTrain.seq_date in additionalTestClsses)
 		else:
 			useCoords = True
 			if useCoords == True:
 				if paramsTrain.dataset=='lm':
-					ds=LEM(args.seq_mode, args.seq_date, paramsTrain.seq_len)
+					ds=LEM(paramsTrain.seq_mode, paramsTrain.seq_date, paramsTrain.seq_len)
 				elif paramsTrain.dataset=='l2':
-					ds=LEM2(args.seq_mode, args.seq_date, paramsTrain.seq_len)
+					ds=LEM2(paramsTrain.seq_mode, paramsTrain.seq_date, paramsTrain.seq_len)
 				elif paramsTrain.dataset=='cv':
-					ds=CampoVerde(args.seq_mode, args.seq_date, paramsTrain.seq_len)
+					ds=CampoVerde(paramsTrain.seq_mode, paramsTrain.seq_date, paramsTrain.seq_len)
 
 				deb.prints(ds)
 				dataSource = SARSource()
@@ -465,23 +460,24 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 				time_delta = ds.getTimeDelta(delta=True,format='days')
 				dotys, dotys_sin_cos = ds.getDayOfTheYear()
 				
-				args = object
-				args.patch_len = 32
-				args.patch_step_train = 32
-				args.patch_step_test = 32
-				args.exp_id = 'dummy'
-				args.path = '../../../../dataset/dataset/lm_data/'
-				#ds.t_len = paramsTrain.seq_len
-				args.class_n = 15
-				args.channel_n = 2
+				paramsTrain.t_len = ds.t_len # modified?
+				paramsTrain.dotys_sin_cos = dotys_sin_cos
+
 				datasetClass = DatasetWithCoords
-				data = datasetClass(patch_len=args.patch_len, patch_step_train=args.patch_step_train,
-					patch_step_test=args.patch_step_test,exp_id=args.exp_id,
-					path=args.path, t_len=ds.t_len, class_n=args.class_n, channel_n = args.channel_n,
-					dotys_sin_cos = dotys_sin_cos, ds = ds)
+				ic(paramsTrain.path)
+				paramsTrain.path = '../' + paramsTrain.path
+				ic(paramsTrain.path)
+
+				data = datasetClass(paramsTrain = paramsTrain, ds = ds,
+					dotys_sin_cos = dotys_sin_cos)
 					
 				data.create_load()
-				pdb.set_trace()
+				paramsTrain.unknown_classes = data.unknown_classes
+				ic(os.path.dirname(os.path.abspath(__file__)))
+				ic(os.getcwd())
+				###os.chdir(os.path.dirname(os.path.abspath(__file__)))
+				###ic(os.getcwd())
+				##pdb.set_trace()
 #				data.patches['test']['coords'] = np.load(data.path['v']+'coords_test.npy').astype(np.int)
 #				data.full_ims_test = np.load(data.path['v']+'full_ims/'+'full_ims_test.npy')
 #				data.full_ims_test = np.load(data.path['v']+'full_ims/'+'full_ims_test.npy')
@@ -500,15 +496,18 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 
 		deb.prints(predictionsLoaderTest)
 		deb.prints(model_path)
-		deb.prints(args.seq_date)
+		deb.prints(paramsTrain.seq_date)
 		#pdb.set_trace()
-		predictions, label_test, test_pred_proba, model = predictionsLoaderTest.loadPredictions(model_path, seq_date=args.seq_date, 
-				model_dataset=args.model_dataset)
+		ic(os.path.dirname(os.path.abspath(__file__)))
+		###os.chdir(os.path.dirname(os.path.abspath(__file__)))
+		ic(os.getcwd())
+		predictions, label_test, test_pred_proba, model = predictionsLoaderTest.loadPredictions(model_path, seq_date=paramsTrain.seq_date, 
+				model_dataset=paramsTrain.model_dataset)
 
 		if paramsAnalysis.open_set==True:
 			if paramsAnalysis.setTrainAsTest == False:
-				predictions_train, label_train, train_pred_proba, _ = predictionsLoaderTrain.loadPredictions(model_path, seq_date=args.seq_date, 
-						model_dataset=args.model_dataset)
+				predictions_train, label_train, train_pred_proba, _ = predictionsLoaderTrain.loadPredictions(model_path, seq_date=paramsTrain.seq_date, 
+						model_dataset=paramsTrain.model_dataset)
 				
 				
 				print("1a")
@@ -615,11 +614,11 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 
 	#			thresholds = np.linspace(-250, -200, 5)
 				thresholds = np.linspace(-250, -150, 10)
-				if args.seq_date == 'dec':
+				if paramsTrain.seq_date == 'dec':
 					thresholds = [-237.5]
-				elif args.seq_date == 'feb':
+				elif paramsTrain.seq_date == 'feb':
 					thresholds = [-188.89]
-				elif args.seq_date == 'mar':
+				elif paramsTrain.seq_date == 'mar':
 					thresholds = [-210]
 	#			2 kkc mar
 					thresholds = [-600]
@@ -644,10 +643,10 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 					best_threshold = -17.7	
 					best_threshold = -184.4 # mar pca identity 90	
 
-				elif args.seq_date == 'jan':
+				elif paramsTrain.seq_date == 'jan':
 					thresholds = [-210]
 					thresholds = np.linspace(100, 500, 10)
-				elif args.seq_date == 'jun':
+				elif paramsTrain.seq_date == 'jun':
 					threshold_range = (-500, 200)
 					#best_threshold = -28.366	
 					best_threshold = -193.6 # jun pca identity 90	
@@ -665,19 +664,19 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 				threshold_range = (0, 1)
 				best_threshold = 0.7
 
-				if args.seq_date == 'jun':
+				if paramsTrain.seq_date == 'jun':
 					best_threshold = 0.76393
 					best_threshold = -100
 					
 			elif paramsAnalysis.openSetMethod == 'OpenGMMS':
-				if args.seq_date == 'mar':
+				if paramsTrain.seq_date == 'mar':
 					thresholds = [-210]
 					thresholds = np.linspace(-180, 1500, 30)
 					threshold_range = (200, 1000)
 					best_threshold = 838.7
 					best_threshold = 855.7
 					best_threshold = 550.2
-				elif args.seq_date == 'jun':
+				elif paramsTrain.seq_date == 'jun':
 					threshold_range = (200, 1000)
 					best_threshold = 811.1
 		elif paramsTrain.dataset == 'cv':
@@ -865,7 +864,7 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 			metrics_t['recall_unknown'].append(round(metrics['recall_unknown']*100,2))
 			metrics_t['f1_score_unknown'].append(round(metrics['f1_score_unknown']*100,2))
 		deb.prints(best_threshold)
-		print(args.seq_date)
+		print(paramsTrain.seq_date)
 		print(metrics_t)
 		try:
 			deb.prints(openModel.covariance_type)
@@ -1174,7 +1173,7 @@ def experiments_plot(metrics,experiment_list,dataset,
 
 #dataset='lm_optical_clouds'
 #dataset='lm'
-dataset=args.dataset
+dataset=paramsTrain.dataset
 
 #dataset='cv'
 #dataset='lm_sarh'
@@ -1208,7 +1207,7 @@ if dataset=='cv':
 		'prediction_ConvLSTM_seq2seq_bi_redoing3.npy',
 		'prediction_DenseNetTimeDistributed_128x2_redoing3.npy']]
 	exp_id=5
-	if args.seq_date =='jun':
+	if paramsTrain.seq_date =='jun':
 		experiment_groups=[[
 			'model_best_UUnet4ConvLSTM_jun.h5'
 		]]	
@@ -1234,28 +1233,28 @@ elif dataset=='l2':
 			'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_mar_l2_mar.h5'
 		]]	
 		experiment_groups=[[
-			'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+args.seq_date+'_l2_rep2.h5'
+			'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+paramsTrain.seq_date+'_l2_rep2.h5'
 		]]	
 		experiment_groups=[[
-			'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+args.seq_date+'_lm_firsttry.h5'
+			'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+paramsTrain.seq_date+'_lm_firsttry.h5'
 		]]	
 		experiment_groups=[[
-			'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+args.seq_date+'_l2_secondtry.h5'
+			'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+paramsTrain.seq_date+'_l2_secondtry.h5'
 		]]	
 #		experiment_groups=[[
-#			'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+args.seq_date+'_l2_rep2.h5'
+#			'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+paramsTrain.seq_date+'_l2_rep2.h5'
 #		]]	
 
 #		experiment_groups=[[
-#			'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+args.seq_date+'_l2.h5'
+#			'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+paramsTrain.seq_date+'_l2.h5'
 #		]]	
 
 #		experiment_groups=[[
-#			'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+args.seq_date+'_l2_secondtry.h5'
+#			'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+paramsTrain.seq_date+'_l2_secondtry.h5'
 #		]]	
 
 #		experiment_groups=[[
-#			'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+args.seq_date+'_700perclass.h5'
+#			'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+paramsTrain.seq_date+'_700perclass.h5'
 #		]]	
 elif dataset=='lm':
 
@@ -1351,33 +1350,37 @@ elif dataset=='lm':
 		experiment_groups=[['model_best_UUnet4ConvLSTM_doty_var_label_valalldates_hwtnorm.h5']]	
 
 		experiment_groups=[[
-			'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+args.seq_date+'_700perclass.h5'
+			'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+paramsTrain.seq_date+'_700perclass.h5'
 		]]	
 		experiment_groups=[[
-			'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+args.seq_date+'_l2_traintimes2.h5'
+			'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+paramsTrain.seq_date+'_l2_traintimes2.h5'
 		]]	
 
 		loco_class = 8
 		experiment_groups=[[
-			'model_best_UUnet4ConvLSTM_fixed_label_fixed_'+args.seq_date+'_loco'+str(loco_class)+'_lm_testlm.h5'
+			'model_best_UUnet4ConvLSTM_fixed_label_fixed_'+paramsTrain.seq_date+'_loco'+str(loco_class)+'_lm_testlm.h5'
 		]]	
 
-		if args.seq_date =='mar':
-			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_'+args.seq_date+'_loco'+str(loco_class)+'_lm_testlm_fewknownclasses.h5']]	
+		if paramsTrain.seq_date =='mar':
+			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_'+paramsTrain.seq_date+'_loco'+str(loco_class)+'_lm_testlm_fewknownclasses.h5']]	
 #			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_lm_testlm_2kkc.h5']]	
 #			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_lm_testlm_allkkc.h5']]
 #			experiment_groups=[['model_best_UUnet4ConvLSTM_len6_mar.h5']]	
 
 
-		elif args.seq_date =='feb':
+		elif paramsTrain.seq_date =='feb':
 #			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_feb_lm_testlm_fewknownclasses_groupclasses.h5']]	
 			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_feb_lm_testlm_fewknownclasses_valrand.h5']]	
-		elif args.seq_date =='jan':
+		elif paramsTrain.seq_date =='jan':
 			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_jan_lm_testlm_fewknownclasses_groupclasses_check.h5']]
 			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_jan_lm_testlm_fewknownclasses_check.h5']]
-		if args.seq_date =='jun':
+		if paramsTrain.seq_date =='jun':
 #			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_jun_lm_fewknownclasses.h5']]	
 			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_jun_lm_fewknownclasses2.h5']]	
+		
+		if paramsTrain.openMode == 'ClosedSetGroupClasses':
+			if paramsTrain.seq_date =='mar':
+				experiment_groups=[['model_best_UUnet4ConvLSTM_mar_lm_fixed_fewknownclasses_groupclasses_coords_notmasked.h5']]
 
 #		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_dec_lm_testlm_fewknownclasses_groupclasses.h5']]
 #		experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_loco8_lm_testlm_lessclass8_2.h5']]	

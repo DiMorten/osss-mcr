@@ -39,9 +39,15 @@ class Params():
 class ParamsTrain(Params):
     def __init__(self, folder_path):
         # 4 known classes
-#        json_path = folder_path+'parameters_openset.json'
-        json_path = folder_path+'parameters_closedset_groupclasses.json'
-#        json_path = folder_path+'save_nonaugmented_train_patches.json'
+#        self.openMode = 'ClosedSetGroupClasses'
+#        self.openMode = 'OpenSet'
+        self.openMode = 'SaveNonaugmentedTrainPatches'
+        if self.openMode == 'OpenSet':
+            json_path = folder_path+'parameters_openset.json'
+        elif self.openMode == 'ClosedSetGroupClasses':
+            json_path = folder_path+'parameters_closedset_groupclasses.json'
+        elif self.openMode == 'SaveNonaugmentedTrainPatches':
+            json_path = folder_path+'save_nonaugmented_train_patches.json'
 
         # 2 known classes
 #        json_path = folder_path+'twokkc_parameters_openset.json'
