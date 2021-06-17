@@ -287,6 +287,7 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 		else:
 			pred_proba = test_predictions.copy()
 		
+		#ic(pred_proba.shape)
 		#pdb.set_trace()
 		print(" shapes", test_predictions.shape, batch['label'].shape)
 		

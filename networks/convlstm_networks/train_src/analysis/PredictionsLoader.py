@@ -249,8 +249,8 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 		else:
 			load_decoder_features_flag = False
 		if load_decoder_features_flag==True:
-			#pred_proba = self.load_decoder_features(model, input_)
-			pred_proba = test_predictions.copy()
+			pred_proba = self.load_decoder_features(model, input_)
+			#pred_proba = test_predictions.copy()
 		else:
 			pred_proba = test_predictions.copy()
 		

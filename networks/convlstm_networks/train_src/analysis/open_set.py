@@ -562,6 +562,7 @@ class OpenSetMethodGaussian(OpenSetMethod):
                 cl_feat_flat = cl_feat_flat[perm[:32768], :]
             deb.prints(cl_feat_flat.shape)
 #            pdb.set_trace()
+            ic(cl_feat_flat.shape)
             model.fit(cl_feat_flat)
             x_pca_train = model.transform(cl_feat_flat)
             deb.prints(x_pca_train.shape)
