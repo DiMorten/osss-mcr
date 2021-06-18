@@ -3,8 +3,8 @@
     "setTrainAsTest": false,
     "metricsOnTrain": false,
     "openSetMethod": "OpenPCS",
-    "makeCovMatrixIdentity": true,
+    "makeCovMatrixIdentity": false,
     "plotROCCurve": true,
-    "loadOpenResults": false
+    "loadOpenResults": true
 
 }

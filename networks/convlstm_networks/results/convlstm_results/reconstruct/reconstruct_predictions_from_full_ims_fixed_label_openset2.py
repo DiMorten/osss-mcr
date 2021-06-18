@@ -38,8 +38,8 @@ parser.add_argument('-mdl', '--model', dest='model_type',
 
 parser.add_argument('--seq_date', dest='seq_date', 
 #                    default='mar',
-#                    default='mar',
-                    default='jun',
+                    default='mar',
+#                    default='jun',
 
                     help='seq_date')
 parser.add_argument('--model_dataset', dest='model_dataset', 
@@ -48,7 +48,7 @@ parser.add_argument('--model_dataset', dest='model_dataset',
 
 paramsTrain = ParamsTrain('../../../train_src/parameters/')
 paramsAnalysis = ParamsAnalysis('../../../train_src/analysis/parameters_analysis/')
-
+paramsReconstruct = ParamsReconstruct()
 
 a = parser.parse_args()
 a.seq_date = paramsTrain.seq_date
@@ -446,8 +446,8 @@ name_id = name_id + "_" + paramsTrain.dataset
 if croppedFlag == True:
 	name_id = name_id + "_crop"
 
-open_set_mode = False
-mosaic_flag = True
+open_set_mode = True
+mosaic_flag = False
 
 # --================= open set
 
