@@ -25,46 +25,28 @@ from PredictionsLoader import PredictionsLoaderNPY, PredictionsLoaderModel, Pred
 from icecream import ic 
 from parameters.parameters_reader import ParamsTrain, ParamsAnalysis
 from analysis.open_set import SoftmaxThresholding, OpenPCS
-
+from params_reconstruct import ParamsReconstruct
 
 ic.configureOutput(includeContext=False, prefix='[@debug] ')
 
-parser = argparse.ArgumentParser(description='')
-parser.add_argument('-ds', '--dataset', dest='dataset',
-					default='lm', help='t len')
-parser.add_argument('-mdl', '--model', dest='model_type',
-					default='unet', help='t len')
-
-
-parser.add_argument('--seq_date', dest='seq_date', 
-#                    default='mar',
-                    default='mar',
-#                    default='jun',
-
-                    help='seq_date')
-parser.add_argument('--model_dataset', dest='model_dataset', 
-                    default='lm',
-                    help='model_dataset')
 
 paramsTrain = ParamsTrain('../../../train_src/parameters/')
 paramsAnalysis = ParamsAnalysis('../../../train_src/analysis/parameters_analysis/')
-paramsReconstruct = ParamsReconstruct()
+pr = ParamsReconstruct()
 
-a = parser.parse_args()
-a.seq_date = paramsTrain.seq_date
-a.dataset = paramsTrain.dataset
 
-ic(a.seq_date)
-dataset=a.dataset
-model_type=a.model_type
+ic(paramsTrain.seq_date)
+dataset=paramsTrain.dataset
 
 direct_execution=False
 if direct_execution==True:
 	dataset='lm'
-	model_type='unet'
+	paramsTrain.model_type='unet'
 
+if paramsTrain.model_type == 'UUnet4ConvLSTM':
+	paramsTrain.model_type = 'unet'
 deb.prints(dataset)
-deb.prints(model_type)
+deb.prints(paramsTrain.model_type)
 deb.prints(direct_execution)
 
 def patch_file_id_order_from_folder(folder_path):
@@ -81,27 +63,27 @@ data_path='../../../../../dataset/dataset/'
 if dataset=='lm':
 
 	path+='lm/'
-	if model_type=='densenet':
+	if paramsTrain.model_type=='densenet':
 		predictions_path=path+'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy'
-	elif model_type=='biconvlstm':
+	elif paramsTrain.model_type=='biconvlstm':
 		predictions_path=path+'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy'
-	elif model_type=='convlstm':
+	elif paramsTrain.model_type=='convlstm':
 		predictions_path=path+'prediction_ConvLSTM_seq2seq_batch16_full.npy'
-	elif model_type=='unet':
+	elif paramsTrain.model_type=='unet':
 		predictions_path=path+'prediction_BUnet4ConvLSTM_repeating1.npy'
 		#predictions_path=path+'prediction_BUnet4ConvLSTM_repeating2.npy'
 		#predictions_path=path+'prediction_BUnet4ConvLSTM_repeating4.npy'
-		predictions_path = path+'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+a.seq_date+'_700perclass.h5'			
-		predictions_path = path+'model_best_UUnet4ConvLSTM_fixed_label_fixed_'+a.seq_date+'_loco8_lm_testlm_fewknownclasses.h5'	
+		predictions_path = path+'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+paramsTrain.seq_date+'_700perclass.h5'			
+		predictions_path = path+'model_best_UUnet4ConvLSTM_fixed_label_fixed_'+paramsTrain.seq_date+'_loco8_lm_testlm_fewknownclasses.h5'	
 		if paramsTrain.seq_date == 'mar':
-			predictions_path = path+'model_best_UUnet4ConvLSTM_fixed_label_fixed_'+a.seq_date+'_loco8_lm_testlm_fewknownclasses.h5'	
+			predictions_path = path+'model_best_UUnet4ConvLSTM_fixed_label_fixed_'+paramsTrain.seq_date+'_loco8_lm_testlm_fewknownclasses.h5'	
 			#predictions_path = path+'model_best_UUnet4ConvLSTM_mar_lm_fixed_fewknownclasses_groupclasses_newdataaugmentation_coords.h5'
 		elif paramsTrain.seq_date == 'jun':
 			predictions_path = path+'model_best_UUnet4ConvLSTM_fixed_label_fixed_jun_lm_fewknownclasses2.h5'	
 
-	elif model_type=='atrous':
+	elif paramsTrain.model_type=='atrous':
 		predictions_path=path+'prediction_BAtrousConvLSTM_2convins5.npy'
-	elif model_type=='atrousgap':
+	elif paramsTrain.model_type=='atrousgap':
 		predictions_path=path+'prediction_BAtrousGAPConvLSTM_raulapproved.npy'
 		#predictions_path=path+'prediction_BAtrousGAPConvLSTM_repeating3.npy'
 		#predictions_path=path+'prediction_BAtrousGAPConvLSTM_repeating4.npy'
@@ -129,26 +111,26 @@ if dataset=='lm':
 elif dataset=='cv':
 
 	path+='cv/'
-	if model_type=='densenet':
+	if paramsTrain.model_type=='densenet':
 		predictions_path=path+'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy'
-	elif model_type=='biconvlstm':
+	elif paramsTrain.model_type=='biconvlstm':
 		predictions_path=path+'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy'
-	elif model_type=='convlstm':
+	elif paramsTrain.model_type=='convlstm':
 		predictions_path=path+'prediction_ConvLSTM_seq2seq_batch16_full.npy'		
-	elif model_type=='unet':
+	elif paramsTrain.model_type=='unet':
 		#predictions_path=path+'prediction_BUnet4ConvLSTM_repeating2.npy'
 		predictions_path=path+'model_best_BUnet4ConvLSTM_int16.h5'
 		if paramsTrain.seq_date == 'jun':
 			predictions_path = path+'model_best_UUnet4ConvLSTM_jun.h5'
-	elif model_type=='atrous':
+	elif paramsTrain.model_type=='atrous':
 		predictions_path=path+'prediction_BAtrousConvLSTM_repeating2.npy'			
-	elif model_type=='atrousgap':
+	elif paramsTrain.model_type=='atrousgap':
 		#predictions_path=path+'prediction_BAtrousGAPConvLSTM_raulapproved.npy'			
 		#predictions_path=path+'prediction_BAtrousGAPConvLSTM_repeating4.npy'			
 		predictions_path=path+'prediction_BAtrousGAPConvLSTM_repeating6.npy'			
-	elif model_type=='unetend':
+	elif paramsTrain.model_type=='unetend':
 		predictions_path=path+'prediction_unet_convlstm_temouri2.npy'			
-	elif model_type=='allinputs':
+	elif paramsTrain.model_type=='allinputs':
 		predictions_path=path+'prediction_bconvlstm_wholeinput.npy'			
 
 	mask_path=data_path+'cv_data/TrainTestMask.tif'
@@ -169,13 +151,13 @@ elif dataset=='cv':
 				   [45, 150, 255]])
 elif dataset=='l2':
 	path+='l2/'	
-	if model_type=='unet':
+	if paramsTrain.model_type=='unet':
 		predictions_path=path+'prediction_BUnet4ConvLSTM_repeating1.npy'
 		#predictions_path=path+'prediction_BUnet4ConvLSTM_repeating2.npy'
 		#predictions_path=path+'prediction_BUnet4ConvLSTM_repeating4.npy'
 		predictions_path = path+'model_best_UUnet4ConvLSTM_doty_fixed_label_dec.h5'
-		predictions_path = path+'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+a.seq_date+'.h5'
-		predictions_path = path+'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+a.seq_date+'_700perclass.h5'
+		predictions_path = path+'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+paramsTrain.seq_date+'.h5'
+		predictions_path = path+'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+paramsTrain.seq_date+'_700perclass.h5'
 #		predictions_path = path+'model_best_UUnet4ConvLSTM_doty_fixed_label_dec_good_slvc05.h5'
 	mask_path=data_path+'l2_data/TrainTestMask.tif'
 	location_path=data_path+'l2_data/locations/'
@@ -196,6 +178,8 @@ elif dataset=='l2':
 					[114,114,56],
 					[53,255,255]])
 print("Loading patch locations...")
+ic(dataset)
+ic(paramsTrain.model_type)
 ic(predictions_path)
 #order_id_load=False
 #if order_id_load==False:
@@ -218,18 +202,18 @@ ic(predictions_path)
 
 print("Loading labels and predictions...")
 
-prediction_type = 'model'
+pr.prediction_type = 'model'
 results_path="../"
 #path=results_path+dataset+'/'
 #prediction_path=path+predictions_path
 path_test='../../../../../dataset/dataset/'+dataset+'_data/patches_bckndfixed/test/'
 print('path_test',path_test)
 
-#prediction_type = 'model'
-if prediction_type=='npy':
+#pr.prediction_type = 'model'
+if pr.prediction_type=='npy':
 	predictionsLoader = PredictionsLoaderNPY()
 	predictions, labels = predictionsLoader.loadPredictions(predictions_path,path+'labels.npy')
-elif prediction_type=='model':	
+elif pr.prediction_type=='model':	
 	#model_path=results_path + 'model/'+dataset+'/'+prediction_filename
 	print('model_path',predictions_path)
 
@@ -238,8 +222,8 @@ elif prediction_type=='model':
 	
 	#PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet
 	predictionsLoaderTest = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset)
-#predictions, label_test, test_pred_proba, model = predictionsLoaderTest.loadPredictions(predictions_path, seq_date=a.seq_date, 
-#		model_dataset=a.model_dataset)	
+#predictions, label_test, test_pred_proba, model = predictionsLoaderTest.loadPredictions(predictions_path, seq_date=paramsTrain.seq_date, 
+#		model_dataset=paramsTrain.model_dataset)	
 # load the full ims ... then create the known classes and unknown class
 # using the paramsTrain values...
 # maybe use the mim object (although not sure if needed)
@@ -285,8 +269,7 @@ ic(full_label_test.shape)
 #pdb.set_trace()
 # ================ HERE CROP THE IMAGE IF NEEDED
 
-croppedFlag = False
-if croppedFlag == True:
+if pr.croppedFlag == True:
 
 #	full_ims_test = full_ims_test[:, 5200:6100,4900:6800]
 #	full_label_test = full_label_test[:, 5200:6100,4900:6800]
@@ -296,8 +279,7 @@ if croppedFlag == True:
 	full_label_test = full_label_test[:, 5100:6100,4900:5900]
 	mask = mask[5100:6100,4900:5900]
 
-save_input_im = True
-if save_input_im == True:
+if pr.save_input_im == True:
 	im = np.load('../../../../../dataset/dataset/'+dataset+'_data/in_np2/20180315_S1.npy')
 	ic(im.shape)
 	im = im[5100:6100,4900:5900, 1]
@@ -329,11 +311,11 @@ data['labeled_dates'] = 12
 seq_mode='fixed'
 
 if dataset=='lm':
-	ds=LEM(seq_mode, a.seq_date)
+	ds=LEM(seq_mode, paramsTrain.seq_date)
 elif dataset=='l2':
-	ds=LEM2(seq_mode, a.seq_date)
+	ds=LEM2(seq_mode, paramsTrain.seq_date)
 elif dataset=='cv':
-	ds=CampoVerde(seq_mode, a.seq_date)
+	ds=CampoVerde(seq_mode, paramsTrain.seq_date)
 deb.prints(ds)
 dataSource = SARSource()
 ds.addDataSource(dataSource)
@@ -346,7 +328,7 @@ ds.dotyReplicateSamples(sample_n = 1)
 # Reconstruct the image
 print("Reconstructing the labes and predictions...")
 
-patch_size=32
+patch_size=paramsTrain.patch_len
 add_padding_flag=False
 if add_padding_flag==True:
 	full_ims_test, stride, step_row, step_col, overlap = seq_add_padding(full_ims_test,patch_size,0)
@@ -377,58 +359,58 @@ cv_labeled_dates = ['20151029', '20151110', '20151122', '20151204', '20151216', 
 					'20160214', '20160309', '20160321', '20160508', '20160520', '20160613', 
 					'20160707', '20160731']
 if paramsTrain.dataset == 'lm':
-	if a.seq_date=='jan':
+	if paramsTrain.seq_date=='jan':
 		dataset_date = lm_labeled_dates[7]
 		l2_date = l2_labeled_dates[3]
 
-	elif a.seq_date=='feb':
+	elif paramsTrain.seq_date=='feb':
 		dataset_date = lm_labeled_dates[8]
 		l2_date = l2_labeled_dates[4]
 
-	elif a.seq_date=='mar':
+	elif paramsTrain.seq_date=='mar':
 		dataset_date = lm_labeled_dates[9]
 		l2_date = l2_labeled_dates[5]
 
-	elif a.seq_date=='apr':
+	elif paramsTrain.seq_date=='apr':
 		dataset_date = lm_labeled_dates[10]
 		l2_date = l2_labeled_dates[6]
 
-	elif a.seq_date=='may':
+	elif paramsTrain.seq_date=='may':
 		dataset_date = lm_labeled_dates[11]
 		l2_date = l2_labeled_dates[7]
 
-	elif a.seq_date=='jun':
+	elif paramsTrain.seq_date=='jun':
 		dataset_date = lm_labeled_dates[0]
 		l2_date = l2_labeled_dates[8]
 
-	elif a.seq_date=='jul':
+	elif paramsTrain.seq_date=='jul':
 		dataset_date = lm_labeled_dates[1]
 		l2_date = l2_labeled_dates[9]
 
-	elif a.seq_date=='aug':
+	elif paramsTrain.seq_date=='aug':
 		dataset_date = lm_labeled_dates[2]
 		l2_date = l2_labeled_dates[10]
 
-	elif a.seq_date=='sep':
+	elif paramsTrain.seq_date=='sep':
 		dataset_date = lm_labeled_dates[3]
 		l2_date = l2_labeled_dates[11]
 
-	elif a.seq_date=='oct':
+	elif paramsTrain.seq_date=='oct':
 		dataset_date = lm_labeled_dates[4]
 		l2_date = l2_labeled_dates[0]
 
-	elif a.seq_date=='nov':
+	elif paramsTrain.seq_date=='nov':
 		dataset_date = lm_labeled_dates[5]
 		l2_date = l2_labeled_dates[1]
 
-	if a.seq_date=='dec':
+	if paramsTrain.seq_date=='dec':
 	#dec
 		dataset_date = lm_labeled_dates[6]
 		l2_date = l2_labeled_dates[2]
 elif paramsTrain.dataset == 'cv':
-	if a.seq_date=='jun':
+	if paramsTrain.seq_date=='jun':
 		dataset_date = cv_labeled_dates[11]
-deb.prints(a.seq_date)
+deb.prints(paramsTrain.seq_date)
 deb.prints(dataset_date)
 
 del full_label_test
@@ -441,13 +423,13 @@ if paramsAnalysis.openSetMethod == "OpenPCS" and paramsAnalysis.makeCovMatrixIde
 	name_id = name_id + "++" 
 name_id = name_id + "_" + paramsTrain.dataset
 
-#name_id = name_id + "_" + a.seq_date
+#name_id = name_id + "_" + paramsTrain.seq_date
 
-if croppedFlag == True:
+if pr.croppedFlag == True:
 	name_id = name_id + "_crop"
 
-open_set_mode = True
-mosaic_flag = False
+# pr.open_set_mode = True
+# pr.mosaic_flag = False
 
 # --================= open set
 
@@ -479,8 +461,8 @@ deb.prints(thresholds)
 #	threshold = 0.7
 ##threshold = 0.7
 #	threshold = -1
-threshold_idx = 4
-threshold = thresholds[threshold_idx]
+# pr.threshold_idx = 4
+threshold = thresholds[pr.threshold_idx]
 
 ic(paramsAnalysis.openSetMethod)
 ic(threshold)
@@ -510,7 +492,7 @@ except:
 
 debug = -2
 
-if mosaic_flag == True:
+if pr.mosaic_flag == True:
 	prediction_rebuilt=np.ones((row,col)).astype(np.uint8)*255
 	scores_rebuilt=np.zeros((row,col)).astype(np.float16)
 
@@ -544,7 +526,7 @@ if mosaic_flag == True:
 							label_date_id = -1) # tstep is -12 to -1
 
 				pred_logits = np.squeeze(model.predict(input_))
-				if open_set_mode == True:
+				if pr.open_set_mode == True:
 					if debug>-1:
 						print('*'*20, "Load decoder features")
 						ic(paramsAnalysis.openSetMethod)
@@ -574,7 +556,7 @@ if mosaic_flag == True:
 
 					ic(np.min(test_pred_proba), np.average(test_pred_proba), np.median(test_pred_proba), np.max(test_pred_proba))
 				# ========================================== open set
-				if open_set_mode == True:
+				if pr.open_set_mode == True:
 					# translate the preddictions.
 					pred_cl = predictionsLoaderTest.newLabel2labelTranslate(pred_cl, 
 							translate_label_path + 'new_labels2labels_'+paramsTrain.dataset+'_'+dataset_date+'_S1.pkl',
@@ -618,7 +600,7 @@ if mosaic_flag == True:
 					ic(openModel.scores.shape)
 					ic(overlap)
 					ic(openModel.scores[overlap//2:x-overlap//2,overlap//2:y-overlap//2].shape)
-				if open_set_mode == True:
+				if pr.open_set_mode == True:
 					scores_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = openModel.scores[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
 				prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_cl[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
 
@@ -648,16 +630,16 @@ if mosaic_flag == True:
 	#prediction_rebuilt=np.reshape(prediction_rebuilt,-1)
 
 	np.save('prediction_rebuilt_'+dataset_date+'_'+name_id+'.npy',prediction_rebuilt)
-	if open_set_mode == True:
+	if pr.open_set_mode == True:
 		np.save('scores_rebuilt_'+dataset_date+'_'+name_id+'.npy',scores_rebuilt)
 	
 else:
 	prediction_rebuilt = np.load('prediction_rebuilt_'+dataset_date+'_'+name_id+'.npy')
-	if open_set_mode == True:
+	if pr.open_set_mode == True:
 		scores_rebuilt = np.load('scores_rebuilt_'+dataset_date+'_'+name_id+'.npy')
 
 # ==== checking scores
-if open_set_mode == True:
+if pr.open_set_mode == True:
 	if debug>-3:
 		scores_test = scores_rebuilt[mask == 2]
 		ic(np.min(scores_test), np.average(scores_test), 
@@ -686,7 +668,7 @@ print("label_rebuilt.unique",np.unique(label_rebuilt,return_counts=True))
 #mask = np.reshape(mask,-1)
 deb.prints(prediction_rebuilt.shape)
 # THIS NEEDS TO BE DONE BEFORE THE OPEN SET
-if open_set_mode == False:
+if pr.open_set_mode == False:
 	prediction_rebuilt = predictionsLoaderTest.newLabel2labelTranslate(prediction_rebuilt, 
 			translate_label_path + 'new_labels2labels_'+paramsTrain.dataset+'_'+dataset_date+'_S1.pkl',
 			bcknd_flag=False)
@@ -873,21 +855,21 @@ def save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask,
 
 	label_rgb=cv2.cvtColor(label_rgb,cv2.COLOR_BGR2RGB)
 	prediction_rgb=cv2.cvtColor(prediction_rgb,cv2.COLOR_BGR2RGB)
-	save_folder=dataset+"/"+model_type+"/"+a.seq_date+"/"
+	save_folder=dataset+"/"+paramsTrain.model_type+"/"+paramsTrain.seq_date+"/"
 	pathlib.Path(save_folder).mkdir(parents=True, exist_ok=True)
 	deb.prints(save_folder)
-	threshIdxName = "_TPR" + tpr_threshold_names[threshold_idx]
+	threshIdxName = "_TPR" + tpr_threshold_names[pr.threshold_idx]
 
-	if open_set_mode == True:
-		prediction_savename = save_folder+"prediction_t_"+a.seq_date+"_"+model_type+"_"+name_id+threshIdxName+".png"
+	if pr.open_set_mode == True:
+		prediction_savename = save_folder+"prediction_t_"+paramsTrain.seq_date+"_"+paramsTrain.model_type+"_"+name_id+threshIdxName+".png"
 	else:
-		prediction_savename = save_folder+"prediction_t_"+a.seq_date+"_"+model_type+"_closedset_"+name_id+".png"
+		prediction_savename = save_folder+"prediction_t_"+paramsTrain.seq_date+"_"+paramsTrain.model_type+"_closedset_"+name_id+".png"
 	ic(prediction_savename)
 	print("saving...")
 	ret = cv2.imwrite(prediction_savename, prediction_rgb)
 	deb.prints(ret)
-	ic(save_folder+"label_t_"+a.seq_date+"_"+model_type+"_"+name_id+".png")
-	ret = cv2.imwrite(save_folder+"label_t_"+a.seq_date+"_"+model_type+"_"+name_id+".png",label_rgb)
+	ic(save_folder+"label_t_"+paramsTrain.seq_date+"_"+paramsTrain.model_type+"_"+name_id+".png")
+	ret = cv2.imwrite(save_folder+"label_t_"+paramsTrain.seq_date+"_"+paramsTrain.model_type+"_"+name_id+".png",label_rgb)
 	deb.prints(ret)
 	ret = cv2.imwrite(save_folder+"mask.png",mask*200)
 	deb.prints(ret)
