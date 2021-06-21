@@ -14,7 +14,7 @@ class ParamsReconstruct():
         self.add_padding_flag = True
 
 #        self.overlap_mode = 'average' # average, replace
-        self.overlap_mode = 'central' # average, replace
+        self.overlap_mode = 'replace' # average, replace
 
 
 

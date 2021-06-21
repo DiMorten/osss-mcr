@@ -333,8 +333,8 @@ patch_size=paramsTrain.patch_len
 if pr.add_padding_flag==True:
 	full_ims_test, stride, step_row, step_col, overlap = seq_add_padding(
 		full_ims_test, patch_size, pr.overlap)
-	#full_label_test, _, _, _, _ = seq_add_padding(full_label_test,32,0)
-	mask_pad, _, _, _, _ = add_padding(mask,patch_size,0)
+	full_label_test, _, _, _, _ = seq_add_padding(full_label_test,patch_size,pr.overlap)
+	mask_pad, _, _, _, _ = add_padding(mask,patch_size,pr.overlap)
 else:
 	mask_pad=mask.copy()
 	stride=patch_size
@@ -497,7 +497,11 @@ if pr.mosaic_flag == True:
 	prediction_rebuilt=np.ones((row,col)).astype(np.uint8)*255
 	scores_rebuilt=np.zeros((row,col)).astype(np.float16)
 
-
+	if pr.add_padding_flag==True:
+		prediction_rebuilt, _, _, _, _ = add_padding(
+			prediction_rebuilt, patch_size, pr.overlap)
+		scores_rebuilt, _, _, _, _ = add_padding(
+			scores_rebuilt, patch_size, pr.overlap)
 
 	print("stride", stride)
 	print(len(range(patch_size//2,row-patch_size//2,stride)))
@@ -605,6 +609,9 @@ if pr.mosaic_flag == True:
 					scores_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = openModel.scores[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
 				if pr.overlap_mode == 'replace':
 					prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_cl[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
+#					prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_cl[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
+#					patch['in'] = full_ims_test[:,m-patch_size//2:m+patch_size//2 + patch_size%2,
+#								n-patch_size//2:n+patch_size//2 + patch_size%2]
 				elif pr.overlap_mode == 'average':
 					pred_patch_prev = np.expand_dims(prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2], axis = 0)
 					pred_patch = np.expand_dims(pred_cl[overlap//2:x-overlap//2,overlap//2:y-overlap//2], axis = 0)
@@ -612,10 +619,6 @@ if pr.mosaic_flag == True:
 					
 					prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = np.median(
 						to_average, axis = 0)
-				elif pr.overlap_mode == 'central':
-					ic(stride)
-					ic(overlap)
-					prediction_rebuilt[m-stride//4:m+stride//4,n-stride//4:n+stride//4] = pred_cl[overlap//4:x-overlap//4,overlap//4:y-overlap//4]
 
 #				prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = predictions_openmodel[:,overlap//2:x-overlap//2,overlap//2:y-overlap//2]
 
@@ -635,6 +638,8 @@ if pr.mosaic_flag == True:
 		ic(overlap)
 		ic(step_row)
 		prediction_rebuilt=prediction_rebuilt[overlap//2:-step_row,overlap//2:-step_col]
+		label_rebuilt=label_rebuilt[overlap//2:-step_row,overlap//2:-step_col]
+		scores_rebuilt=scores_rebuilt[overlap//2:-step_row,overlap//2:-step_col]
 
 	print("---- pad was removed")
 
@@ -715,7 +720,13 @@ if metrics_flag==True:
 
 		class_n = 15
 		print("label predictions shape, beginning of metrics_get",label.shape,predictions.shape)
+		ic(predictions.shape)
+		ic(label.shape)
+		ic(mask.shape)
+
 		predictions=predictions[mask==2]
+
+
 		label=label[mask==2]
 		print("label predictions shape, test area",label.shape,predictions.shape)
 		print("Before small classes ignore")
