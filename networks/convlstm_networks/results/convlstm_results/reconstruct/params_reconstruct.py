@@ -2,10 +2,19 @@
 class ParamsReconstruct():
     def __init__(self):
         self.prediction_type = 'model'
-        self.croppedFlag = False
         self.save_input_im = True
-        self.open_set_mode = True
-        self.mosaic_flag = False
+
+        self.croppedFlag = False
+        self.open_set_mode = False
+        self.mosaic_flag = True
+
         self.threshold_idx = 4
+        self.overlap = 0.5
+
+        self.add_padding_flag = True
+
+#        self.overlap_mode = 'average' # average, replace
+        self.overlap_mode = 'central' # average, replace
+
 
 

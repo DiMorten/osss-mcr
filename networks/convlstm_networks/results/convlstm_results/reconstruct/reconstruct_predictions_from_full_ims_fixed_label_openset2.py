@@ -4,7 +4,7 @@ import cv2
 import glob
 import argparse
 import pdb
-import sys
+import sys, os
 #sys.path.append('../../../../../train_src/analysis/')
 import pathlib
 from utils import seq_add_padding, add_padding
@@ -329,9 +329,10 @@ ds.dotyReplicateSamples(sample_n = 1)
 print("Reconstructing the labes and predictions...")
 
 patch_size=paramsTrain.patch_len
-add_padding_flag=False
-if add_padding_flag==True:
-	full_ims_test, stride, step_row, step_col, overlap = seq_add_padding(full_ims_test,patch_size,0)
+# pr.add_padding_flag=True
+if pr.add_padding_flag==True:
+	full_ims_test, stride, step_row, step_col, overlap = seq_add_padding(
+		full_ims_test, patch_size, pr.overlap)
 	#full_label_test, _, _, _, _ = seq_add_padding(full_label_test,32,0)
 	mask_pad, _, _, _, _ = add_padding(mask,patch_size,0)
 else:
@@ -602,7 +603,19 @@ if pr.mosaic_flag == True:
 					ic(openModel.scores[overlap//2:x-overlap//2,overlap//2:y-overlap//2].shape)
 				if pr.open_set_mode == True:
 					scores_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = openModel.scores[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
-				prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_cl[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
+				if pr.overlap_mode == 'replace':
+					prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_cl[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
+				elif pr.overlap_mode == 'average':
+					pred_patch_prev = np.expand_dims(prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2], axis = 0)
+					pred_patch = np.expand_dims(pred_cl[overlap//2:x-overlap//2,overlap//2:y-overlap//2], axis = 0)
+					to_average = np.concatenate((pred_patch_prev, pred_patch), axis = 0)
+					
+					prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = np.median(
+						to_average, axis = 0)
+				elif pr.overlap_mode == 'central':
+					ic(stride)
+					ic(overlap)
+					prediction_rebuilt[m-stride//4:m+stride//4,n-stride//4:n+stride//4] = pred_cl[overlap//4:x-overlap//4,overlap//4:y-overlap//4]
 
 #				prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = predictions_openmodel[:,overlap//2:x-overlap//2,overlap//2:y-overlap//2]
 
@@ -617,8 +630,11 @@ if pr.mosaic_flag == True:
 		#	break
 	del full_ims_test
 	print("loop time: ", time.time()-t0)
-	if add_padding_flag==True:
-		prediction_rebuilt=prediction_rebuilt[:,overlap//2:-step_row,overlap//2:-step_col]
+	if pr.add_padding_flag==True:
+		ic(prediction_rebuilt.shape)
+		ic(overlap)
+		ic(step_row)
+		prediction_rebuilt=prediction_rebuilt[overlap//2:-step_row,overlap//2:-step_col]
 
 	print("---- pad was removed")
 
@@ -863,9 +879,14 @@ def save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask,
 	if pr.open_set_mode == True:
 		prediction_savename = save_folder+"prediction_t_"+paramsTrain.seq_date+"_"+paramsTrain.model_type+"_"+name_id+threshIdxName+".png"
 	else:
-		prediction_savename = save_folder+"prediction_t_"+paramsTrain.seq_date+"_"+paramsTrain.model_type+"_closedset_"+name_id+".png"
+		prediction_savename = save_folder+"prediction_t_"+paramsTrain.seq_date+"_"+paramsTrain.model_type+"_closedset_"+name_id+"_overl"+str(pr.overlap)+".png"
 	ic(prediction_savename)
 	print("saving...")
+	try:
+
+		os.remove(prediction_savename)
+	except:
+		print("no file to remove")
 	ret = cv2.imwrite(prediction_savename, prediction_rgb)
 	deb.prints(ret)
 	ic(save_folder+"label_t_"+paramsTrain.seq_date+"_"+paramsTrain.model_type+"_"+name_id+".png")
