@@ -407,6 +407,11 @@ class CampoVerde(Dataset):
 					self.im_list=im_list_full[-date_id-12+1:-date_id+1]
 					assert len(self.im_list)==12
 					assert self.im_list[-1]=='20160613_S1'
+				elif self.seq_date=='may':
+					date_id = 4
+					self.im_list=im_list_full[-date_id-11+1:-date_id+1]
+					assert len(self.im_list)==11
+					assert self.im_list[-1]=='20160520_S1'
 
 
 		elif self.dataSource.name == 'OpticalSource':

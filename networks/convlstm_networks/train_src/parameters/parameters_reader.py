@@ -79,10 +79,12 @@ class ParamsTrain(Params):
             if self.seq_date == 'mar':
                 self.known_classes = [0, 1, 10, 12]
 #                self.known_classes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-                self.samples_per_class = 700
+#                self.samples_per_class = 700
 
             elif self.seq_date == 'jun':
-                self.known_classes = [1, 6, 10, 12]
+#                self.known_classes = [1, 6, 10, 12]
+                self.known_classes = [5, 6, 10, 12]
+
         elif self.dataset == 'cv':
             if self.seq_date == 'jun':
                 self.known_classes = [1, 2, 8]

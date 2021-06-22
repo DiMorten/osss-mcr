@@ -334,13 +334,15 @@ class DataForNet(object):
 
 
 
-		print("============ Beginning masking ============")
-		print("Channels to mask:",self.dataset.getChannelsToMask())
+
 		#pdb.set_trace()
-		masking = True
+		masking = False
 		if masking == True:
+			print("============ Beginning masking ============")
+			print("Channels to mask:",self.dataset.getChannelsToMask())
 			self.full_ims_train,self.full_ims_test=self.im_seq_mask(patch["full_ims"],patch["train_mask"],channels_to_mask=self.dataset.getChannelsToMask())
 		else:
+			print("============= Not masking ==============")
 			self.full_ims_train,self.full_ims_test = (patch["full_ims"], patch["full_ims"])
 		patch["full_ims"]=[]
 		

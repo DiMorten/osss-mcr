@@ -796,7 +796,10 @@ class DatasetWithCoords(Dataset):
 		ic(np.unique(self.patches['train']['label'], return_counts = True))
 		ic(self.patches['test']['label'].shape)
 		ic(np.unique(self.patches['test']['label'], return_counts = True))
+		
 
+		unique,count=np.unique(self.full_label_train,return_counts=True)
+		self.class_n=unique.shape[0]
 #		pdb.set_trace()
 		'''
 		self.patches['train']['label'] = self.patches['train']['label']-1
@@ -887,8 +890,30 @@ class DatasetWithCoords(Dataset):
 		print("Moved bcknd to last")
 		ic(np.unique(self.full_label_train, return_counts=True))
 		ic(np.unique(self.full_label_test, return_counts=True))
+		unique,count=np.unique(self.full_label_train,return_counts=True)
+		self.class_n=unique.shape[0] # plus background
+		ic(self.class_n)
 
+	def addPaddingToInput(self, model_t_len, im):
+		if self.t_len < model_t_len: 
+			seq_pad_len = model_t_len - self.t_len
+			im = np.concatenate(
+					(np.zeros((seq_pad_len, *im.shape[1:])),
+					im),
+					axis = 0)
+		ic(im.shape)
+		return im
 
+	def addPaddingToInputPatches(self, patches, model_t_len):
+		if self.t_len < model_t_len: 
+			seq_pad_len = model_t_len - self.t_len
+			patch_n = patches.shape[0]
+			patches = np.concatenate(
+					(np.zeros((patch_n, seq_pad_len, *patches.shape[2:])),
+					patches),
+					axis = 1)
+		ic(patches.shape)
+		return patches
 	def val_set_get(self,mode='random',validation_split=0.2, idxs=None):
 
 		self.patches['val']={'n':int(self.patches['train']['n']*validation_split)}

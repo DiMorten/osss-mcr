@@ -211,7 +211,8 @@ if __name__ == '__main__':
 
 		data.create_load()
 	
-			
+	paramsTrain.class_n = data.class_n
+	ic(paramsTrain.class_n)
 	# check coords patch
 
 ##	data.comparePatchesCoords()
@@ -286,8 +287,10 @@ if __name__ == '__main__':
 
 #	paramsTrain.model_load=False
 	if paramsTrain.model_load:
+		model_name = 'model_best_fit2.h5'
+		model_name = 'model_lm_mar_nomask_good.h5'
 		
-		model.graph=load_model('model_best_fit2.h5', compile=False)		
+		model.graph=load_model(model_name, compile=False)		
 
 	else:
 		model.graph.compile(loss=loss,

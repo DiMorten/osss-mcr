@@ -645,14 +645,14 @@ if pr.mosaic_flag == True:
 
 	#prediction_rebuilt=np.reshape(prediction_rebuilt,-1)
 
-	np.save('prediction_rebuilt_'+dataset_date+'_'+name_id+'.npy',prediction_rebuilt)
+	np.save('prediction_rebuilt_'+dataset_date+'_'+name_id+'_overl'+str(pr.overlap)+'.npy',prediction_rebuilt)
 	if pr.open_set_mode == True:
-		np.save('scores_rebuilt_'+dataset_date+'_'+name_id+'.npy',scores_rebuilt)
+		np.save('scores_rebuilt_'+dataset_date+'_'+name_id+'_overl'+str(pr.overlap)+'.npy',scores_rebuilt)
 	
 else:
-	prediction_rebuilt = np.load('prediction_rebuilt_'+dataset_date+'_'+name_id+'.npy')
+	prediction_rebuilt = np.load('prediction_rebuilt_'+dataset_date+'_'+name_id+'_overl'+str(pr.overlap)+'.npy')
 	if pr.open_set_mode == True:
-		scores_rebuilt = np.load('scores_rebuilt_'+dataset_date+'_'+name_id+'.npy')
+		scores_rebuilt = np.load('scores_rebuilt_'+dataset_date+'_'+name_id+'_overl'+str(pr.overlap)+'.npy')
 
 # ==== checking scores
 if pr.open_set_mode == True:

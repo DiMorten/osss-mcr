@@ -9,8 +9,12 @@ import numpy as np
 def plotMultipleRocCurves(rocCurvesNames, nameID, legendNames):
     for name, legendName in zip(rocCurvesNames, legendNames):
         data = np.load(name)
-        tpr = data['fpr']
-        fpr = data['tpr']
+#        tpr = data['fpr']
+#        fpr = data['tpr']
+
+        tpr = data['tpr']
+        fpr = data['fpr']
+
         roc_auc = metrics.auc(fpr, tpr)*100
         plt.figure(1)
         plt.plot([0, 1], [0, 1], 'k--')
@@ -34,15 +38,15 @@ if __name__=='__main__':
 #        date = 'jun'
 
         if date == 'mar':
-            rocCurvesNames = ['roc_curve_SoftmaxThresholding__test.npz',
+            rocCurvesNames = ['roc_curve_SoftmaxThresholding__test_mar_lm.npz',
 #                    'roc_curve_OpenGMMS_comp1_full_test_mar_lm.npz',
 #                    'roc_curve_OpenGMMS_comp2_full_test_mar_lm.npz',
 #                    'roc_curve_OpenGMMS_comp4_full_test_mar_lm.npz',
 #                    'roc_curve_OpenGMMS_comp8_test.npz',
 
 #                    'roc_curve_OpenPCS_comp20_test_mar_lm.npz',
-                    'roc_curve_OpenPCS_comp90_nocovidentity_test.npz',
-                    'roc_curve_OpenPCS_comp90_test.npz']
+                    'roc_curve_OpenPCS_comp90_nocovidentity_test_mar_lm.npz',
+                    'roc_curve_OpenPCS_comp90_test_mar_lm.npz']
             rocCurvesNames = ['roc_curve_SoftmaxThresholding__test_mar_lm.npz',
 #                    'roc_curve_OpenGMMS_comp1_full_test_mar_lm.npz',
 #                    'roc_curve_OpenGMMS_comp2_full_test_mar_lm.npz',

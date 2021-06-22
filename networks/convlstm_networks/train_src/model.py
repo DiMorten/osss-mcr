@@ -2091,8 +2091,15 @@ class ModelFit(NetModel):
 
 		self.batch['train']['size'] = 16
 
+		# padding
+		ic(data.t_len)
+		ic(data.full_ims_train.shape)
+		#pdb.set_trace()
+		# change magic number
+		data.full_ims_train = data.addPaddingToInput(
+			self.model_t_len, data.full_ims_train)
 
-
+		#pdb.set_trace()
 		history = self.applyFitMethod(data)
 
 		def PlotHistory(_model, feature, path_file = None):
@@ -2130,7 +2137,11 @@ class ModelFit(NetModel):
 			)
 		return history
 
-	def evaluate(self, data):		
+	def evaluate(self, data):	
+
+		data.patches['test']['in'] = data.addPaddingToInputPatches(
+			self.model_t_len, data.patches['test']['in'])
+	
 		data.patches['test']['prediction'] = self.graph.predict(data.patches['test']['in'])
 		metrics_test=data.metrics_get(data.patches['test']['prediction'],
 			data.patches['test']['label'],debug=2)
@@ -2210,7 +2221,7 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 		ic(self.class_n)
 		#pdb.set_trace()
 		params_train = {
-			'dim': (self.t_len,self.patch_len,self.patch_len),
+			'dim': (self.model_t_len,self.patch_len,self.patch_len),
 			'label_dim': (self.patch_len,self.patch_len),
 			'batch_size': self.batch['train']['size'],
 #			'n_classes': self.class_n,
@@ -2260,7 +2271,7 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 		return history
 	def evaluate(self, data):	
 		params_test = {
-			'dim': (self.t_len,self.patch_len,self.patch_len),
+			'dim': (self.model_t_len,self.patch_len,self.patch_len),
 			'label_dim': (self.patch_len,self.patch_len),
 			'batch_size': 1,
 #			'n_classes': self.class_n,
@@ -2270,6 +2281,10 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 			'shuffle': False,
 #			'printCoords': False,
 			'augm': False}	
+
+		data.full_ims_test = data.addPaddingToInput(
+			self.model_t_len, data.full_ims_test)
+
 		data.getPatchesFromCoords(data.full_label_test, data.patches['test']['coords'])
 		test_generator = DataGeneratorWithCoords(data.full_ims_test, data.full_label_test, 
 				data.patches['test']['coords'], **params_test)

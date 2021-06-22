@@ -48,6 +48,22 @@ class MIMFixed_PaddedSeq(MIMFixed):
             input_ = ds.addDoty(input_)
             return input_
 
+    def trainPreprocess(self, full_ims_train, ds, label_date_id, batch_seq_len=12):
+        len_input_seq = full_ims_train.shape[0]
+        #print("batch shape, len input seq", batch['shape'], len_input_seq)
+        if len_input_seq<batch_seq_len:
+            full_ims_train_seq_padded = np.zeros(
+                (len_input_seq,*full_ims_train.shape[1:])).astype(np.float16)
+            full_ims_train_seq_padded[:, -len_input_seq:] = full_ims_train
+            full_ims_train_seq_padded = ds.addDotyPadded(input_, 
+                        bounds = None, 
+                        seq_len = batch_seq_len,
+                        sample_n =  batch['in'].shape[0])
+            return input_
+        else:
+            input_ = batch['in'].astype(np.float16)
+            input_ = ds.addDoty(input_)
+            return input_
 
 class MIMFixedLabelSeq(MIMFixed):
     def __init__(self):
