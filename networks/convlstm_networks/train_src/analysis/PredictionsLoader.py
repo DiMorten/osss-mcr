@@ -349,6 +349,8 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 		return open_features
 	def npyLoadPredictions(self, seq_date):
 		batch = {}
+
+
 		dated_patches_name =True
 		if dated_patches_name==False:
 
@@ -356,33 +358,37 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 	#		test_label=np.load(self.path_test+'patches_label.npy')
 			batch['label']=np.load(self.path_test+'patches_label.npy') # may18
 		else:
+
 			batch['in']=np.load(self.path_test+'patches_in_fixed_'+seq_date+'.npy',mmap_mode='r') # len is 21
 	#		test_label=np.load(self.path_test+'patches_label.npy')
 			deb.prints(self.path_test+'patches_label_fixed_'+seq_date+'.npy')
 			batch['label']=np.load(self.path_test+'patches_label_fixed_'+seq_date+'.npy') # may18
 
-		batch = self.npyPreprocess(batch)
+		# load new label in new location
+		batch['label_with_unknown']=np.load(self.path_test+'patches_label_fixed_'+paramsTrain.seq_date+'_unknown.npy') # may18			
 
+		batch = self.npyPreprocess(batch)
+		
 		return batch
 	def npyPreprocess(self, batch):
 		self.loco_class = 8		
 		#+'patches_label_'+self.seq_mode+'_'+self.seq_date+'_unknown.npy',
 
-#		batch['label_with_loco_class']=np.load(self.path_test+'patches_label_fixed_'+seq_date+'_loco'+str(self.loco_class)+'.npy') # may18			
-		batch['label_with_loco_class']=np.load(self.path_test+'patches_label_fixed_'+paramsTrain.seq_date+'_unknown.npy') # may18			
-
+#		batch['label_with_unknown']=np.load(self.path_test+'patches_label_fixed_'+seq_date+'_loco'+str(self.loco_class)+'.npy') # may18			
+##		batch['label_with_unknown']=np.load(self.path_test+'patches_label_fixed_'+paramsTrain.seq_date+'_unknown.npy') # may18			
+		
 		# test label with loco class. 
-		# If loco_class=8, batch['label_with_loco_class'] contains the loco class as 8+1=9 because 0 is the background ID
-		deb.prints(np.unique(batch['label_with_loco_class'], return_counts=True))
+		# If loco_class=8, batch['label_with_unknown'] contains the loco class as 8+1=9 because 0 is the background ID
+		deb.prints(np.unique(batch['label_with_unknown'], return_counts=True))
 		
 #		self.known_classes = [0, 1, 10, 12]
 
 		if paramsTrain.select_kept_classes_flag==False:
-			for clss in np.unique(batch['label_with_loco_class']): # clss is from 1 to clss_n+1
+			for clss in np.unique(batch['label_with_unknown']): # clss is from 1 to clss_n+1
 				if (clss-1>=0) and (clss-1 not in paramsTrain.unknown_classes): 
-					batch['label_with_loco_class'][batch['label_with_loco_class']!=clss]=0 
+					batch['label_with_unknown'][batch['label_with_unknown']!=clss]=0 
 
-#			all_classes = np.unique(batch['label_with_loco_class']) # with background
+#			all_classes = np.unique(batch['label_with_unknown']) # with background
 #			all_classes = all_classes[1:] - 1 # no bcknd
 #			deb.prints(all_classes)
 #			deb.prints(paramsTrain.unknown_classes)
@@ -390,23 +396,23 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 #			deb.prints(unknown_classes)
 
 #			self.loco_class = paramsTrain.unknown_classes
-#			batch['label_with_loco_class'][batch['label_with_loco_class']!=self.loco_class+1]=0 
+#			batch['label_with_unknown'][batch['label_with_unknown']!=self.loco_class+1]=0 
 		else:
-#			all_classes = np.unique(batch['label_with_loco_class']) # with background
+#			all_classes = np.unique(batch['label_with_unknown']) # with background
 #			all_classes = all_classes[1:] - 1 # no bcknd
 #			deb.prints(all_classes)
 #			deb.prints(known_classes)
 #			unknown_classes = np.setdiff1d(all_classes, args.known_classes)
 #			deb.prints(unknown_classes)
 			for clss in paramsTrain.known_classes:
-				batch['label_with_loco_class'][batch['label_with_loco_class']==int(clss) + 1] = 0
+				batch['label_with_unknown'][batch['label_with_unknown']==int(clss) + 1] = 0
 #				self.patches['train']['label'][self.patches['train']['label']==int(clss) + 1] = 0
 #				self.patches['test']['label'][self.patches['test']['label']==int(clss) + 1] = 0
 		
-		batch['label_with_loco_class'][batch['label_with_loco_class']!=0] = 40 # group all unknown classes into one single class
-		deb.prints(np.unique(batch['label_with_loco_class'], return_counts=True))
+		batch['label_with_unknown'][batch['label_with_unknown']!=0] = 40 # group all unknown classes into one single class
+		deb.prints(np.unique(batch['label_with_unknown'], return_counts=True))
 
-		self.label_with_loco_class = batch['label_with_loco_class'].copy() 
+		self.label_with_unknown = batch['label_with_unknown'].copy() 
 		
 		ic(batch['in'].shape)
 		ic(batch['label'].shape)
@@ -414,8 +420,8 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 	def addLocoClass(self, test_label):
 		print('*'*20, 'addLocoClass')
 		deb.prints(np.unique(test_label,return_counts=True))
-		deb.prints(np.unique(self.label_with_loco_class, return_counts=True))
-		test_label[self.label_with_loco_class == 40] = 40
+		deb.prints(np.unique(self.label_with_unknown, return_counts=True))
+		test_label[self.label_with_unknown == 40] = 40
 		deb.prints(np.unique(test_label,return_counts=True))
 		print('*'*20, 'end addLocoClass')
 		return test_label
@@ -460,7 +466,38 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSetCoords(PredictionsLoade
 		#self.model_t_len = 12
 		#self.full_ims = self.data.addPaddingToInput(
 		#	self.model_t_len, self.full_ims)
+		
 		ic(self.full_ims.shape)
+		ic(self.path_test)
+		ic(self.data.path['v'])
+		batch['label_with_unknown'] = np.load(self.data.path['v'] +
+			'full_ims/label_with_unknown/full_label_test_with_unknown_' + 
+			str(self.data.paramsTrain.seq_date) + '.npy')
+		
+		batch['label_with_unknown'] = np.load(self.data.path['v'] +
+			'full_ims/full_label_test.npy')[-1]
+		'''
+		ic(batch['label_with_unknown'].shape)
+		ic(np.unique(batch['label_with_unknown'], return_counts=True))
+		ic(batch['label_with_unknown'].dtype)
+
+		ic(batch['label_with_unknown2'].shape)
+		ic(np.unique(batch['label_with_unknown2'], return_counts=True))
+		ic(batch['label_with_unknown2'].dtype)
+
+		assert batch['label_with_unknown'] == batch['label_with_unknown2']
+		
+		pdb.set_trace() 
+		'''
+		batch['label_with_unknown'] = self.data.getPatchesFromCoords(
+			batch['label_with_unknown'], self.coords)
+		ic(batch['label_with_unknown'].shape)
+		ic(np.unique(batch['label_with_unknown'], return_counts=True))
+
+
+
+
+		#pdb.set_trace()
 		#pdb.set_trace()
 		batch['in'] = self.data.getSequencePatchesFromCoords(
 			self.full_ims, self.coords) # test coords is called self.coords, make custom init in this class. self.full_ims is also set independent

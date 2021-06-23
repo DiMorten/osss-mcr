@@ -195,8 +195,8 @@ class Dataset(object):
 			print('*'*20, 'Open set - ignoring class')
 		
 			# making label with loco class copy
-			self.patches['test']['label_with_loco_class'] = self.patches['test']['label'].copy()
-			self.patches['train']['label_with_loco_class'] = self.patches['train']['label'].copy()
+			self.patches['test']['label_with_unknown'] = self.patches['test']['label'].copy()
+			self.patches['train']['label_with_unknown'] = self.patches['train']['label'].copy()
 
 			deb.prints(np.unique(self.patches['train']['label'],return_counts=True))
 			deb.prints(self.paramsTrain.loco_class)
@@ -825,6 +825,17 @@ class DatasetWithCoords(Dataset):
 		ic(self.paramsTrain.known_classes)
 		#ic(self.unknown_classes)
 		
+		# save label with unknown class
+		'''
+		np.save(self.path['v'] + 
+			'full_ims/label_with_unknown/full_label_train_with_unknown_' + 
+			str(self.paramsTrain.seq_date) + '.npy', 
+			self.full_label_train)
+		np.save(self.path['v'] + 
+			'full_ims/label_with_unknown/full_label_test_with_unknown_' + 
+			str(self.paramsTrain.seq_date) + '.npy', 
+			self.full_label_test)
+		'''
 		if self.paramsTrain.open_set==True:
 			if self.paramsTrain.select_kept_classes_flag==False:	
 				self.unknown_classes = self.paramsTrain.unknown_classes

@@ -74,8 +74,8 @@ class PatchesStorageAllSamplesOpenSet(PatchesStorageAllSamples):
 		#self.storeSplit(data_patches['val'],'val_bckndfixed')
 		if self.params.open_set==True:
 			print("Storing unknown labels")
-			self.storeLabel(data_patches['test']['label_with_loco_class'],'test_bckndfixed')
-			self.storeLabel(data_patches['train']['label_with_loco_class'],'train_bckndfixed')
+			self.storeLabel(data_patches['test']['label_with_unknown'],'test_bckndfixed')
+			self.storeLabel(data_patches['train']['label_with_unknown'],'train_bckndfixed')
 
 
 
