@@ -61,7 +61,7 @@ from monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerato
 import natsort
 from model import NetModel, ModelFit, ModelLoadGenerator, ModelLoadGeneratorDebug, ModelLoadGeneratorWithCoords, ModelLoadEachBatch
 from dataset import Dataset, DatasetWithCoords
-
+ic.configureOutput(includeContext=False)
 np.random.seed(2021)
 tf.set_random_seed(2021)
 
@@ -289,6 +289,7 @@ if __name__ == '__main__':
 	if paramsTrain.model_load:
 		model_name = 'model_best_fit2.h5'
 		model_name = 'model_lm_mar_nomask_good.h5'
+		model_name = 'model_lm_jun_maize_nomask_good.h5'
 		
 		model.graph=load_model(model_name, compile=False)		
 

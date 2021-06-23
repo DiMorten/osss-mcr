@@ -408,8 +408,8 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 
 		self.label_with_loco_class = batch['label_with_loco_class'].copy() 
 		
-		deb.prints(batch['in'].shape)
-		deb.prints(batch['label'].shape)
+		ic(batch['in'].shape)
+		ic(batch['label'].shape)
 		return batch
 	def addLocoClass(self, test_label):
 		print('*'*20, 'addLocoClass')
@@ -457,13 +457,22 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSetCoords(PredictionsLoade
 #		self.data.full_label = np.load(self.full_label_path).astype(np.uint8) 
 		##self.data.labelPreprocess(loadDicts = True) # new version which only applies (not extract dicts), loading dicts, thus its equal for train and test
 		batch = {}
+		#self.model_t_len = 12
+		#self.full_ims = self.data.addPaddingToInput(
+		#	self.model_t_len, self.full_ims)
+		ic(self.full_ims.shape)
+		#pdb.set_trace()
 		batch['in'] = self.data.getSequencePatchesFromCoords(
 			self.full_ims, self.coords) # test coords is called self.coords, make custom init in this class. self.full_ims is also set independent
 		batch['label'] = self.data.getPatchesFromCoords(
 			self.full_label, self.coords)
+		ic(batch['in'].shape)
+		ic(batch['label'].shape)
 
+
+		#pdb.set_trace()
 		batch = self.npyPreprocess(batch)
-
+		#pdb.set_trace()
 		return batch
 
 #class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModelNto1FixedSeqFixedLabel):

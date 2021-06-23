@@ -336,7 +336,7 @@ class DataForNet(object):
 
 
 		#pdb.set_trace()
-		masking = False
+		masking = True
 		if masking == True:
 			print("============ Beginning masking ============")
 			print("Channels to mask:",self.dataset.getChannelsToMask())

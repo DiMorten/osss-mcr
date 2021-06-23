@@ -146,7 +146,7 @@ class NetModel(object):
 		self.stop_epoch = paramsTrain.stop_epoch
 		deb.prints(self.stop_epoch)
 
-		self.model_t_len = paramsTrain.seq_len
+		self.model_t_len = paramsTrain.model_t_len
 		self.mim = paramsTrain.mim
 	def transition_down(self, pipe, filters):
 		pipe = Conv2D(filters, (3, 3), strides=(2, 2), padding='same')(pipe)
@@ -2094,11 +2094,13 @@ class ModelFit(NetModel):
 		# padding
 		ic(data.t_len)
 		ic(data.full_ims_train.shape)
+		ic(self.model_t_len)
 		#pdb.set_trace()
 		# change magic number
 		data.full_ims_train = data.addPaddingToInput(
 			self.model_t_len, data.full_ims_train)
 
+		ic(data.full_ims_train.shape)
 		#pdb.set_trace()
 		history = self.applyFitMethod(data)
 

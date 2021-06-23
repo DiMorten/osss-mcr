@@ -1061,7 +1061,7 @@ class DatasetWithCoords(Dataset):
 		patch_size = self.patch_len #32
 		# t_len = 12
 		# channel_n = 2
-		patch_dim = (self.t_len, patch_size, patch_size, self.channel_n)
+		patch_dim = (ims.shape[0], patch_size, patch_size, ims.shape[-1])
 		Y = np.empty((coords.shape[0], *patch_dim), dtype=np.float16)
 		for idx in range(coords.shape[0]):
 			patch = ims[:, coords[idx][0]:coords[idx][0]+patch_size,
