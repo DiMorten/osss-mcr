@@ -777,6 +777,7 @@ class DatasetWithCoords(Dataset):
 		self.full_label_train = np.load(self.path['v']+'full_ims/'+'full_label_train.npy').astype(np.uint8)
 		self.full_label_test = np.load(self.path['v']+'full_ims/'+'full_label_test.npy').astype(np.uint8)
 
+
 		self.labelPreprocess()
 
 		self.patches['train']['n'] = self.patches['train']['coords'].shape[0]
@@ -811,9 +812,48 @@ class DatasetWithCoords(Dataset):
 		class_n_no_bkcnd = len(self.classes)-1
 		self.patches['train']['label'][self.patches['train']['label']==255] = class_n_no_bkcnd
 		'''
+
+	def knownClassesGet(self):
+		# known classes criteria
+		unique, count = np.unique(self.full_label_train, return_counts=True)
+		ic(unique, count)
+		
+		unique = unique[1:] - 1
+		count = count[1:]
+		ic(unique, count)
+
+		total_count = np.sum(count)
+		ic(total_count)
+		count_percentage = count / total_count
+		ic(count_percentage)
+		ic(sorted(zip(count_percentage, unique)))
+
+		unique_sorted = sorted(zip(count_percentage, unique), reverse=True)
+		unique_sorted = np.asarray(unique_sorted)
+		ic(unique_sorted)
+
+		cum_percentage = 0.
+		self.paramsTrain.known_classes = []
+		ic(unique.shape[0])
+		ic(self.paramsTrain.known_classes_percentage)
+		for idx in range(unique.shape[0]):
+			cum_percentage += unique_sorted[idx, 0]
+			ic(idx, unique_sorted[idx], cum_percentage)
+			if cum_percentage<self.paramsTrain.known_classes_percentage:
+				self.paramsTrain.known_classes.append(int(unique_sorted[idx, 1]))
+			else:
+				break
+		self.paramsTrain.known_classes = sorted(self.paramsTrain.known_classes)
+		ic(self.paramsTrain.known_classes)
+		pdb.set_trace()
+
+#		self.known_classes = #
 	def labelPreprocess(self, saveDicts = True):
 		self.full_label_train = self.full_label_train[-1]
 		self.full_label_test = self.full_label_test[-1]
+
+		
+		
 
 		unique,count=np.unique(self.full_label_train,return_counts=True)
 		self.class_n=unique.shape[0] # plus background
@@ -822,7 +862,7 @@ class DatasetWithCoords(Dataset):
 		ic(np.unique(self.full_label_test, return_counts=True))
 
 #		pdb.set_trace()
-		ic(self.paramsTrain.known_classes)
+		
 		#ic(self.unknown_classes)
 		
 		# save label with unknown class
@@ -837,6 +877,9 @@ class DatasetWithCoords(Dataset):
 			self.full_label_test)
 		'''
 		if self.paramsTrain.open_set==True:
+
+			self.knownClassesGet()
+			ic(self.paramsTrain.known_classes)
 			if self.paramsTrain.select_kept_classes_flag==False:	
 				self.unknown_classes = self.paramsTrain.unknown_classes
 			else:

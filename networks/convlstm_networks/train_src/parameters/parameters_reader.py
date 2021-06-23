@@ -95,9 +95,9 @@ class ParamsTrain(Params):
                 self.known_classes = [1, 2, 6]
             elif self.seq_date == 'jun':
                 self.known_classes = [1, 2, 8]
-
+        
         print("self.known_classes", self.known_classes)
-
+        self.known_classes_percentage = 0.92
 
         # default main params
 

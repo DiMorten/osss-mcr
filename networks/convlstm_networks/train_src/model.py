@@ -2117,7 +2117,7 @@ class ModelFit(NetModel):
 		PlotHistory(history, 'loss', path_file='loss_fig.png')
 
 		self.graph.save('model_best_fit2.h5')	
-		self.graph.save(self.model_name)	
+		self.graph.save(self.name)	
 			
 
 	def applyFitMethod(self, data):
