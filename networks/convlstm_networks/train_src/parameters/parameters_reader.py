@@ -82,8 +82,8 @@ class ParamsTrain(Params):
 #                self.samples_per_class = 700
 
             elif self.seq_date == 'jun':
-                self.known_classes = [1, 6, 10, 12]
-#                self.known_classes = [5, 6, 10, 12]
+#                self.known_classes = [1, 6, 10, 12]
+                self.known_classes = [5, 6, 10, 12]
 
         elif self.dataset == 'cv':
             if self.seq_date == 'jun':

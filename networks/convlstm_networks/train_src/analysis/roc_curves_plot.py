@@ -33,7 +33,7 @@ if __name__=='__main__':
     dataset = 'lm'
 
     if dataset == 'lm':
-        date = 'mar'
+        date = 'jun'
 #        date = 'jun'
 #        date = 'jun'
 
@@ -66,13 +66,13 @@ if __name__=='__main__':
 #                'OpenPCA + Inverse Covariance 20',
                 'OpenPCS + Inverse Covariance']
         elif date == 'jun':
-            rocCurvesNames = ['roc_curve_SoftmaxThresholding__test_jun.npz',
+            rocCurvesNames = ['roc_curve_SoftmaxThresholding__test_jun_lm.npz',
 #                    'roc_curve_OpenGMMS_comp1_full_test_jun_lm.npz',
 #                    'roc_curve_OpenGMMS_comp2_full_test_jun_lm.npz',
 #                    'roc_curve_OpenGMMS_comp4_full_test_jun_lm.npz',
 #                    'roc_curve_OpenGMMS_comp8_full_test_jun_lm.npz',
-                    'roc_curve_OpenPCS_comp90_nocovidentity_test_jun.npz',
-                    'roc_curve_OpenPCS_comp90_test_jun.npz']
+                    'roc_curve_OpenPCS_comp90_nocovidentity_test_jun_lm.npz',
+                    'roc_curve_OpenPCS_comp90_test_jun_lm.npz']
             legendNames = ['Softmax Thresholding',
 #                'OpenGMMS 1 components',
 #                'OpenGMMS 2 components',
