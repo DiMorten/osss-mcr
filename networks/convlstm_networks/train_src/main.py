@@ -158,146 +158,160 @@ def sizeof_fmt(num, suffix='B'):
 # ========== NetModel object implements model graph definition, train/testing, early stopping ================ #
 
 flag = {"data_create": 2, "label_one_hot": True}
+
+class TrainTest():
+
+	def trainEvaluate(self, model_name_id):
+		
+		model_name = 'model_best_' + paramsTrain.model_type + '_' + \
+			paramsTrain.seq_date + '_' + paramsTrain.dataset + '_' + \
+			model_name_id
+		ic(model_name)
+
+		premade_split_patches_load=False
+		
+
+		deb.prints(premade_split_patches_load)
+		#
+		patchesArray = PatchesArray()
+		time_measure=False
+
+
+	#	dataset='l2'
+		#dataset='l2'
+		if dataset=='lm':
+			ds=LEM(paramsTrain.seq_mode, paramsTrain.seq_date, paramsTrain.seq_len)
+		elif dataset=='l2':
+			ds=LEM2(paramsTrain.seq_mode, paramsTrain.seq_date, paramsTrain.seq_len)
+		elif dataset=='cv':
+			ds=CampoVerde(paramsTrain.seq_mode, paramsTrain.seq_date, paramsTrain.seq_len)
+
+		deb.prints(ds)
+		dataSource = SARSource()
+		ds.addDataSource(dataSource)
+		time_delta = ds.getTimeDelta(delta=True,format='days')
+		dotys, dotys_sin_cos = ds.getDayOfTheYear()
+
+		paramsTrain.t_len = ds.t_len # modified?
+		paramsTrain.dotys_sin_cos = dotys_sin_cos
+
+		if paramsTrain.sliceFromCoords == False:
+			datasetClass = Dataset
+		else:
+			datasetClass = DatasetWithCoords
+		data = datasetClass(paramsTrain = paramsTrain, ds = ds,
+			dotys_sin_cos = dotys_sin_cos)
+		#t_len=paramsTrain.t_len
+
+		
+	#	paramsTrain.patience=30 # more for the Nice paper
+	##	paramsTrain.patience=10 # more for the Nice paper
+
+		#val_set=True
+		#val_set_mode='stratified'
+	#	val_set_mode='stratified'
+		#val_set_mode=paramsTrain.val_set_mode
+		
+	#	val_set_mode='random'
+		if premade_split_patches_load==False:
+			randomly_subsample_sets=False
+
+			data.create_load()
+		
+		paramsTrain.class_n = data.class_n
+		ic(paramsTrain.class_n)
+		# check coords patch
+
+	##	data.comparePatchesCoords()
+		#adam = Adam(lr=0.0001, beta_1=0.9)
+		adam = Adam(lr=paramsTrain.learning_rate, beta_1=0.9)
+		
+		#adam = Adagrad(0.01)
+		#model = ModelLoadEachBatch(epochs=paramsTrain.epochs, patch_len=paramsTrain.patch_len,
+	##	modelClass = NetModel
+	##	modelClass = ModelFit
+	##	modelClass = ModelLoadGenerator
+		if paramsTrain.sliceFromCoords == False:
+			#modelClass = NetModel
+	#		modelClass = ModelFit
+			modelClass = ModelLoadGenerator
+	#		modelClass = ModelLoadGeneratorDebug
+		else:
+			modelClass = ModelLoadGeneratorWithCoords
+
+
+		model = modelClass(paramsTrain = paramsTrain, ds = ds, 
+						) # , data = data
+
+		model.name = model_name
+		
+		model.class_n=data.class_n-1 # Model is designed without background class
+		deb.prints(data.class_n)
+		model.build()
+
+
+		model.class_n+=1 # This is used in loss_weights_estimate, val_set_get, semantic_balance (To-do: Eliminate bcknd class)
+
+		print("=== SELECT VALIDATION SET FROM TRAIN SET")
+			
+		#val_set = False # fix this
+		if paramsTrain.val_set==True:
+			deb.prints(paramsTrain.val_set_mode)
+			data.val_set_get(paramsTrain.val_set_mode,0.15)
+		else:
+			data.patches['val']={}
+
+			data.patches['val']['label']=np.zeros((1,1))
+			data.patches['val']['in']=np.zeros((1,1))
+			
+			deb.prints(data.patches['val']['label'].shape)
+			
+		#balancing=False
+		
+		if paramsTrain.balancing==True:
+			print("=== AUGMENTING TRAINING DATA")
+
+			if paramsTrain.seq_mode=='fixed' or paramsTrain.seq_mode=='fixed_label_len':
+				label_type = 'Nto1'
+			elif paramsTrain.seq_mode=='var' or paramsTrain.seq_mode=='var_label':	
+				label_type = 'NtoN'
+			deb.prints(label_type)
+			print("Before balancing:")
+
+			data.semantic_balance(paramsTrain.samples_per_class,label_type = label_type) #More for known classes few. Compare with 500 later
+						
+		model.class_n-=1
+
+		# Label background from 0 to last. 
+		deb.prints(data.patches['train']['coords'].shape)
+
+		#=========== End of moving bcknd label from 0 to last value
+
+		metrics=['accuracy']
+
+		#loss=weighted_categorical_crossentropy_ignoring_last_label(model.loss_weights_ones)
+		loss=categorical_focal_ignoring_last_label(alpha=0.25,gamma=2)
+		#loss=weighted_categorical_focal_ignoring_last_label(model.loss_weights,alpha=0.25,gamma=2)
+
+
+	#	paramsTrain.model_load=False
+		if paramsTrain.model_load:
+			
+			model_name = 'model_best_fit2.h5'
+			model_name = 'model_lm_mar_nomask_good.h5'
+			model_name = 'model_lm_jun_maize_nomask_good.h5'
+			model_name = 'model_lm_jun_maize_nomask_good.h5'
+			model_name = 'model_best_UUnet4ConvLSTM_jun.h5'
+			
+			model.graph=load_model(model_name, compile=False)		
+
+		else:
+			model.graph.compile(loss=loss,
+						optimizer=adam, metrics=metrics)
+
+			model.train(data)
+		
+		model.evaluate(data)
+
 if __name__ == '__main__':
-
-	premade_split_patches_load=False
-	
-
-	deb.prints(premade_split_patches_load)
-	#
-	patchesArray = PatchesArray()
-	time_measure=False
-
-
-#	dataset='l2'
-	#dataset='l2'
-	if dataset=='lm':
-		ds=LEM(paramsTrain.seq_mode, paramsTrain.seq_date, paramsTrain.seq_len)
-	elif dataset=='l2':
-		ds=LEM2(paramsTrain.seq_mode, paramsTrain.seq_date, paramsTrain.seq_len)
-	elif dataset=='cv':
-		ds=CampoVerde(paramsTrain.seq_mode, paramsTrain.seq_date, paramsTrain.seq_len)
-
-	deb.prints(ds)
-	dataSource = SARSource()
-	ds.addDataSource(dataSource)
-	time_delta = ds.getTimeDelta(delta=True,format='days')
-	dotys, dotys_sin_cos = ds.getDayOfTheYear()
-	#pdb.set_trace()
-
-	paramsTrain.t_len = ds.t_len # modified?
-	paramsTrain.dotys_sin_cos = dotys_sin_cos
-
-	if paramsTrain.sliceFromCoords == False:
-		datasetClass = Dataset
-	else:
-		datasetClass = DatasetWithCoords
-	data = datasetClass(paramsTrain = paramsTrain, ds = ds,
-		dotys_sin_cos = dotys_sin_cos)
-	#t_len=paramsTrain.t_len
-
-	
-#	paramsTrain.patience=30 # more for the Nice paper
-##	paramsTrain.patience=10 # more for the Nice paper
-
-	#val_set=True
-	#val_set_mode='stratified'
-#	val_set_mode='stratified'
-	#val_set_mode=paramsTrain.val_set_mode
-	
-#	val_set_mode='random'
-	if premade_split_patches_load==False:
-		randomly_subsample_sets=False
-
-		data.create_load()
-	
-	paramsTrain.class_n = data.class_n
-	ic(paramsTrain.class_n)
-	# check coords patch
-
-##	data.comparePatchesCoords()
-	#adam = Adam(lr=0.0001, beta_1=0.9)
-	adam = Adam(lr=paramsTrain.learning_rate, beta_1=0.9)
-	
-	#adam = Adagrad(0.01)
-	#model = ModelLoadEachBatch(epochs=paramsTrain.epochs, patch_len=paramsTrain.patch_len,
-##	modelClass = NetModel
-##	modelClass = ModelFit
-##	modelClass = ModelLoadGenerator
-	if paramsTrain.sliceFromCoords == False:
-		#modelClass = NetModel
-#		modelClass = ModelFit
-		modelClass = ModelLoadGenerator
-#		modelClass = ModelLoadGeneratorDebug
-	else:
-		modelClass = ModelLoadGeneratorWithCoords
-
-
-	model = modelClass(paramsTrain = paramsTrain, ds = ds, 
-					 ) # , data = data
-
-	model.class_n=data.class_n-1 # Model is designed without background class
-	deb.prints(data.class_n)
-	model.build()
-
-
-	model.class_n+=1 # This is used in loss_weights_estimate, val_set_get, semantic_balance (To-do: Eliminate bcknd class)
-
-	print("=== SELECT VALIDATION SET FROM TRAIN SET")
-		
-	#val_set = False # fix this
-	if paramsTrain.val_set==True:
-		deb.prints(paramsTrain.val_set_mode)
-		data.val_set_get(paramsTrain.val_set_mode,0.15)
-	else:
-		data.patches['val']={}
-
-		data.patches['val']['label']=np.zeros((1,1))
-		data.patches['val']['in']=np.zeros((1,1))
-		
-		deb.prints(data.patches['val']['label'].shape)
-		
-	#balancing=False
-	
-	if paramsTrain.balancing==True:
-		print("=== AUGMENTING TRAINING DATA")
-
-		if paramsTrain.seq_mode=='fixed' or paramsTrain.seq_mode=='fixed_label_len':
-			label_type = 'Nto1'
-		elif paramsTrain.seq_mode=='var' or paramsTrain.seq_mode=='var_label':	
-			label_type = 'NtoN'
-		deb.prints(label_type)
-		print("Before balancing:")
-
-		data.semantic_balance(paramsTrain.samples_per_class,label_type = label_type) #More for known classes few. Compare with 500 later
-					
-	model.class_n-=1
-
-	# Label background from 0 to last. 
-	deb.prints(data.patches['train']['coords'].shape)
-
-	#=========== End of moving bcknd label from 0 to last value
-
-	metrics=['accuracy']
-
-	#loss=weighted_categorical_crossentropy_ignoring_last_label(model.loss_weights_ones)
-	loss=categorical_focal_ignoring_last_label(alpha=0.25,gamma=2)
-	#loss=weighted_categorical_focal_ignoring_last_label(model.loss_weights,alpha=0.25,gamma=2)
-
-
-#	paramsTrain.model_load=False
-	if paramsTrain.model_load:
-		model_name = 'model_best_fit2.h5'
-		model_name = 'model_lm_mar_nomask_good.h5'
-		model_name = 'model_lm_jun_maize_nomask_good.h5'
-		
-		model.graph=load_model(model_name, compile=False)		
-
-	else:
-		model.graph.compile(loss=loss,
-					optimizer=adam, metrics=metrics)
-
-		model.train(data)
-	
-	model.evaluate(data)
-
+	TrainTest().trainEvaluate('')

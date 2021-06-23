@@ -1210,7 +1210,8 @@ if dataset=='cv':
 	exp_id=5
 	if paramsTrain.seq_date =='jun':
 		experiment_groups=[[
-			'model_best_UUnet4ConvLSTM_jun.h5'
+#			'model_best_UUnet4ConvLSTM_jun.h5'
+			'model_best_jun_cv_nomask.h5'
 		]]	
 
 elif dataset=='l2':

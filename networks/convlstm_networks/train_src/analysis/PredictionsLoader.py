@@ -470,10 +470,11 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSetCoords(PredictionsLoade
 		ic(self.full_ims.shape)
 		ic(self.path_test)
 		ic(self.data.path['v'])
+		'''dataset
 		batch['label_with_unknown'] = np.load(self.data.path['v'] +
 			'full_ims/label_with_unknown/full_label_test_with_unknown_' + 
 			str(self.data.paramsTrain.seq_date) + '.npy')
-		
+		'''
 		batch['label_with_unknown'] = np.load(self.data.path['v'] +
 			'full_ims/full_label_test.npy')[-1]
 		'''

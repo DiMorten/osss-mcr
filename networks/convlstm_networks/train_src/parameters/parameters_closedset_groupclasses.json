@@ -6,15 +6,12 @@
     "val_set": true,
     "store_patches": true,
     "select_kept_classes_flag": false,
-    "known_classes": [0, 1, 10, 12],
     "group_bcknd_classes": false,
     "samples_per_class": 2000,
     "val_set_mode": "random",
-    "seq_date": "mar", 
-    "dataset": "lm",
     "seq_len": 12,
     "seq_mode": "fixed",
-    "learning_rate": 0.0001,
+
     "sliceFromCoords": true
 
 }

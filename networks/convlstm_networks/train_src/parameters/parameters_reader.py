@@ -40,8 +40,8 @@ class ParamsTrain(Params):
     def __init__(self, folder_path):
         # 4 known classes
 #        self.openMode = 'ClosedSetGroupClasses'
-#        self.openMode = 'OpenSet'
-        self.openMode = 'SaveNonaugmentedTrainPatches'
+        self.openMode = 'OpenSet'
+#        self.openMode = 'SaveNonaugmentedTrainPatches'
         if self.openMode == 'OpenSet':
             json_path = folder_path+'parameters_openset.json'
         elif self.openMode == 'ClosedSetGroupClasses':
@@ -49,6 +49,11 @@ class ParamsTrain(Params):
         elif self.openMode == 'SaveNonaugmentedTrainPatches':
             json_path = folder_path+'save_nonaugmented_train_patches.json'
 
+        self.dataset = 'cv'
+        
+        self.seq_date = 'may'
+        
+        self.learning_rate = 0.0001
         # 2 known classes
 #        json_path = folder_path+'twokkc_parameters_openset.json'
 #        json_path = folder_path+'twokkc_parameters_closedset_groupclasses.json'
@@ -86,7 +91,9 @@ class ParamsTrain(Params):
                 self.known_classes = [5, 6, 10, 12]
 
         elif self.dataset == 'cv':
-            if self.seq_date == 'jun':
+            if self.seq_date == 'may':
+                self.known_classes = [1, 2, 6]
+            elif self.seq_date == 'jun':
                 self.known_classes = [1, 2, 8]
 
         print("self.known_classes", self.known_classes)
