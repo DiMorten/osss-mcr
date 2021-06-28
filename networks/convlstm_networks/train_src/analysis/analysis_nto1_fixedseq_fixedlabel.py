@@ -1211,8 +1211,13 @@ if dataset=='cv':
 	if paramsTrain.seq_date =='jun':
 		experiment_groups=[[
 #			'model_best_UUnet4ConvLSTM_jun.h5'
-			'model_best_jun_cv_nomask.h5'
+#			'model_best_jun_cv_nomask.h5'
+			'model_best_UUnet4ConvLSTM_jun_cv_criteria_0_92.h5'
 		]]	
+	elif paramsTrain.seq_date == 'may':
+		experiment_groups=[[
+			'model_cv_may_3classes_nomask.h5'
+		]]
 
 elif dataset=='l2':
 		exp_id=1
@@ -1382,7 +1387,8 @@ elif dataset=='lm':
 #			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_jun_lm_fewknownclasses.h5']]	
 #			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_jun_lm_fewknownclasses2.h5']]	
 			experiment_groups=[['model_lm_jun_sorghum2_openset_masked.h5']]	
-			experiment_groups=[['model_lm_jun_maize_nomask_good.h5']]	
+			experiment_groups=[['model_lm_jun_maize_nomask_good.h5']]
+			experiment_groups=[['model_best_UUnet4ConvLSTM_jun_lm_.h5']]
 		if paramsTrain.openMode == 'ClosedSetGroupClasses':
 			if paramsTrain.seq_date =='mar':
 				experiment_groups=[['model_best_UUnet4ConvLSTM_mar_lm_fixed_fewknownclasses_groupclasses_coords_notmasked.h5']]

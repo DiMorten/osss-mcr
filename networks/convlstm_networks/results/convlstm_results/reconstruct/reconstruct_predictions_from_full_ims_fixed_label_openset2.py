@@ -77,9 +77,11 @@ if dataset=='lm':
 		predictions_path = path+'model_best_UUnet4ConvLSTM_fixed_label_fixed_'+paramsTrain.seq_date+'_loco8_lm_testlm_fewknownclasses.h5'	
 		if paramsTrain.seq_date == 'mar':
 			predictions_path = path+'model_best_UUnet4ConvLSTM_fixed_label_fixed_'+paramsTrain.seq_date+'_loco8_lm_testlm_fewknownclasses.h5'	
+			predictions_path = path+'model_lm_mar_nomask_good.h5'	
 			#predictions_path = path+'model_best_UUnet4ConvLSTM_mar_lm_fixed_fewknownclasses_groupclasses_newdataaugmentation_coords.h5'
 		elif paramsTrain.seq_date == 'jun':
 			predictions_path = path+'model_best_UUnet4ConvLSTM_fixed_label_fixed_jun_lm_fewknownclasses2.h5'	
+			predictions_path = path+'model_best_UUnet4ConvLSTM_jun_lm_.h5'	
 
 	elif paramsTrain.model_type=='atrous':
 		predictions_path=path+'prediction_BAtrousConvLSTM_2convins5.npy'
@@ -122,6 +124,9 @@ elif dataset=='cv':
 		predictions_path=path+'model_best_BUnet4ConvLSTM_int16.h5'
 		if paramsTrain.seq_date == 'jun':
 			predictions_path = path+'model_best_UUnet4ConvLSTM_jun.h5'
+			predictions_path = path+'model_best_UUnet4ConvLSTM_jun_cv_criteria_0_92.h5'
+		if paramsTrain.seq_date == 'may':
+			predictions_path = path+'model_cv_may_3classes_nomask.h5'
 	elif paramsTrain.model_type=='atrous':
 		predictions_path=path+'prediction_BAtrousConvLSTM_repeating2.npy'			
 	elif paramsTrain.model_type=='atrousgap':

@@ -165,7 +165,7 @@ class TrainTest():
 		
 		model_name = 'model_best_' + paramsTrain.model_type + '_' + \
 			paramsTrain.seq_date + '_' + paramsTrain.dataset + '_' + \
-			model_name_id
+			model_name_id + '.h5'
 		ic(model_name)
 
 		premade_split_patches_load=False
@@ -302,7 +302,8 @@ class TrainTest():
 			model_name = 'model_lm_jun_maize_nomask_good.h5'
 			model_name = 'model_lm_jun_maize_nomask_good.h5'
 			model_name = 'model_best_UUnet4ConvLSTM_jun.h5'
-			
+			model_name = 'model_cv_may_3classes_nomask.h5'
+			model_name = 'model_best_fit2.h5'
 			model.graph=load_model(model_name, compile=False)		
 
 		else:
@@ -314,4 +315,4 @@ class TrainTest():
 		model.evaluate(data)
 
 if __name__ == '__main__':
-	TrainTest().trainEvaluate('')
+	TrainTest().trainEvaluate(paramsTrain.model_name)

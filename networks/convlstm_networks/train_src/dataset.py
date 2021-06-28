@@ -843,9 +843,12 @@ class DatasetWithCoords(Dataset):
 				self.paramsTrain.known_classes.append(int(unique_sorted[idx, 1]))
 			else:
 				break
+#				print("Unknown class")
+#			else:
+#				break
 		self.paramsTrain.known_classes = sorted(self.paramsTrain.known_classes)
 		ic(self.paramsTrain.known_classes)
-		pdb.set_trace()
+		#pdb.set_trace()
 
 #		self.known_classes = #
 	def labelPreprocess(self, saveDicts = True):

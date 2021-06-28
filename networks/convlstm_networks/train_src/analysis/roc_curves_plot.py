@@ -31,7 +31,8 @@ def plotMultipleRocCurves(rocCurvesNames, nameID, legendNames):
 
 if __name__=='__main__':
     dataset = 'cv'
-
+    date = 'jun'
+    '''
     if dataset == 'lm':
         date = 'jun'
 #        date = 'jun'
@@ -81,7 +82,7 @@ if __name__=='__main__':
                 'OpenPCS',
                 'OpenPCS + Inverse Covariance']
     elif dataset == 'cv':
-        date = 'jun'
+        date = 'may'
         if date == 'jun':
             rocCurvesNames = ['roc_curve_SoftmaxThresholding__test_jun_cv.npz',
 #                    'roc_curve_OpenGMMS_comp8_full_test_jun_cv.npz',
@@ -89,10 +90,14 @@ if __name__=='__main__':
                     'roc_curve_OpenPCS_comp90_nocovidentity_test_jun_cv.npz',
                     'roc_curve_OpenPCS_comp90_test_jun_cv.npz'
                     ]
-            legendNames = ['Softmax Thresholding',
-#                'OpenGMMS 8 components',
-                
-                'OpenPCS',
-                'OpenPCS + Inverse Covariance']
+        elif date == 'may':
+    '''
+    rocCurvesNames = ['roc_curve_SoftmaxThresholding__test_{}_{}.npz'.format(date, dataset),
+            'roc_curve_OpenPCS_comp90_nocovidentity_test_{}_{}.npz'.format(date, dataset),
+            'roc_curve_OpenPCS_comp90_test_{}_{}.npz'.format(date, dataset)
+            ]
+    legendNames = ['Softmax Thresholding',
+        'OpenPCS',
+        'OpenPCS + Inverse Covariance']
 
     plotMultipleRocCurves(rocCurvesNames, date+'_'+dataset, legendNames)

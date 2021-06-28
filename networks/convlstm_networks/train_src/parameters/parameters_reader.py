@@ -40,8 +40,8 @@ class ParamsTrain(Params):
     def __init__(self, folder_path):
         # 4 known classes
 #        self.openMode = 'ClosedSetGroupClasses'
-        self.openMode = 'OpenSet'
-#        self.openMode = 'SaveNonaugmentedTrainPatches'
+#        self.openMode = 'OpenSet'
+        self.openMode = 'SaveNonaugmentedTrainPatches'
         if self.openMode == 'OpenSet':
             json_path = folder_path+'parameters_openset.json'
         elif self.openMode == 'ClosedSetGroupClasses':
@@ -49,32 +49,12 @@ class ParamsTrain(Params):
         elif self.openMode == 'SaveNonaugmentedTrainPatches':
             json_path = folder_path+'save_nonaugmented_train_patches.json'
 
-        self.dataset = 'cv'
-        
-        self.seq_date = 'may'
-        
+        self.dataset = 'lm'
+        self.seq_date = 'mar'
+        self.model_name = 'criteria_0_92'
         self.learning_rate = 0.0001
-        # 2 known classes
-#        json_path = folder_path+'twokkc_parameters_openset.json'
-#        json_path = folder_path+'twokkc_parameters_closedset_groupclasses.json'
-#        json_path = folder_path+'twokkc_save_nonaugmented_train_patches.json'
 
-        # all kkc
-#        json_path = folder_path+'allkkc_parameters_openset.json'
-#        json_path = folder_path+'allkkc_parameters_closedset_groupclasses.json'
-#        json_path = folder_path+'allkkc_save_nonaugmented_train_patches.json'
 
-#        json_path = folder_path+'parameters_openset_specifyunknownclasses.json'
-#        json_path = folder_path+'save_nonaugmented_train_patches_unknownclasses.json'
-
-#        json_path = folder_path+'parameters_openset_lessclass8.json'
-#        json_path = folder_path+'save_nonaugmented_train_patches_lessclass8.json'
-#        json_path = folder_path+'parameters_closedset_groupclasses_lessclass8.json'
-
-        # 3 known classes campo verde
-#        json_path = folder_path+'cv/'+'parameters_openset.json'
-#        json_path = folder_path+'parameters_closedset_groupclasses.json'
-#        json_path = folder_path+'cv/'+'save_nonaugmented_train_patches.json'
 
         print(os.listdir(folder_path))
         super().__init__(json_path)
@@ -88,14 +68,15 @@ class ParamsTrain(Params):
 
             elif self.seq_date == 'jun':
 #                self.known_classes = [1, 6, 10, 12]
-                self.known_classes = [5, 6, 10, 12]
+                self.known_classes = [1, 5, 6, 10, 12]
 
         elif self.dataset == 'cv':
             if self.seq_date == 'may':
                 self.known_classes = [1, 2, 6]
             elif self.seq_date == 'jun':
-                self.known_classes = [1, 2, 8]
-        
+                #self.known_classes = [1, 2, 8]
+                self.known_classes = [1, 2, 6, 8]
+
         print("self.known_classes", self.known_classes)
         self.known_classes_percentage = 0.92
 
