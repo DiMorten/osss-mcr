@@ -498,10 +498,12 @@ except:
 
 debug = -2
 
+t0 = time.time()
 if pr.mosaic_flag == True:
+	class_n = len(paramsTrain.known_classes)
 	prediction_rebuilt=np.ones((row,col)).astype(np.uint8)*255
 	scores_rebuilt=np.zeros((row,col)).astype(np.float16)
-
+	prediction_logits_rebuilt=np.ones((row,col, class_n)).astype(np.uint8)*255
 
 
 	print("stride", stride)
@@ -513,6 +515,9 @@ if pr.mosaic_flag == True:
 	t0 = time.time()
 	count = 0
 	# score get
+
+	patches_in = []
+
 	for m in range(patch_size//2,row-patch_size//2,stride): 
 		for n in range(patch_size//2,col-patch_size//2,stride):
 			patch_mask = mask_pad[m-patch_size//2:m+patch_size//2 + patch_size%2,
@@ -523,15 +528,37 @@ if pr.mosaic_flag == True:
 							n-patch_size//2:n+patch_size//2 + patch_size%2]
 							
 				patch['in'] = np.expand_dims(patch['in'], axis = 0)
+				#ic(patch['in'].shape)
 				#patch = patch.reshape((1,patch_size,patch_size,bands))
 
+				
 				# features = predictionsLoaderTest.getFeatures(patch['in'], )
 				patch['shape'] = (patch['in'].shape[0], paramsTrain.seq_len) + patch['in'].shape[2:]
 
 				input_ = mim.batchTrainPreprocess(patch, ds,  
 							label_date_id = -1) # tstep is -12 to -1
 
-				pred_logits = np.squeeze(model.predict(input_))
+				patches_in.append(input_)
+#				ic(input_.shape)
+#				pdb.set_trace()
+	
+	patches_in = np.concatenate(patches_in, axis=0)
+
+	pred_logits_patches = model.predict(patches_in)
+	ic(pred_logits_patches.shape)
+	del patches_in
+	#pdb.set_trace()
+	count_mask = 0
+	for m in range(patch_size//2,row-patch_size//2,stride): 
+		for n in range(patch_size//2,col-patch_size//2,stride):
+			patch_mask = mask_pad[m-patch_size//2:m+patch_size//2 + patch_size%2,
+						n-patch_size//2:n+patch_size//2 + patch_size%2]
+			if np.any(patch_mask==2):
+
+				#pred_logits = np.squeeze(model.predict(input_))
+				pred_logits = np.squeeze(pred_logits_patches[count_mask])
+	#				ic(pred_logits.shape)
+
 				if pr.open_set_mode == True:
 					if debug>-1:
 						print('*'*20, "Load decoder features")
@@ -545,12 +572,13 @@ if pr.mosaic_flag == True:
 						if debug>0:
 							ic(test_pred_proba_shape) # h, w, classes
 						test_pred_proba = np.reshape(test_pred_proba, (-1, test_pred_proba.shape[-1]))
-#				ic(np.average(test_pred_proba))
+	#				ic(np.average(test_pred_proba))
 
 				#print(input_[0].shape)
 				#ic(len(input_))
 
-#				ic(input_.shape)
+	#				ic(input_.shape)
+
 				pred_cl = pred_logits.argmax(axis=-1)
 				#deb.prints(pred_cl.shape)
 				x, y = pred_cl.shape
@@ -574,9 +602,9 @@ if pr.mosaic_flag == True:
 					#test_pred_proba = np.reshape(test_pred_proba, test_pred_proba_shape)
 					openModel.predictScores(pred_cl.flatten() - 1, test_pred_proba,
 								debug = debug)
-#					openModel.predictScores(pred_cl.flatten(), test_pred_proba,
-#								debug = debug)
-#					pdb.set_trace()
+	#					openModel.predictScores(pred_cl.flatten(), test_pred_proba,
+	#								debug = debug)
+	#					pdb.set_trace()
 					openModel.scores = np.reshape(openModel.scores, (x, y)) # reshape to h, w
 					if debug>-2:
 						ic(np.min(test_pred_proba), np.average(test_pred_proba), 
@@ -593,7 +621,7 @@ if pr.mosaic_flag == True:
 						ic(openModel.scores.flatten()[idx])
 						ic(pred_cl.flatten()[idx])
 
-#						pdb.set_trace()
+	#						pdb.set_trace()
 
 					#pdb.set_trace()
 					# load the pca model / covariance matrix 
@@ -610,6 +638,7 @@ if pr.mosaic_flag == True:
 					scores_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = openModel.scores[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
 				if pr.overlap_mode == 'replace':
 					prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_cl[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
+					prediction_logits_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_logits[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
 				elif pr.overlap_mode == 'average':
 					pred_patch_prev = np.expand_dims(prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2], axis = 0)
 					pred_patch = np.expand_dims(pred_cl[overlap//2:x-overlap//2,overlap//2:y-overlap//2], axis = 0)
@@ -622,19 +651,23 @@ if pr.mosaic_flag == True:
 					ic(overlap)
 					prediction_rebuilt[m-stride//4:m+stride//4,n-stride//4:n+stride//4] = pred_cl[overlap//4:x-overlap//4,overlap//4:y-overlap//4]
 
-#				prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = predictions_openmodel[:,overlap//2:x-overlap//2,overlap//2:y-overlap//2]
+	#				prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = predictions_openmodel[:,overlap//2:x-overlap//2,overlap//2:y-overlap//2]
 
 				##deb.prints(np.unique(prediction_rebuilt, return_counts=True))
 				#pdb.set_trace()
-			count = count + 1
-			if count % 50000 == 0:
-				print(count)
+				count_mask += 1
+		count = count + 1
+		if count % 50000 == 0:
+			print(count)
 
 		#if count == 40:
 		#	deb.prints(np.unique(prediction_rebuilt, return_counts=True))
 		#	break
 	del full_ims_test
 	print("loop time: ", time.time()-t0)
+#	if pr.open_set_mode == False:
+#		prediction_rebuilt = prediction_logits_rebuilt.argmax(axis=-1)
+
 	if pr.add_padding_flag==True:
 		ic(prediction_rebuilt.shape)
 		ic(overlap)
@@ -659,6 +692,7 @@ else:
 	if pr.open_set_mode == True:
 		scores_rebuilt = np.load('scores_rebuilt_'+dataset_date+'_'+name_id+'_overl'+str(pr.overlap)+'.npy')
 
+ic(t0-time.time())
 # ==== checking scores
 if pr.open_set_mode == True:
 	if debug>-3:
