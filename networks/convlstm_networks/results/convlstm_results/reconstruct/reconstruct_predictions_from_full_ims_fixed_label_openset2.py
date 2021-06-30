@@ -339,7 +339,7 @@ if pr.add_padding_flag==True:
 	full_ims_test, stride, step_row, step_col, overlap = seq_add_padding(
 		full_ims_test, patch_size, pr.overlap)
 	#full_label_test, _, _, _, _ = seq_add_padding(full_label_test,32,0)
-	mask_pad, _, _, _, _ = add_padding(mask,patch_size,0)
+	mask_pad, _, _, _, _ = add_padding(mask,patch_size,pr.overlap)
 else:
 	mask_pad=mask.copy()
 	stride=patch_size
@@ -503,7 +503,7 @@ if pr.mosaic_flag == True:
 	class_n = len(paramsTrain.known_classes)
 	prediction_rebuilt=np.ones((row,col)).astype(np.uint8)*255
 	scores_rebuilt=np.zeros((row,col)).astype(np.float16)
-	prediction_logits_rebuilt=np.ones((row,col, class_n)).astype(np.uint8)*255
+	prediction_logits_rebuilt=np.ones((row,col, class_n)).astype(np.float16)
 
 
 	print("stride", stride)
@@ -637,15 +637,53 @@ if pr.mosaic_flag == True:
 				if pr.open_set_mode == True:
 					scores_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = openModel.scores[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
 				if pr.overlap_mode == 'replace':
+					#ic(np.unique(prediction_rebuilt, return_counts = True))
+					#ic(np.unique(prediction_logits_rebuilt.argmax(axis=-1), return_counts = True))
 					prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_cl[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
+					'''
+					print("Start loop debug")
+					ic(pred_cl.shape)
+					ic(np.unique(pred_cl, return_counts = True))
+					ic(pred_logits.shape)
+					ic(np.unique(pred_logits.argmax(axis=-1), return_counts = True))
+					'''
 					prediction_logits_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_logits[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
-				elif pr.overlap_mode == 'average':
-					pred_patch_prev = np.expand_dims(prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2], axis = 0)
-					pred_patch = np.expand_dims(pred_cl[overlap//2:x-overlap//2,overlap//2:y-overlap//2], axis = 0)
-					to_average = np.concatenate((pred_patch_prev, pred_patch), axis = 0)
+
+					'''
+					ic(prediction_rebuilt.shape)
+					ic(prediction_logits_rebuilt.shape)
+					ic(prediction_logits_rebuilt.argmax(axis=-1).shape)
 					
-					prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = np.median(
+					
+					ic(np.unique(prediction_rebuilt, return_counts = True))
+					ic(np.unique(prediction_logits_rebuilt.argmax(axis=-1), return_counts = True))
+					print("End loop debug")
+					pdb.set_trace()
+					'''
+				elif pr.overlap_mode == 'average':
+					pred_patch_prev = np.expand_dims(prediction_logits_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2], axis = 0)
+					pred_patch = np.expand_dims(pred_logits[overlap//2:x-overlap//2,overlap//2:y-overlap//2], axis = 0)
+					to_average = np.concatenate((pred_patch_prev, pred_patch), axis = 0)
+
+					prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_cl[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
+
+
+					prediction_logits_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = np.average(
 						to_average, axis = 0)
+
+				elif pr.overlap_mode == 'average_score':
+					pred_patch_prev = np.expand_dims(prediction_logits_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2], axis = 0)
+					pred_patch = np.expand_dims(pred_logits[overlap//2:x-overlap//2,overlap//2:y-overlap//2], axis = 0)
+					to_average = np.concatenate((pred_patch_prev, pred_patch), axis = 0)
+
+					prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_cl[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
+
+
+					prediction_logits_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = np.average(
+						to_average, axis = 0)
+
+
+
 				elif pr.overlap_mode == 'central':
 					ic(stride)
 					ic(overlap)
@@ -665,14 +703,25 @@ if pr.mosaic_flag == True:
 		#	break
 	del full_ims_test
 	print("loop time: ", time.time()-t0)
-#	if pr.open_set_mode == False:
-#		prediction_rebuilt = prediction_logits_rebuilt.argmax(axis=-1)
-
+	ic(count_mask)
+	ic(prediction_logits_rebuilt.shape)
+	ic(prediction_rebuilt.shape)
+	ic(np.unique(prediction_rebuilt, return_counts=True))
+	#prediction_rebuilt[mask_pad != 2] = 255
+	ic(np.unique(prediction_rebuilt, return_counts=True))
+	if pr.open_set_mode == False:
+		prediction_rebuilt = prediction_logits_rebuilt.argmax(axis=-1).astype(np.uint8)
+		prediction_rebuilt[mask_pad != 2] = 255
+	ic(np.unique(prediction_rebuilt, return_counts=True))
+#	pdb.set_trace()
 	if pr.add_padding_flag==True:
 		ic(prediction_rebuilt.shape)
 		ic(overlap)
 		ic(step_row)
 		prediction_rebuilt=prediction_rebuilt[overlap//2:-step_row,overlap//2:-step_col]
+		scores_rebuilt=scores_rebuilt[overlap//2:-step_row,overlap//2:-step_col]
+#		prediction_logits_rebuilt=prediction_logits_rebuilt[overlap//2:-step_row,overlap//2:-step_col]
+
 
 	print("---- pad was removed")
 
@@ -692,7 +741,7 @@ else:
 	if pr.open_set_mode == True:
 		scores_rebuilt = np.load('scores_rebuilt_'+dataset_date+'_'+name_id+'_overl'+str(pr.overlap)+'.npy')
 
-ic(t0-time.time())
+ic(time.time()-t0)
 # ==== checking scores
 if pr.open_set_mode == True:
 	if debug>-3:
@@ -706,9 +755,9 @@ if pr.open_set_mode == True:
 		ic(scores_rebuilt.shape)
 
 		deb.prints(np.unique(prediction_rebuilt,return_counts=True))
-
+		ic(prediction_rebuilt.shape)
 	prediction_rebuilt = openModel.predict(prediction_rebuilt, scores_rebuilt, debug = debug)
-
+	ic(prediction_rebuilt.shape)
 
 if debug>-1:
 	print('*'*20, "Finished openModel predict")
@@ -731,6 +780,9 @@ if pr.open_set_mode == False:
 deb.prints(prediction_rebuilt.shape)
 #pdb.set_trace()
 deb.prints(np.unique(prediction_rebuilt,return_counts=True))
+
+
+ic(time.time()-t0)
 metrics_flag=True
 if metrics_flag==True:
 	# ========== metrics get =======#
@@ -940,3 +992,5 @@ save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask,
 		sequence_len, custom_colormap, small_classes_ignore=True,
 		name_id = name_id)
 
+
+ic(time.time()-t0)
