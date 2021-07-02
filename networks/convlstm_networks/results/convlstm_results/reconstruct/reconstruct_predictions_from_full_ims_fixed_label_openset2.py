@@ -446,8 +446,11 @@ if paramsTrain.dataset == 'lm':
 		thresholds = [0.956, 0.9395, 0.9194, 0.8896, 0.796 ]
 	elif paramsAnalysis.openSetMethod == 'OpenPCS' and paramsAnalysis.makeCovMatrixIdentity == True:
 		thresholds = [-109., -116.4, -125.2, -139.3, -177.3]
+		thresholds = [-111.2144675,  -118.23112963, -125.74639188, -137.06778798, -165.44133578]		
 	elif paramsAnalysis.openSetMethod == 'OpenPCS' and paramsAnalysis.makeCovMatrixIdentity == False:
 		thresholds = [102.2, 64.2, 53.7, 36.0, -3.5]
+		thresholds = [82.666,  49.3365, 41.0876, 29.2014,  1.7033]
+		
 elif paramsTrain.dataset == 'cv':
 	if paramsAnalysis.openSetMethod == 'SoftmaxThresholding':
 		thresholds = [0.693, 0.647, 0.5845, 0.4814, 0.4177]
@@ -469,6 +472,8 @@ deb.prints(thresholds)
 #	threshold = -1
 # pr.threshold_idx = 4
 threshold = thresholds[pr.threshold_idx]
+threshold = -184.4
+#threshold = 0.7
 
 ic(paramsAnalysis.openSetMethod)
 ic(threshold)

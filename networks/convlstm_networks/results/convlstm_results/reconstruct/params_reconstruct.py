@@ -4,12 +4,12 @@ class ParamsReconstruct():
         self.prediction_type = 'model'
         self.save_input_im = True
 
-        self.croppedFlag = False
+        self.croppedFlag = True
         self.open_set_mode = True
         self.mosaic_flag = True
 
         self.threshold_idx = 4
-        self.overlap = 0.5
+        self.overlap = 0
 
         self.add_padding_flag = True
 
