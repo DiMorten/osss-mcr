@@ -27,7 +27,7 @@ from parameters.parameters_reader import ParamsTrain, ParamsAnalysis
 from analysis.open_set import SoftmaxThresholding, OpenPCS
 from params_reconstruct import ParamsReconstruct
 
-ic.configureOutput(includeContext=False, prefix='[@debug] ')
+ic.configureOutput(includeContext=True, prefix='[@debug] ')
 
 
 paramsTrain = ParamsTrain('../../../train_src/parameters/')
@@ -553,33 +553,39 @@ if pr.mosaic_flag == True:
 	ic(pred_logits_patches.shape)
 #	del patches_in
 	#pdb.set_trace()
+
+	# get test features
+	if pr.open_set_mode == True:
+		if debug>-1:
+			print('*'*20, "Load decoder features")
+			ic(paramsAnalysis.openSetMethod)
+
+		if paramsAnalysis.openSetMethod =='OpenPCS':
+			test_pred_proba_patches = predictionsLoaderTest.load_decoder_features(
+				model, patches_in,
+				debug = 1) # , debug = debug
+		else:
+			test_pred_proba_patches = pred_logits_patches.copy()
+			if debug>0:
+				ic(test_pred_proba_patches.shape) # h, w, classes
+			test_pred_proba_patches = np.reshape(test_pred_proba_patches, (test_pred_proba.shape[0], -1, test_pred_proba.shape[-1]))
+
+
 	count_mask = 0
 	for m in range(patch_size//2,row-patch_size//2,stride): 
 		for n in range(patch_size//2,col-patch_size//2,stride):
+			
 			patch_mask = mask_pad[m-patch_size//2:m+patch_size//2 + patch_size%2,
 						n-patch_size//2:n+patch_size//2 + patch_size%2]
 			if np.any(patch_mask==2):
-
+##				t0=time.time()
 				#pred_logits = np.squeeze(model.predict(input_))
 				pred_logits = np.squeeze(pred_logits_patches[count_mask])
 	#				ic(pred_logits.shape)
 
 				if pr.open_set_mode == True:
-					if debug>-1:
-						print('*'*20, "Load decoder features")
-						ic(paramsAnalysis.openSetMethod)
+					test_pred_proba = np.squeeze(test_pred_proba_patches[count_mask])
 
-					if paramsAnalysis.openSetMethod =='OpenPCS':
-						test_pred_proba = predictionsLoaderTest.load_decoder_features(
-							model, np.expand_dims(patches_in[count_mask], axis=0),
-							debug = debug) # , debug = debug
-					else:
-						test_pred_proba = pred_logits.copy()
-						test_pred_proba_shape = test_pred_proba.shape 
-						if debug>0:
-							ic(test_pred_proba_shape) # h, w, classes
-						test_pred_proba = np.reshape(test_pred_proba, (-1, test_pred_proba.shape[-1]))
-	#				ic(np.average(test_pred_proba))
 
 				#print(input_[0].shape)
 				#ic(len(input_))
@@ -607,8 +613,12 @@ if pr.mosaic_flag == True:
 						ic(pred_cl.shape)
 					#ic()
 					#test_pred_proba = np.reshape(test_pred_proba, test_pred_proba_shape)
+##					ic(t0-time.time())
+
 					openModel.predictScores(pred_cl.flatten() - 1, test_pred_proba,
 								debug = debug)
+##					ic(t0-time.time())
+
 	#					openModel.predictScores(pred_cl.flatten(), test_pred_proba,
 	#								debug = debug)
 	#					pdb.set_trace()
@@ -701,6 +711,8 @@ if pr.mosaic_flag == True:
 				##deb.prints(np.unique(prediction_rebuilt, return_counts=True))
 				#pdb.set_trace()
 				count_mask += 1
+##				ic(t0-time.time())
+##				pdb.set_trace()
 		count = count + 1
 		if count % 50000 == 0:
 			print(count)

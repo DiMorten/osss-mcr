@@ -22,7 +22,7 @@ import pdb
 sys.path.append('../../../train_src/')
 import deb
 import pickle
-
+from icecream import ic
 
 
 
@@ -361,11 +361,14 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 
 		if debug > 0:
 			deb.prints(open_features[0].shape)
-		open_features = [x.reshape(-1, x.shape[-1]) for x in open_features]
+#		open_features = np.concatenate(open_features, axis = 0)
+#		ic(open_features.shape)
+#		pdb.set_trace()
+		open_features = [x.reshape(x.shape[0], -1, x.shape[-1]) for x in open_features]
 		if debug > 0:
 			[deb.prints(open_features[x].shape) for x in [0,1,2,3]]
 
-		open_features = np.concatenate(open_features, axis=1)# .astype(prediction_dtype)
+		open_features = np.squeeze(np.concatenate(open_features, axis=-1))# .astype(prediction_dtype)
 
 #		open_features_flat = []
 #		for feature in open_features:
