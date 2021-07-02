@@ -339,7 +339,7 @@ if pr.add_padding_flag==True:
 	full_ims_test, stride, step_row, step_col, overlap = seq_add_padding(
 		full_ims_test, patch_size, pr.overlap)
 	#full_label_test, _, _, _, _ = seq_add_padding(full_label_test,32,0)
-	mask_pad, _, _, _, _ = add_padding(mask,patch_size,0)
+	mask_pad, _, _, _, _ = add_padding(mask,patch_size,pr.overlap)
 else:
 	mask_pad=mask.copy()
 	stride=patch_size

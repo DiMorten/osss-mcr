@@ -23,7 +23,7 @@ class ParamsReconstruct():
 
         ic(self.overlap, self.threshold_idx)
 
-        self.prediction_mask = False
+        self.prediction_mask = True
 
 
 
