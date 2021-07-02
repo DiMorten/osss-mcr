@@ -11,7 +11,7 @@ class ParamsReconstruct():
         self.threshold_idx = 4
         self.overlap = 0
 
-        self.add_padding_flag = True
+        self.add_padding_flag = False
 
         self.overlap_mode = 'replace' # average, replace
 #        self.overlap_mode = 'average' # average, replace
@@ -22,6 +22,8 @@ class ParamsReconstruct():
             self.overlap = 0
 
         ic(self.overlap, self.threshold_idx)
+
+        self.prediction_mask = False
 
 
 
