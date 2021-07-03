@@ -9,7 +9,7 @@ class ParamsReconstruct():
 
         self.croppedFlag = False
         self.open_set_mode = True
-        self.mosaic_flag = False
+        self.mosaic_flag = True
 
         self.threshold_idx = 4
         self.overlap = 0.5
@@ -29,7 +29,7 @@ class ParamsReconstruct():
 
         ic(self.overlap, self.threshold_idx)
 
-        self.prediction_mask = True
+        self.prediction_mask = False
         
         self.data_path='../../../../../dataset/dataset/'
         self.setModelPath('../model/') 
