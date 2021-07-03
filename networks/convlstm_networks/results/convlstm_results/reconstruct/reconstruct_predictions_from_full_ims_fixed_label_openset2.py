@@ -27,12 +27,12 @@ from parameters.parameters_reader import ParamsTrain, ParamsAnalysis
 from analysis.open_set import SoftmaxThresholding, OpenPCS
 from params_reconstruct import ParamsReconstruct
 
-ic.configureOutput(includeContext=True, prefix='[@debug] ')
+ic.configureOutput(includeContext=False, prefix='[@debug] ')
 
 
 paramsTrain = ParamsTrain('../../../train_src/parameters/')
 paramsAnalysis = ParamsAnalysis('../../../train_src/analysis/parameters_analysis/')
-pr = ParamsReconstruct()
+pr = ParamsReconstruct(paramsTrain)
 
 
 ic(paramsTrain.seq_date)
@@ -43,8 +43,7 @@ if direct_execution==True:
 	dataset='lm'
 	paramsTrain.model_type='unet'
 
-if paramsTrain.model_type == 'UUnet4ConvLSTM':
-	paramsTrain.model_type = 'unet'
+
 deb.prints(dataset)
 deb.prints(paramsTrain.model_type)
 deb.prints(direct_execution)
@@ -57,144 +56,19 @@ def patch_file_id_order_from_folder(folder_path):
 	print(order[0:20])
 	return order
 
-path='../model/'
-
-data_path='../../../../../dataset/dataset/'
-if dataset=='lm':
-
-	path+='lm/'
-	if paramsTrain.model_type=='densenet':
-		predictions_path=path+'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy'
-	elif paramsTrain.model_type=='biconvlstm':
-		predictions_path=path+'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy'
-	elif paramsTrain.model_type=='convlstm':
-		predictions_path=path+'prediction_ConvLSTM_seq2seq_batch16_full.npy'
-	elif paramsTrain.model_type=='unet':
-		predictions_path=path+'prediction_BUnet4ConvLSTM_repeating1.npy'
-		#predictions_path=path+'prediction_BUnet4ConvLSTM_repeating2.npy'
-		#predictions_path=path+'prediction_BUnet4ConvLSTM_repeating4.npy'
-		predictions_path = path+'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+paramsTrain.seq_date+'_700perclass.h5'			
-		predictions_path = path+'model_best_UUnet4ConvLSTM_fixed_label_fixed_'+paramsTrain.seq_date+'_loco8_lm_testlm_fewknownclasses.h5'	
-		if paramsTrain.seq_date == 'mar':
-			predictions_path = path+'model_best_UUnet4ConvLSTM_fixed_label_fixed_'+paramsTrain.seq_date+'_loco8_lm_testlm_fewknownclasses.h5'	
-			predictions_path = path+'model_lm_mar_nomask_good.h5'	
-			#predictions_path = path+'model_best_UUnet4ConvLSTM_mar_lm_fixed_fewknownclasses_groupclasses_newdataaugmentation_coords.h5'
-		elif paramsTrain.seq_date == 'jun':
-			predictions_path = path+'model_best_UUnet4ConvLSTM_fixed_label_fixed_jun_lm_fewknownclasses2.h5'	
-			predictions_path = path+'model_best_UUnet4ConvLSTM_jun_lm_.h5'	
-
-	elif paramsTrain.model_type=='atrous':
-		predictions_path=path+'prediction_BAtrousConvLSTM_2convins5.npy'
-	elif paramsTrain.model_type=='atrousgap':
-		predictions_path=path+'prediction_BAtrousGAPConvLSTM_raulapproved.npy'
-		#predictions_path=path+'prediction_BAtrousGAPConvLSTM_repeating3.npy'
-		#predictions_path=path+'prediction_BAtrousGAPConvLSTM_repeating4.npy'
-		
-
-
-	mask_path=data_path+'lm_data/TrainTestMask.tif'
-	location_path=data_path+'lm_data/locations/'
-	folder_load_path=data_path+'lm_data/train_test/test/labels/'
-
-	custom_colormap = np.array([[255,146,36],
-					[255,255,0],
-					[164,164,164],
-					[255,62,62],
-					[0,0,0],
-					[172,89,255],
-					[0,166,83],
-					[40,255,40],
-					[187,122,83],
-					[217,64,238],
-					[0,113,225],
-					[128,0,0],
-					[114,114,56],
-					[53,255,255]])
-elif dataset=='cv':
-
-	path+='cv/'
-	if paramsTrain.model_type=='densenet':
-		predictions_path=path+'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy'
-	elif paramsTrain.model_type=='biconvlstm':
-		predictions_path=path+'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy'
-	elif paramsTrain.model_type=='convlstm':
-		predictions_path=path+'prediction_ConvLSTM_seq2seq_batch16_full.npy'		
-	elif paramsTrain.model_type=='unet':
-		#predictions_path=path+'prediction_BUnet4ConvLSTM_repeating2.npy'
-		predictions_path=path+'model_best_BUnet4ConvLSTM_int16.h5'
-		if paramsTrain.seq_date == 'jun':
-			predictions_path = path+'model_best_UUnet4ConvLSTM_jun.h5'
-			predictions_path = path+'model_best_UUnet4ConvLSTM_jun_cv_criteria_0_92.h5'
-		if paramsTrain.seq_date == 'may':
-			predictions_path = path+'model_cv_may_3classes_nomask.h5'
-	elif paramsTrain.model_type=='atrous':
-		predictions_path=path+'prediction_BAtrousConvLSTM_repeating2.npy'			
-	elif paramsTrain.model_type=='atrousgap':
-		#predictions_path=path+'prediction_BAtrousGAPConvLSTM_raulapproved.npy'			
-		#predictions_path=path+'prediction_BAtrousGAPConvLSTM_repeating4.npy'			
-		predictions_path=path+'prediction_BAtrousGAPConvLSTM_repeating6.npy'			
-	elif paramsTrain.model_type=='unetend':
-		predictions_path=path+'prediction_unet_convlstm_temouri2.npy'			
-	elif paramsTrain.model_type=='allinputs':
-		predictions_path=path+'prediction_bconvlstm_wholeinput.npy'			
-
-	mask_path=data_path+'cv_data/TrainTestMask.tif'
-	location_path=data_path+'cv_data/locations/'
-
-	folder_load_path=data_path+'cv_data/train_test/test/labels/'
-
-	custom_colormap = np.array([[255, 146, 36],
-				   [255, 255, 0],
-				   [164, 164, 164],
-				   [255, 62, 62],
-				   [0, 0, 0],
-				   [172, 89, 255],
-				   [0, 166, 83],
-				   [40, 255, 40],
-				   [187, 122, 83],
-				   [217, 64, 238],
-				   [45, 150, 255]])
-elif dataset=='l2':
-	path+='l2/'	
-	if paramsTrain.model_type=='unet':
-		predictions_path=path+'prediction_BUnet4ConvLSTM_repeating1.npy'
-		#predictions_path=path+'prediction_BUnet4ConvLSTM_repeating2.npy'
-		#predictions_path=path+'prediction_BUnet4ConvLSTM_repeating4.npy'
-		predictions_path = path+'model_best_UUnet4ConvLSTM_doty_fixed_label_dec.h5'
-		predictions_path = path+'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+paramsTrain.seq_date+'.h5'
-		predictions_path = path+'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+paramsTrain.seq_date+'_700perclass.h5'
-#		predictions_path = path+'model_best_UUnet4ConvLSTM_doty_fixed_label_dec_good_slvc05.h5'
-	mask_path=data_path+'l2_data/TrainTestMask.tif'
-	location_path=data_path+'l2_data/locations/'
-	folder_load_path=data_path+'l2_data/train_test/test/labels/'
-
-	custom_colormap = np.array([[255,146,36],
-					[255,255,0],
-					[164,164,164],
-					[255,62,62],
-					[0,0,0],
-					[172,89,255],
-					[0,166,83],
-					[40,255,40],
-					[187,122,83],
-					[217,64,238],
-					[0,113,225],
-					[128,0,0],
-					[114,114,56],
-					[53,255,255]])
 print("Loading patch locations...")
 ic(dataset)
 ic(paramsTrain.model_type)
-ic(predictions_path)
+ic(pr.predictions_path)
 #order_id_load=False
 #if order_id_load==False:
-#	order_id=patch_file_id_order_from_folder(folder_load_path)
+#	order_id=patch_file_id_order_from_folder(pr.folder_load_path)
 #	np.save('order_id.npy',order_id)
 #else:
 #	order_id=np.load('order_id.npy')
 
-#cols=np.load(location_path+'locations_col.npy')
-#rows=np.load(location_path+'locations_row.npy')
+#cols=np.load(pr.location_path+'locations_col.npy')
+#rows=np.load(pr.location_path+'locations_row.npy')
 
 #print(cols.shape, rows.shape)
 #cols=cols[order_id]
@@ -202,37 +76,37 @@ ic(predictions_path)
 
 # ======== load labels and predictions 
 
-#labels=np.load(path+'labels.npy').argmax(axis=4)
-#predictions=np.load(predictions_path).argmax(axis=4)
+#labels=np.load(model_path+'labels.npy').argmax(axis=4)
+#predictions=np.load(pr.predictions_path).argmax(axis=4)
 
 print("Loading labels and predictions...")
 
 pr.prediction_type = 'model'
 results_path="../"
-#path=results_path+dataset+'/'
-#prediction_path=path+predictions_path
+#model_path=results_path+dataset+'/'
+#prediction_path=model_path+pr.predictions_path
 path_test='../../../../../dataset/dataset/'+dataset+'_data/patches_bckndfixed/test/'
 print('path_test',path_test)
 
 #pr.prediction_type = 'model'
 if pr.prediction_type=='npy':
 	predictionsLoader = PredictionsLoaderNPY()
-	predictions, labels = predictionsLoader.loadPredictions(predictions_path,path+'labels.npy')
+	predictions, labels = predictionsLoader.loadPredictions(pr.predictions_path,model_path+'labels.npy')
 elif pr.prediction_type=='model':	
 	#model_path=results_path + 'model/'+dataset+'/'+prediction_filename
-	print('model_path',predictions_path)
+	print('model_path',pr.predictions_path)
 
 	# predictionsLoader = PredictionsLoaderModel(path_test)
 	
 	
 	#PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet
 	predictionsLoaderTest = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset)
-#predictions, label_test, test_pred_proba, model = predictionsLoaderTest.loadPredictions(predictions_path, seq_date=paramsTrain.seq_date, 
+#predictions, label_test, test_pred_proba, model = predictionsLoaderTest.loadPredictions(pr.predictions_path, seq_date=paramsTrain.seq_date, 
 #		model_dataset=paramsTrain.model_dataset)	
 # load the full ims ... then create the known classes and unknown class
 # using the paramsTrain values...
 # maybe use the mim object (although not sure if needed)
-	model = predictionsLoaderTest.loadModel(predictions_path)
+	model = predictionsLoaderTest.loadModel(pr.predictions_path)
 #================= load labels and predictions
 
 
@@ -259,7 +133,7 @@ elif pr.prediction_type=='model':
 #patch_len=labels.shape[2]
 
 # Load mask
-mask=cv2.imread(mask_path,-1)
+mask=cv2.imread(pr.mask_path,-1)
 mask[mask==1]=0 # training as background
 print("Mask shape",mask.shape)
 #print((sequence_len,)+mask.shape)
@@ -517,7 +391,6 @@ if pr.mosaic_flag == True:
 
 
 #	debug = 1
-	t0 = time.time()
 	count = 0
 	# score get
 
@@ -563,7 +436,7 @@ if pr.mosaic_flag == True:
 		if paramsAnalysis.openSetMethod =='OpenPCS':
 			test_pred_proba_patches = predictionsLoaderTest.load_decoder_features(
 				model, patches_in,
-				debug = 1) # , debug = debug
+				debug = 0) # , debug = debug
 		else:
 			test_pred_proba_patches = pred_logits_patches.copy()
 			if debug>0:
@@ -918,7 +791,7 @@ deb.prints(label_rebuilt.shape)
 deb.prints(prediction_rebuilt.shape)
 deb.prints(important_classes_idx)
 
-#custom_colormap = custom_colormap[important_classes_idx]
+#pr.custom_colormap = pr.custom_colormap[important_classes_idx]
 
 def save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask, 
 		sequence_len, custom_colormap, small_classes_ignore=True, name_id=""):
@@ -1010,7 +883,7 @@ def save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask,
 
 
 save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask, 
-		sequence_len, custom_colormap, small_classes_ignore=True,
+		sequence_len, pr.custom_colormap, small_classes_ignore=True,
 		name_id = name_id)
 
 
