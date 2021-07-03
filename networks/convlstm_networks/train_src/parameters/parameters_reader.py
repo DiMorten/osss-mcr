@@ -50,7 +50,7 @@ class ParamsTrain(Params):
             json_path = folder_path+'save_nonaugmented_train_patches.json'
 
         self.dataset = 'lm'
-        self.seq_date = 'mar'
+        self.seq_date = 'jun'
         self.model_name = 'criteria_0_92'
         self.learning_rate = 0.0001
 

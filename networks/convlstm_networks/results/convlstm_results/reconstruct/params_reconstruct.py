@@ -5,7 +5,7 @@ class ParamsReconstruct():
         self.paramsTrain = paramsTrain
 
         self.prediction_type = 'model'
-        self.save_input_im = True
+        self.save_input_im = False
 
         self.croppedFlag = False
         self.open_set_mode = True
@@ -30,6 +30,8 @@ class ParamsReconstruct():
         ic(self.overlap, self.threshold_idx)
 
         self.prediction_mask = False
+
+        self.conditionType = 'test'
         
         self.data_path='../../../../../dataset/dataset/'
         self.setModelPath('../model/') 
@@ -63,6 +65,9 @@ class ParamsReconstruct():
                 elif self.paramsTrain.seq_date == 'jun':
                     self.predictions_path = self.model_path+'model_best_UUnet4ConvLSTM_fixed_label_fixed_jun_lm_fewknownclasses2.h5'	
                     self.predictions_path = self.model_path+'model_best_UUnet4ConvLSTM_jun_lm_.h5'	
+                    self.predictions_path = self.model_path+'model_best_UUnet4ConvLSTM_jun_cv_criteria_0_92.h5'	
+
+                    
 
             elif self.paramsTrain.model_type=='atrous':
                 self.predictions_path=self.model_path+'prediction_BAtrousConvLSTM_2convins5.npy'

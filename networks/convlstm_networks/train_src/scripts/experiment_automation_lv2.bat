@@ -26,7 +26,7 @@ set loco_class=8
 :: pasture
 
 :: set seq_date=may
-set seq_date=mar
+set seq_date=jun
 
 :: set seq_date=feb
 
