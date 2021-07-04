@@ -32,9 +32,12 @@ class ParamsReconstruct():
         self.prediction_mask = False
 
         self.conditionType = 'test'
+#        self.conditionType = 'full'
         
         self.data_path='../../../../../dataset/dataset/'
         self.setModelPath('../model/') 
+
+        self.prediction_dtype = np.float16
 
     def setModelPath(self, model_path):
                 
@@ -65,7 +68,7 @@ class ParamsReconstruct():
                 elif self.paramsTrain.seq_date == 'jun':
                     self.predictions_path = self.model_path+'model_best_UUnet4ConvLSTM_fixed_label_fixed_jun_lm_fewknownclasses2.h5'	
                     self.predictions_path = self.model_path+'model_best_UUnet4ConvLSTM_jun_lm_.h5'	
-                    self.predictions_path = self.model_path+'model_best_UUnet4ConvLSTM_jun_cv_criteria_0_92.h5'	
+#                    self.predictions_path = self.model_path+'model_best_UUnet4ConvLSTM_jun_cv_criteria_0_92.h5'	
 
                     
 

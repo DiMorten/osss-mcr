@@ -425,14 +425,16 @@ if pr.mosaic_flag == True:
 
 				input_ = mim.batchTrainPreprocess(patch, ds,  
 							label_date_id = -1) # tstep is -12 to -1
-
+				##ic(input_.dtype)
+				##pdb.set_trace()
 				patches_in.append(input_)
 #				ic(input_.shape)
 #				pdb.set_trace()
-	
 	patches_in = np.concatenate(patches_in, axis=0)
+	ic(patches_in.dtype)
 
-	pred_logits_patches = model.predict(patches_in)
+	pred_logits_patches = model.predict(patches_in).astype(pr.prediction_dtype)
+	ic(pred_logits_patches.dtype)
 	ic(pred_logits_patches.shape)
 #	del patches_in
 	#pdb.set_trace()
@@ -447,12 +449,16 @@ if pr.mosaic_flag == True:
 			test_pred_proba_patches = predictionsLoaderTest.load_decoder_features(
 				model, patches_in,
 				debug = 0) # , debug = debug
+			
 		else:
 			test_pred_proba_patches = pred_logits_patches.copy()
 			if debug>0:
 				ic(test_pred_proba_patches.shape) # h, w, classes
 			test_pred_proba_patches = np.reshape(test_pred_proba_patches, (test_pred_proba_patches.shape[0], -1, test_pred_proba_patches.shape[-1]))
 
+	test_pred_proba_patches = test_pred_proba_patches.astype(pr.prediction_dtype)
+	ic(test_pred_proba_patches.dtype, test_pred_proba_patches.shape)
+	#pdb.set_trace()
 
 	count_mask = 0
 

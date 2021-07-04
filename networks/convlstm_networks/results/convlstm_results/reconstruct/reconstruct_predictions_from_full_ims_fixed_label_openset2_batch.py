@@ -26,6 +26,7 @@ from icecream import ic
 from parameters.parameters_reader import ParamsTrain, ParamsAnalysis
 from analysis.open_set import SoftmaxThresholding, OpenPCS
 from params_reconstruct import ParamsReconstruct
+from params_batchprocessing import ParamsBatchProcessing
 
 ic.configureOutput(includeContext=False, prefix='[@debug] ')
 
@@ -33,6 +34,7 @@ ic.configureOutput(includeContext=False, prefix='[@debug] ')
 paramsTrain = ParamsTrain('../../../train_src/parameters/')
 paramsAnalysis = ParamsAnalysis('../../../train_src/analysis/parameters_analysis/')
 pr = ParamsReconstruct(paramsTrain)
+pb = ParamsBatchProcessing(paramsTrain, pr)
 
 
 ic(paramsTrain.seq_date)
@@ -396,219 +398,271 @@ if pr.mosaic_flag == True:
 	count = 0
 	# score get
 
-	patches_in = []
-
-	for m in range(patch_size//2,row-patch_size//2,stride): 
-		for n in range(patch_size//2,col-patch_size//2,stride):
-			patch_mask = mask_pad[m-patch_size//2:m+patch_size//2 + patch_size%2,
-						n-patch_size//2:n+patch_size//2 + patch_size%2]
-
-
-			if pr.conditionType == 'test':
-				condition = np.any(patch_mask==2)
-			else:
-				condition = True			
-			if condition:
-#			if np.any(patch_mask==2):
-#			if True:
-				patch = {}			
-				patch['in'] = full_ims_test[:,m-patch_size//2:m+patch_size//2 + patch_size%2,
-							n-patch_size//2:n+patch_size//2 + patch_size%2]
-							
-				patch['in'] = np.expand_dims(patch['in'], axis = 0)
-				#ic(patch['in'].shape)
-				#patch = patch.reshape((1,patch_size,patch_size,bands))
-
-				
-				# features = predictionsLoaderTest.getFeatures(patch['in'], )
-				patch['shape'] = (patch['in'].shape[0], paramsTrain.seq_len) + patch['in'].shape[2:]
-
-				input_ = mim.batchTrainPreprocess(patch, ds,  
-							label_date_id = -1) # tstep is -12 to -1
-
-				patches_in.append(input_)
-#				ic(input_.shape)
-#				pdb.set_trace()
 	
-	patches_in = np.concatenate(patches_in, axis=0)
-
-	pred_logits_patches = model.predict(patches_in)
-	ic(pred_logits_patches.shape)
-#	del patches_in
-	#pdb.set_trace()
-
-	# get test features
-	if pr.open_set_mode == True:
-		if debug>-1:
-			print('*'*20, "Load decoder features")
-			ic(paramsAnalysis.openSetMethod)
-
-		if paramsAnalysis.openSetMethod =='OpenPCS':
-			test_pred_proba_patches = predictionsLoaderTest.load_decoder_features(
-				model, patches_in,
-				debug = 0) # , debug = debug
-		else:
-			test_pred_proba_patches = pred_logits_patches.copy()
-			if debug>0:
-				ic(test_pred_proba_patches.shape) # h, w, classes
-			test_pred_proba_patches = np.reshape(test_pred_proba_patches, (test_pred_proba_patches.shape[0], -1, test_pred_proba_patches.shape[-1]))
-
-
 	count_mask = 0
 
+	# check amount of patches to be predicted
+
 	for m in range(patch_size//2,row-patch_size//2,stride): 
 		for n in range(patch_size//2,col-patch_size//2,stride):
-			
 			patch_mask = mask_pad[m-patch_size//2:m+patch_size//2 + patch_size%2,
 						n-patch_size//2:n+patch_size//2 + patch_size%2]
-
 			if pr.conditionType == 'test':
 				condition = np.any(patch_mask==2)
 			else:
 				condition = True			
 			if condition:
-##				t0=time.time()
-				#pred_logits = np.squeeze(model.predict(input_))
-				pred_logits = np.squeeze(pred_logits_patches[count_mask])
-	#				ic(pred_logits.shape)
+				count_mask += 1
+	ic(count_mask)
+	patches_per_batch = count_mask // pb.batch_processing_n
+	ic(patches_per_batch)
+	ic(patches_per_batch * pb.batch_processing_n)
+	assert patches_per_batch * pb.batch_processing_n == count_mask
+	assert patches_per_batch < 10200
+	pdb.set_trace()
+	count_mask = 0
+	count_mask_overall = 0
+	count_mask_batch = 0
+	for batch in range(pb.batch_processing_n):
+		print("================== starting batch ... ==================")
+		count_mask_overall += count_mask_batch
+		ic(count_mask_overall)
+		ic(batch)
+		ic(batch * patches_per_batch)
+		ic((batch + 1) * patches_per_batch)
+		patches_in = []
+		count_mask_batch = 0
+		count_mask = 0
+		for m in range(patch_size//2,row-patch_size//2,stride): 
+			for n in range(patch_size//2,col-patch_size//2,stride):
+				
+				patch_mask = mask_pad[m-patch_size//2:m+patch_size//2 + patch_size%2,
+							n-patch_size//2:n+patch_size//2 + patch_size%2]
 
-				if pr.open_set_mode == True:
-					test_pred_proba = np.squeeze(test_pred_proba_patches[count_mask])
 
+				if pr.conditionType == 'test':
+					condition_masking = np.any(patch_mask==2)
+				else:
+					condition_masking = True
+						
+				condition = condition_masking and count_mask >= batch * patches_per_batch and count_mask < (batch + 1) * patches_per_batch
+				if condition:
 
-				#print(input_[0].shape)
-				#ic(len(input_))
+					patch = {}			
+					patch['in'] = full_ims_test[:,m-patch_size//2:m+patch_size//2 + patch_size%2,
+								n-patch_size//2:n+patch_size//2 + patch_size%2]
+								
+					patch['in'] = np.expand_dims(patch['in'], axis = 0)
+					#ic(patch['in'].shape)
+					#patch = patch.reshape((1,patch_size,patch_size,bands))
+
+					
+					# features = predictionsLoaderTest.getFeatures(patch['in'], )
+					patch['shape'] = (patch['in'].shape[0], paramsTrain.seq_len) + patch['in'].shape[2:]
+
+					input_ = mim.batchTrainPreprocess(patch, ds,  
+								label_date_id = -1) # tstep is -12 to -1
+
+					patches_in.append(input_)
+					count_mask_batch += 1
+				if condition_masking:
+					count_mask += 1
 
 	#				ic(input_.shape)
+	#				pdb.set_trace()
 
-				pred_cl = pred_logits.argmax(axis=-1)
-				#deb.prints(pred_cl.shape)
-				x, y = pred_cl.shape
-				prediction_shape = pred_cl.shape
-				if debug>-1:
-					print('*'*20, "Starting openModel predict")
-					ic(pred_cl.shape)
-					ic(test_pred_proba.shape)
+		ic(count_mask_batch)
+		ic(count_mask)
+		#pdb.set_trace()
+		patches_in = np.concatenate(patches_in, axis=0)
 
-					ic(np.min(test_pred_proba), np.average(test_pred_proba), np.median(test_pred_proba), np.max(test_pred_proba))
-				# ========================================== open set
-				if pr.open_set_mode == True:
-					# translate the preddictions.
-					pred_cl = predictionsLoaderTest.newLabel2labelTranslate(pred_cl, 
-							translate_label_path + 'new_labels2labels_'+paramsTrain.dataset+'_'+dataset_date+'_S1.pkl',
-							bcknd_flag=False, debug = debug)
+		pred_logits_patches = model.predict(patches_in).astype(pr.prediction_dtype)
+		ic(pred_logits_patches.dtype)
+		ic(pred_logits_patches.shape)
+	#	del patches_in
+		#pdb.set_trace()
 
-					if debug>0:
+		# get test features
+		if pr.open_set_mode == True:
+			if debug>-1:
+				print('*'*20, "Load decoder features")
+				ic(paramsAnalysis.openSetMethod)
+
+			if paramsAnalysis.openSetMethod =='OpenPCS':
+				test_pred_proba_patches = predictionsLoaderTest.load_decoder_features(
+					model, patches_in,
+					debug = 0) # , debug = debug
+			else:
+				test_pred_proba_patches = pred_logits_patches.copy()
+				if debug>0:
+					ic(test_pred_proba_patches.shape) # h, w, classes
+				test_pred_proba_patches = np.reshape(test_pred_proba_patches, (test_pred_proba_patches.shape[0], -1, test_pred_proba_patches.shape[-1]))
+
+		test_pred_proba_patches = test_pred_proba_patches.astype(pr.prediction_dtype)
+		ic(test_pred_proba_patches.dtype, test_pred_proba_patches.shape)
+		ic(count_mask)
+		count_mask = 0
+		count_mask_batch = 0
+		for m in range(patch_size//2,row-patch_size//2,stride): 
+			for n in range(patch_size//2,col-patch_size//2,stride):
+				
+				patch_mask = mask_pad[m-patch_size//2:m+patch_size//2 + patch_size%2,
+							n-patch_size//2:n+patch_size//2 + patch_size%2]
+
+				if pr.conditionType == 'test':
+					condition_masking = np.any(patch_mask==2)
+				else:
+					condition_masking = True	
+				condition = condition_masking and count_mask >= batch * patches_per_batch and count_mask < (batch + 1) * patches_per_batch
+		
+				if condition:
+	##				t0=time.time()
+					#pred_logits = np.squeeze(model.predict(input_))
+					pred_logits = np.squeeze(pred_logits_patches[count_mask_batch])
+		#				ic(pred_logits.shape)
+
+					if pr.open_set_mode == True:
+						test_pred_proba = np.squeeze(test_pred_proba_patches[count_mask_batch])
+
+
+					#print(input_[0].shape)
+					#ic(len(input_))
+
+		#				ic(input_.shape)
+
+					pred_cl = pred_logits.argmax(axis=-1)
+					#deb.prints(pred_cl.shape)
+					x, y = pred_cl.shape
+					prediction_shape = pred_cl.shape
+					if debug>-1:
+						print('*'*20, "Starting openModel predict")
 						ic(pred_cl.shape)
-					#ic()
-					#test_pred_proba = np.reshape(test_pred_proba, test_pred_proba_shape)
-##					ic(t0-time.time())
-
-					openModel.predictScores(pred_cl.flatten() - 1, test_pred_proba,
-								debug = debug)
-##					ic(t0-time.time())
-
-	#					openModel.predictScores(pred_cl.flatten(), test_pred_proba,
-	#								debug = debug)
-	#					pdb.set_trace()
-					openModel.scores = np.reshape(openModel.scores, (x, y)) # reshape to h, w
-					if debug>-2:
-						ic(np.min(test_pred_proba), np.average(test_pred_proba), 
-							np.median(test_pred_proba), np.max(test_pred_proba))
-						ic(np.min(openModel.scores), np.average(openModel.scores), 
-							np.median(openModel.scores), np.max(openModel.scores))
-						ic(openModel.scores.shape)
 						ic(test_pred_proba.shape)
 
-						idx = 1020
-						ic(np.min(test_pred_proba[idx]), np.average(test_pred_proba[idx]), 
-							np.median(test_pred_proba[idx]), np.max(test_pred_proba[idx]))
-						ic(openModel.scores.flatten()[idx].shape)
-						ic(openModel.scores.flatten()[idx])
-						ic(pred_cl.flatten()[idx])
+						ic(np.min(test_pred_proba), np.average(test_pred_proba), np.median(test_pred_proba), np.max(test_pred_proba))
+					# ========================================== open set
+					if pr.open_set_mode == True:
+						# translate the preddictions.
+						pred_cl = predictionsLoaderTest.newLabel2labelTranslate(pred_cl, 
+								translate_label_path + 'new_labels2labels_'+paramsTrain.dataset+'_'+dataset_date+'_S1.pkl',
+								bcknd_flag=False, debug = debug)
 
-	#						pdb.set_trace()
+						if debug>0:
+							ic(pred_cl.shape)
+						#ic()
+						#test_pred_proba = np.reshape(test_pred_proba, test_pred_proba_shape)
+	##					ic(t0-time.time())
 
+						openModel.predictScores(pred_cl.flatten() - 1, test_pred_proba,
+									debug = debug)
+	##					ic(t0-time.time())
+
+		#					openModel.predictScores(pred_cl.flatten(), test_pred_proba,
+		#								debug = debug)
+		#					pdb.set_trace()
+						openModel.scores = np.reshape(openModel.scores, (x, y)) # reshape to h, w
+						if debug>-2:
+							ic(np.min(test_pred_proba), np.average(test_pred_proba), 
+								np.median(test_pred_proba), np.max(test_pred_proba))
+							ic(np.min(openModel.scores), np.average(openModel.scores), 
+								np.median(openModel.scores), np.max(openModel.scores))
+							ic(openModel.scores.shape)
+							ic(test_pred_proba.shape)
+
+							idx = 1020
+							ic(np.min(test_pred_proba[idx]), np.average(test_pred_proba[idx]), 
+								np.median(test_pred_proba[idx]), np.max(test_pred_proba[idx]))
+							ic(openModel.scores.flatten()[idx].shape)
+							ic(openModel.scores.flatten()[idx])
+							ic(pred_cl.flatten()[idx])
+
+		#						pdb.set_trace()
+
+						#pdb.set_trace()
+						# load the pca model / covariance matrix 
+						#ic(pred_cl.shape)
+
+					##deb.prints(np.unique(predictions_openmodel, return_counts=True))
+					#deb.prints(predictions_openmodel.shape)
+					##deb.prints(np.unique(prediction_rebuilt, return_counts=True))
+					if debug>1:
+						ic(openModel.scores.shape)
+						ic(overlap)
+						ic(openModel.scores[overlap//2:x-overlap//2,overlap//2:y-overlap//2].shape)
+					if pr.open_set_mode == True:
+						scores_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = openModel.scores[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
+					if pr.overlap_mode == 'replace':
+						#ic(np.unique(prediction_rebuilt, return_counts = True))
+						#ic(np.unique(prediction_logits_rebuilt.argmax(axis=-1), return_counts = True))
+						prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_cl[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
+						'''
+						print("Start loop debug")
+						ic(pred_cl.shape)
+						ic(np.unique(pred_cl, return_counts = True))
+						ic(pred_logits.shape)
+						ic(np.unique(pred_logits.argmax(axis=-1), return_counts = True))
+						'''
+						prediction_logits_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_logits[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
+
+						'''
+						ic(prediction_rebuilt.shape)
+						ic(prediction_logits_rebuilt.shape)
+						ic(prediction_logits_rebuilt.argmax(axis=-1).shape)
+						
+						
+						ic(np.unique(prediction_rebuilt, return_counts = True))
+						ic(np.unique(prediction_logits_rebuilt.argmax(axis=-1), return_counts = True))
+						print("End loop debug")
+						pdb.set_trace()
+						'''
+					elif pr.overlap_mode == 'average':
+						pred_patch_prev = np.expand_dims(prediction_logits_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2], axis = 0)
+						pred_patch = np.expand_dims(pred_logits[overlap//2:x-overlap//2,overlap//2:y-overlap//2], axis = 0)
+						to_average = np.concatenate((pred_patch_prev, pred_patch), axis = 0)
+
+						prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_cl[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
+
+
+						prediction_logits_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = np.average(
+							to_average, axis = 0)
+
+					elif pr.overlap_mode == 'average_score':
+						pred_patch_prev = np.expand_dims(prediction_logits_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2], axis = 0)
+						pred_patch = np.expand_dims(pred_logits[overlap//2:x-overlap//2,overlap//2:y-overlap//2], axis = 0)
+						to_average = np.concatenate((pred_patch_prev, pred_patch), axis = 0)
+
+						prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_cl[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
+
+
+						prediction_logits_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = np.average(
+							to_average, axis = 0)
+
+
+
+					elif pr.overlap_mode == 'central':
+						ic(stride)
+						ic(overlap)
+						prediction_rebuilt[m-stride//4:m+stride//4,n-stride//4:n+stride//4] = pred_cl[overlap//4:x-overlap//4,overlap//4:y-overlap//4]
+
+		#				prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = predictions_openmodel[:,overlap//2:x-overlap//2,overlap//2:y-overlap//2]
+
+					##deb.prints(np.unique(prediction_rebuilt, return_counts=True))
 					#pdb.set_trace()
-					# load the pca model / covariance matrix 
-					#ic(pred_cl.shape)
+					count_mask_batch += 1
+				if condition_masking:				
+					count_mask += 1
+	##				ic(t0-time.time())
+	##				pdb.set_trace()
+			count = count + 1
+			if count % 50000 == 0:
+				print(count)
 
-				##deb.prints(np.unique(predictions_openmodel, return_counts=True))
-				#deb.prints(predictions_openmodel.shape)
-				##deb.prints(np.unique(prediction_rebuilt, return_counts=True))
-				if debug>1:
-					ic(openModel.scores.shape)
-					ic(overlap)
-					ic(openModel.scores[overlap//2:x-overlap//2,overlap//2:y-overlap//2].shape)
-				if pr.open_set_mode == True:
-					scores_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = openModel.scores[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
-				if pr.overlap_mode == 'replace':
-					#ic(np.unique(prediction_rebuilt, return_counts = True))
-					#ic(np.unique(prediction_logits_rebuilt.argmax(axis=-1), return_counts = True))
-					prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_cl[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
-					'''
-					print("Start loop debug")
-					ic(pred_cl.shape)
-					ic(np.unique(pred_cl, return_counts = True))
-					ic(pred_logits.shape)
-					ic(np.unique(pred_logits.argmax(axis=-1), return_counts = True))
-					'''
-					prediction_logits_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_logits[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
-
-					'''
-					ic(prediction_rebuilt.shape)
-					ic(prediction_logits_rebuilt.shape)
-					ic(prediction_logits_rebuilt.argmax(axis=-1).shape)
-					
-					
-					ic(np.unique(prediction_rebuilt, return_counts = True))
-					ic(np.unique(prediction_logits_rebuilt.argmax(axis=-1), return_counts = True))
-					print("End loop debug")
-					pdb.set_trace()
-					'''
-				elif pr.overlap_mode == 'average':
-					pred_patch_prev = np.expand_dims(prediction_logits_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2], axis = 0)
-					pred_patch = np.expand_dims(pred_logits[overlap//2:x-overlap//2,overlap//2:y-overlap//2], axis = 0)
-					to_average = np.concatenate((pred_patch_prev, pred_patch), axis = 0)
-
-					prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_cl[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
-
-
-					prediction_logits_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = np.average(
-						to_average, axis = 0)
-
-				elif pr.overlap_mode == 'average_score':
-					pred_patch_prev = np.expand_dims(prediction_logits_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2], axis = 0)
-					pred_patch = np.expand_dims(pred_logits[overlap//2:x-overlap//2,overlap//2:y-overlap//2], axis = 0)
-					to_average = np.concatenate((pred_patch_prev, pred_patch), axis = 0)
-
-					prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_cl[overlap//2:x-overlap//2,overlap//2:y-overlap//2]
-
-
-					prediction_logits_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = np.average(
-						to_average, axis = 0)
-
-
-
-				elif pr.overlap_mode == 'central':
-					ic(stride)
-					ic(overlap)
-					prediction_rebuilt[m-stride//4:m+stride//4,n-stride//4:n+stride//4] = pred_cl[overlap//4:x-overlap//4,overlap//4:y-overlap//4]
-
-	#				prediction_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = predictions_openmodel[:,overlap//2:x-overlap//2,overlap//2:y-overlap//2]
-
-				##deb.prints(np.unique(prediction_rebuilt, return_counts=True))
-				#pdb.set_trace()
-				count_mask += 1
-##				ic(t0-time.time())
-##				pdb.set_trace()
-		count = count + 1
-		if count % 50000 == 0:
-			print(count)
-
-		#if count == 40:
-		#	deb.prints(np.unique(prediction_rebuilt, return_counts=True))
-		#	break
+			#if count == 40:
+			#	deb.prints(np.unique(prediction_rebuilt, return_counts=True))
+			#	break
+		ic(count_mask_batch)
+		ic(count_mask)
+	ic(count_mask_overall)
 	del full_ims_test
 	print("loop time: ", time.time()-t0)
 	ic(count_mask)
