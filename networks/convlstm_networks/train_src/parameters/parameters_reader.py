@@ -49,7 +49,7 @@ class ParamsTrain(Params):
         elif self.openMode == 'SaveNonaugmentedTrainPatches':
             json_path = folder_path+'save_nonaugmented_train_patches.json'
 
-        self.dataset = 'lm'
+        self.dataset = 'cv'
         self.seq_date = 'jun'
         self.model_name = 'criteria_0_92'
         self.learning_rate = 0.0001

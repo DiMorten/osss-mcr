@@ -31,8 +31,8 @@ class ParamsReconstruct():
 
         self.prediction_mask = False
 
-        self.conditionType = 'test'
-#        self.conditionType = 'full'
+#        self.conditionType = 'test'
+        self.conditionType = 'full'
         
         self.data_path='../../../../../dataset/dataset/'
         self.setModelPath('../model/') 

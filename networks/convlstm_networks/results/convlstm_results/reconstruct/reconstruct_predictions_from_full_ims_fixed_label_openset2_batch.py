@@ -419,7 +419,7 @@ if pr.mosaic_flag == True:
 	ic(patches_per_batch * pb.batch_processing_n)
 	assert patches_per_batch * pb.batch_processing_n == count_mask
 	assert patches_per_batch < 10200
-	pdb.set_trace()
+	#pdb.set_trace()
 	count_mask = 0
 	count_mask_overall = 0
 	count_mask_batch = 0
