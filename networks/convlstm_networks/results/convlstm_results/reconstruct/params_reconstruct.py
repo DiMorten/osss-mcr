@@ -9,7 +9,7 @@ class ParamsReconstruct():
 
         self.croppedFlag = False
         self.open_set_mode = True
-        self.mosaic_flag = True
+        self.mosaic_flag = False
 
         self.threshold_idx = 4
         self.overlap = 0.5
@@ -31,8 +31,8 @@ class ParamsReconstruct():
 
         self.prediction_mask = False
 
-#        self.conditionType = 'test'
-        self.conditionType = 'full'
+        self.conditionType = 'test'
+#        self.conditionType = 'all'
         
         self.data_path='../../../../../dataset/dataset/'
         self.setModelPath('../model/') 

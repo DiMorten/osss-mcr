@@ -352,6 +352,9 @@ threshold = thresholds[pr.threshold_idx]
 #threshold = -184.4
 #threshold = 0.7
 threshold = -193.6
+threshold = -50
+threshold = -120
+threshold = -90
 
 ic(paramsAnalysis.openSetMethod)
 ic(threshold)
@@ -417,6 +420,7 @@ if pr.mosaic_flag == True:
 	patches_per_batch = count_mask // pb.batch_processing_n
 	ic(patches_per_batch)
 	ic(patches_per_batch * pb.batch_processing_n)
+	ic(pb.batch_processing_n)
 	assert patches_per_batch * pb.batch_processing_n == count_mask
 	assert patches_per_batch < 10200
 	#pdb.set_trace()
