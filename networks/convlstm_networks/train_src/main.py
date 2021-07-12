@@ -189,7 +189,7 @@ class TrainTest():
 		deb.prints(ds)
 		dataSource = SARSource()
 		ds.addDataSource(dataSource)
-		time_delta = ds.getTimeDelta(delta=True,format='days')
+
 		dotys, dotys_sin_cos = ds.getDayOfTheYear()
 
 		paramsTrain.t_len = ds.t_len # modified?
