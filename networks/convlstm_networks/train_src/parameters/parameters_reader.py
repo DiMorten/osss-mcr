@@ -42,10 +42,16 @@ class ParamsTrain(Params):
 #        self.openMode = 'ClosedSetGroupClasses'
 #        self.openMode = 'OpenSet'
 
-        self.getFullIms = True
-        self.coordsExtract = True
+        # ============= PATCH EXTRACTION ============== #
 
-        self.openMode = 'SaveNonaugmentedTrainPatches'
+        self.getFullIms = False
+        self.coordsExtract = False
+
+        # ============== OPEN SET MODE ================= #
+
+        #self.openMode = 'SaveNonaugmentedTrainPatches'
+        self.openMode = 'OpenSet'
+        
         if self.openMode == 'OpenSet':
             json_path = folder_path+'parameters_openset.json'
         elif self.openMode == 'ClosedSetGroupClasses':
@@ -53,11 +59,14 @@ class ParamsTrain(Params):
         elif self.openMode == 'SaveNonaugmentedTrainPatches':
             json_path = folder_path+'save_nonaugmented_train_patches.json'
 
+        # DATASET AND DATA
         self.dataset = 'cv'
         self.seq_date = 'jun'
         self.model_name = 'criteria_0_92'
         self.learning_rate = 0.0001
-
+        self.id = "checking_deleted_files_ok"
+        
+        
         self.path = Path("../../../dataset/dataset/") / (self.dataset + "_data")
 
         print(os.listdir(folder_path))
@@ -126,7 +135,7 @@ class ParamsTrain(Params):
         self.model_type = "UUnet4ConvLSTM"
         #self.seq_mode = "fixed"
         #self.seq_date = "mar"
-        self.id = "dummy"
+        
         self.loco_class = 8 # legacy. delete
 
         
