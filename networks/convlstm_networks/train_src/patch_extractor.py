@@ -125,7 +125,8 @@ class PatchExtractor():
 		print("Test masked unique/count",unique,count) 
 
 		ic(self.paramsTrain.path / 'full_ims/full_ims_test.npy')
-
+		
+		(self.paramsTrain.path / 'full_ims').mkdir(parents=True, exist_ok=True)
 		np.save(self.paramsTrain.path / 'full_ims/full_ims_test.npy',self.full_ims_test.astype(np.float16))
 		np.save(self.paramsTrain.path / 'full_ims/full_ims_train.npy',self.full_ims_train.astype(np.float16))
 		np.save(self.paramsTrain.path / 'full_ims/full_label_test.npy',self.full_label_test)

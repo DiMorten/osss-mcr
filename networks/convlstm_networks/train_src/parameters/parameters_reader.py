@@ -42,7 +42,7 @@ class ParamsTrain(Params):
 #        self.openMode = 'ClosedSetGroupClasses'
 #        self.openMode = 'OpenSet'
 
-        self.getFullIms = False
+        self.getFullIms = True
         self.coordsExtract = True
 
         self.openMode = 'SaveNonaugmentedTrainPatches'
