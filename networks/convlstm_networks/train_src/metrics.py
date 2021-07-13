@@ -177,3 +177,14 @@ msle = MSLE = mean_squared_logarithmic_error
 cosine = cosine_proximity
 fscore = f1score = fmeasure
 
+import numpy as np
+from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score
+
+
+
+def compute_metrics(true_labels, predicted_labels):
+	accuracy = accuracy_score(true_labels, predicted_labels)
+	f1score = 100*f1_score(true_labels, predicted_labels, average=None)
+	recall = 100*recall_score(true_labels, predicted_labels, average=None)
+	prescision = 100*precision_score(true_labels, predicted_labels, average=None)
+	return accuracy, f1score, recall, prescision

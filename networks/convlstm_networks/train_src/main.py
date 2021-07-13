@@ -1,6 +1,5 @@
 from colorama import init
 init()
-from utils import *
 from keras.layers import Input, Dense, Conv2D, MaxPool2D, Flatten, Dropout, Conv2DTranspose
 # from keras.callbacks import ModelCheckpoint , EarlyStopping
 from keras.optimizers import Adam,Adagrad 
@@ -39,14 +38,13 @@ import pickle
 import pdb
 import pathlib
 from pathlib import Path, PureWindowsPath
-from patches_handler import PatchesArray
 from keras.layers import Conv3DTranspose, Conv3D
 
 from keras.callbacks import EarlyStopping
 import tensorflow as tf
 from collections import Counter
 
-from patches_storage import PatchesStorageEachSample,PatchesStorageAllSamples, PatchesStorageAllSamplesOpenSet
+
 #from datagenerator import DataGenerator
 from generator import DataGenerator, DataGeneratorWithCoords, DataGeneratorWithCoordsPatches
 
