@@ -80,19 +80,19 @@ class NetModel(object):
 		self.patches['train']['step']=paramsTrain.patch_step_train
 		self.patches['test']['step']=paramsTrain.patch_step_test 
       
-		self.path['train']['in'] = paramsTrain.path + 'train_test/train/ims/'
-		self.path['test']['in'] = paramsTrain.path + 'train_test/test/ims/'
-		self.path['train']['label'] = paramsTrain.path + 'train_test/train/labels/'
-		self.path['test']['label'] = paramsTrain.path + 'train_test/test/labels/'
+		self.path['train']['in'] = paramsTrain.path / 'train_test/train/ims/'
+		self.path['test']['in'] = paramsTrain.path / 'train_test/test/ims/'
+		self.path['train']['label'] = paramsTrain.path / 'train_test/train/labels/'
+		self.path['test']['label'] = paramsTrain.path / 'train_test/test/labels/'
 
 		# in these paths, the augmented train set and validation set are stored
 		# they can be loaded after (flag decides whether estimating these values and storing,
 		# or loading the precomputed ones)
-		self.path_patches_bckndfixed = paramsTrain.path + 'patches_bckndfixed/' 
-		self.path['train_bckndfixed']=self.path_patches_bckndfixed+'train/'
-		self.path['val_bckndfixed']=self.path_patches_bckndfixed+'val/'
-		self.path['test_bckndfixed']=self.path_patches_bckndfixed+'test/'
-		self.path['test_loco'] = self.path_patches_bckndfixed+'test_loco/'
+		self.path_patches_bckndfixed = paramsTrain.path / 'patches_bckndfixed/' 
+		self.path['train_bckndfixed']=self.path_patches_bckndfixed / 'train/'
+		self.path['val_bckndfixed']=self.path_patches_bckndfixed / 'val/'
+		self.path['test_bckndfixed']=self.path_patches_bckndfixed / 'test/'
+		self.path['test_loco'] = self.path_patches_bckndfixed / 'test_loco/'
 
 		self.channel_n = paramsTrain.channel_n
 		deb.prints(self.channel_n)

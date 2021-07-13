@@ -78,19 +78,19 @@ class Dataset(object):
 		self.patches['train']['step']=self.paramsTrain.patch_step_train
 		self.patches['test']['step']=self.paramsTrain.patch_step_test 
 	  
-		self.path['train']['in'] = self.paramsTrain.path + 'train_test/train/ims/'
-		self.path['test']['in'] = self.paramsTrain.path + 'train_test/test/ims/'
-		self.path['train']['label'] = self.paramsTrain.path + 'train_test/train/labels/'
-		self.path['test']['label'] = self.paramsTrain.path + 'train_test/test/labels/'
+		self.path['train']['in'] = self.paramsTrain.path / 'train_test/train/ims/'
+		self.path['test']['in'] = self.paramsTrain.path / 'train_test/test/ims/'
+		self.path['train']['label'] = self.paramsTrain.path / 'train_test/train/labels/'
+		self.path['test']['label'] = self.paramsTrain.path / 'train_test/test/labels/'
 
 		# in these paths, the augmented train set and validation set are stored
 		# they can be loaded after (flag decides whether estimating these values and storing,
 		# or loading the precomputed ones)
-		self.path_patches_bckndfixed = self.paramsTrain.path + 'patches_bckndfixed/' 
-		self.path['train_bckndfixed']=self.path_patches_bckndfixed+'train/'
-		self.path['val_bckndfixed']=self.path_patches_bckndfixed+'val/'
-		self.path['test_bckndfixed']=self.path_patches_bckndfixed+'test/'
-		self.path['test_loco'] = self.path_patches_bckndfixed+'test_loco/'
+		self.path_patches_bckndfixed = self.paramsTrain.path / 'patches_bckndfixed/' 
+		self.path['train_bckndfixed']=self.path_patches_bckndfixed/'train/'
+		self.path['val_bckndfixed']=self.path_patches_bckndfixed/'val/'
+		self.path['test_bckndfixed']=self.path_patches_bckndfixed/'test/'
+		self.path['test_loco'] = self.path_patches_bckndfixed/'test_loco/'
 
 		self.channel_n = self.paramsTrain.channel_n
 		deb.prints(self.channel_n)
@@ -767,15 +767,15 @@ class DatasetWithCoords(Dataset):
 		ic(os.path.dirname(os.path.abspath(__file__)))
 		ic(os.getcwd())
 		##os.chdir(os.path.dirname(os.path.abspath(__file__)))
-		self.patches['train']['coords'] = np.load(self.path['v']+'coords_train.npy').astype(np.int)
-		self.patches['test']['coords'] = np.load(self.path['v']+'coords_test.npy').astype(np.int)
+		self.patches['train']['coords'] = np.load(self.path['v'] / 'coords_train.npy').astype(np.int)
+		self.patches['test']['coords'] = np.load(self.path['v'] / 'coords_test.npy').astype(np.int)
 		ic(self.patches['train']['coords'].shape)
 		#pdb.set_trace()
-		self.full_ims_train = np.load(self.path['v']+'full_ims/'+'full_ims_train.npy')
-		self.full_ims_test = np.load(self.path['v']+'full_ims/'+'full_ims_test.npy')
+		self.full_ims_train = np.load(self.path['v'] / 'full_ims' / 'full_ims_train.npy')
+		self.full_ims_test = np.load(self.path['v'] / 'full_ims' / 'full_ims_test.npy')
 		
-		self.full_label_train = np.load(self.path['v']+'full_ims/'+'full_label_train.npy').astype(np.uint8)
-		self.full_label_test = np.load(self.path['v']+'full_ims/'+'full_label_test.npy').astype(np.uint8)
+		self.full_label_train = np.load(self.path['v'] / 'full_ims' / 'full_label_train.npy').astype(np.uint8)
+		self.full_label_test = np.load(self.path['v'] / 'full_ims' / 'full_label_test.npy').astype(np.uint8)
 
 
 		self.labelPreprocess()

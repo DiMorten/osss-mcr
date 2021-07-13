@@ -32,6 +32,7 @@ from abc import ABC, abstractmethod
 import time, datetime
 import pdb
 import joblib
+from icecream import ic
 class DataSource(object):
 	def __init__(self, band_n, foldernameInput, label_folder,name):
 		self.band_n = band_n
@@ -365,10 +366,10 @@ class Dataset(object):
 			#for band in range(0,conf["band_n"]):
 			#	patch["full_ims_train"][t_step,:,:,band][patch["train_mask"]!=1]=-1
 			# Do the masking here. Do we have the train labels?
-		deb.prints(patch["full_ims"].shape,fname)
-		deb.prints(patch["full_label_ims"].shape,fname)
-		deb.prints(patch["full_ims"].dtype,fname)
-		deb.prints(patch["full_label_ims"].dtype,fname)
+		ic(patch["full_ims"].shape)
+		ic(patch["full_label_ims"].shape)
+		ic(patch["full_ims"].dtype)
+		ic(patch["full_label_ims"].dtype)
 		
 		deb.prints(np.unique(patch['full_label_ims'],return_counts=True))
 		return patch

@@ -2,7 +2,7 @@ import os
 import json
 from icecream import ic
 import pdb
-
+from pathlib import Path
 class Params():
     """Class that loads hyperparameters from a json file.
 
@@ -41,6 +41,10 @@ class ParamsTrain(Params):
         # 4 known classes
 #        self.openMode = 'ClosedSetGroupClasses'
 #        self.openMode = 'OpenSet'
+
+        self.getFullIms = False
+        self.coordsExtract = True
+
         self.openMode = 'SaveNonaugmentedTrainPatches'
         if self.openMode == 'OpenSet':
             json_path = folder_path+'parameters_openset.json'
@@ -54,7 +58,7 @@ class ParamsTrain(Params):
         self.model_name = 'criteria_0_92'
         self.learning_rate = 0.0001
 
-
+        self.path = Path("../../../dataset/dataset/") / (self.dataset + "_data")
 
         print(os.listdir(folder_path))
         super().__init__(json_path)
@@ -96,22 +100,23 @@ class ParamsTrain(Params):
         # General params (common to open set and closed set and group classes)
 
         if self.dataset == 'lm':
-            self.path = "../../../dataset/dataset/lm_data/"
+            #self.path = "../../../dataset/dataset/lm_data/"
             self.class_n = 15
             self.t_len = 19
         elif self.dataset == 'cv':
-            self.path = "../../../dataset/dataset/cv_data/"
+            #self.path = "../../../dataset/dataset/cv_data/"
             self.class_n = 12
             self.t_len = 14
         elif self.dataset == 'l2':
-            self.path = "../../../dataset/dataset/l2_data/"
+            #self.path = "../../../dataset/dataset/l2_data/"
             self.class_n = 15
 
         self.channel_n = 2
 
         self.stop_epoch = 400
         self.patch_len = 32
-        self.patch_step_train = self.patch_len
+        self.stride = self.patch_len
+        self.patch_step_train = self.stride
         self.patch_step_test = self.patch_len
         self.batch_size_train = 16
         self.batch_size_test = 16  #unused

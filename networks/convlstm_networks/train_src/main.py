@@ -61,6 +61,8 @@ from monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerato
 import natsort
 from model import NetModel, ModelFit, ModelLoadGenerator, ModelLoadGeneratorDebug, ModelLoadGeneratorWithCoords, ModelLoadEachBatch
 from dataset import Dataset, DatasetWithCoords
+
+from patch_extractor import PatchExtractor
 ic.configureOutput(includeContext=False)
 np.random.seed(2021)
 tf.set_random_seed(2021)
@@ -161,77 +163,52 @@ flag = {"data_create": 2, "label_one_hot": True}
 
 class TrainTest():
 
-	def trainEvaluate(self, model_name_id):
+	def __init__(self, paramsTrain):
+		self.paramsTrain = paramsTrain
+
 		
-		model_name = 'model_best_' + paramsTrain.model_type + '_' + \
-			paramsTrain.seq_date + '_' + paramsTrain.dataset + '_' + \
+		if self.paramsTrain.dataset=='lm':
+			self.ds=LEM(self.paramsTrain.seq_mode, self.paramsTrain.seq_date, self.paramsTrain.seq_len)
+		elif self.paramsTrain.dataset=='l2':
+			self.ds=LEM2(self.paramsTrain.seq_mode, self.paramsTrain.seq_date, self.paramsTrain.seq_len)
+		elif self.paramsTrain.dataset=='cv':
+			self.ds=CampoVerde(self.paramsTrain.seq_mode, self.paramsTrain.seq_date, self.paramsTrain.seq_len)
+
+		deb.prints(self.ds)
+		
+		self.ds.addDataSource(paramsTrain.dataSource)
+
+		dotys, dotys_sin_cos = self.ds.getDayOfTheYear()
+
+		self.paramsTrain.t_len = self.ds.t_len # modified?
+		self.paramsTrain.dotys_sin_cos = dotys_sin_cos
+		self.dotys_sin_cos = dotys_sin_cos
+
+	def trainAndEvaluate(self, model_name_id):
+		
+		self.model_name = 'model_best_' + self.paramsTrain.model_type + '_' + \
+			self.paramsTrain.seq_date + '_' + self.paramsTrain.dataset + '_' + \
 			model_name_id + '.h5'
-		ic(model_name)
-
-		premade_split_patches_load=False
-		
-
-		deb.prints(premade_split_patches_load)
-		#
-		patchesArray = PatchesArray()
-		time_measure=False
-
-
-	#	dataset='l2'
-		#dataset='l2'
-		if dataset=='lm':
-			ds=LEM(paramsTrain.seq_mode, paramsTrain.seq_date, paramsTrain.seq_len)
-		elif dataset=='l2':
-			ds=LEM2(paramsTrain.seq_mode, paramsTrain.seq_date, paramsTrain.seq_len)
-		elif dataset=='cv':
-			ds=CampoVerde(paramsTrain.seq_mode, paramsTrain.seq_date, paramsTrain.seq_len)
-
-		deb.prints(ds)
-		dataSource = SARSource()
-		ds.addDataSource(dataSource)
-
-		dotys, dotys_sin_cos = ds.getDayOfTheYear()
-
-		paramsTrain.t_len = ds.t_len # modified?
-		paramsTrain.dotys_sin_cos = dotys_sin_cos
-
-		if paramsTrain.sliceFromCoords == False:
+		ic(self.model_name)
+		if self.paramsTrain.sliceFromCoords == False:
 			datasetClass = Dataset
 		else:
 			datasetClass = DatasetWithCoords
-		data = datasetClass(paramsTrain = paramsTrain, ds = ds,
-			dotys_sin_cos = dotys_sin_cos)
-		#t_len=paramsTrain.t_len
+		data = datasetClass(paramsTrain = self.paramsTrain, ds = self.ds,
+			dotys_sin_cos = self.dotys_sin_cos)
 
+		data.create_load()
 		
-	#	paramsTrain.patience=30 # more for the Nice paper
-	##	paramsTrain.patience=10 # more for the Nice paper
+		self.paramsTrain.class_n = data.class_n
+		ic(self.paramsTrain.class_n)
 
-		#val_set=True
-		#val_set_mode='stratified'
-	#	val_set_mode='stratified'
-		#val_set_mode=paramsTrain.val_set_mode
+		adam = Adam(lr=self.paramsTrain.learning_rate, beta_1=0.9)
 		
-	#	val_set_mode='random'
-		if premade_split_patches_load==False:
-			randomly_subsample_sets=False
-
-			data.create_load()
-		
-		paramsTrain.class_n = data.class_n
-		ic(paramsTrain.class_n)
-		# check coords patch
-
-	##	data.comparePatchesCoords()
-		#adam = Adam(lr=0.0001, beta_1=0.9)
-		adam = Adam(lr=paramsTrain.learning_rate, beta_1=0.9)
-		
-		#adam = Adagrad(0.01)
-		#model = ModelLoadEachBatch(epochs=paramsTrain.epochs, patch_len=paramsTrain.patch_len,
+		#model = ModelLoadEachBatch(epochs=self.paramsTrain.epochs, patch_len=self.paramsTrain.patch_len,
 	##	modelClass = NetModel
 	##	modelClass = ModelFit
 	##	modelClass = ModelLoadGenerator
-		if paramsTrain.sliceFromCoords == False:
+		if self.paramsTrain.sliceFromCoords == False:
 			#modelClass = NetModel
 	#		modelClass = ModelFit
 			modelClass = ModelLoadGenerator
@@ -240,10 +217,10 @@ class TrainTest():
 			modelClass = ModelLoadGeneratorWithCoords
 
 
-		model = modelClass(paramsTrain = paramsTrain, ds = ds, 
+		model = modelClass(paramsTrain = self.paramsTrain, ds = self.ds, 
 						) # , data = data
 
-		model.name = model_name
+		model.name = self.model_name
 		
 		model.class_n=data.class_n-1 # Model is designed without background class
 		deb.prints(data.class_n)
@@ -255,9 +232,9 @@ class TrainTest():
 		print("=== SELECT VALIDATION SET FROM TRAIN SET")
 			
 		#val_set = False # fix this
-		if paramsTrain.val_set==True:
-			deb.prints(paramsTrain.val_set_mode)
-			data.val_set_get(paramsTrain.val_set_mode,0.15)
+		if self.paramsTrain.val_set==True:
+			deb.prints(self.paramsTrain.val_set_mode)
+			data.val_set_get(self.paramsTrain.val_set_mode,0.15)
 		else:
 			data.patches['val']={}
 
@@ -268,17 +245,17 @@ class TrainTest():
 			
 		#balancing=False
 		
-		if paramsTrain.balancing==True:
+		if self.paramsTrain.balancing==True:
 			print("=== AUGMENTING TRAINING DATA")
 
-			if paramsTrain.seq_mode=='fixed' or paramsTrain.seq_mode=='fixed_label_len':
+			if self.paramsTrain.seq_mode=='fixed' or self.paramsTrain.seq_mode=='fixed_label_len':
 				label_type = 'Nto1'
-			elif paramsTrain.seq_mode=='var' or paramsTrain.seq_mode=='var_label':	
+			elif self.paramsTrain.seq_mode=='var' or self.paramsTrain.seq_mode=='var_label':	
 				label_type = 'NtoN'
 			deb.prints(label_type)
 			print("Before balancing:")
 
-			data.semantic_balance(paramsTrain.samples_per_class,label_type = label_type) #More for known classes few. Compare with 500 later
+			data.semantic_balance(self.paramsTrain.samples_per_class,label_type = label_type) #More for known classes few. Compare with 500 later
 						
 		model.class_n-=1
 
@@ -294,19 +271,19 @@ class TrainTest():
 		#loss=weighted_categorical_focal_ignoring_last_label(model.loss_weights,alpha=0.25,gamma=2)
 
 
-	#	paramsTrain.model_load=False
-		if paramsTrain.model_load:
+	#	self.paramsTrain.model_load=False
+		if self.paramsTrain.model_load:
 			
-			model_name = 'model_best_fit2.h5'
-			model_name = 'model_lm_mar_nomask_good.h5'
-			model_name = 'model_lm_jun_maize_nomask_good.h5'
-			model_name = 'model_lm_jun_maize_nomask_good.h5'
-			model_name = 'model_best_UUnet4ConvLSTM_jun.h5'
-			model_name = 'model_cv_may_3classes_nomask.h5'
-			model_name = 'model_best_fit2.h5'
-			model_name = 'model_lm_mar_nomask_good.h5'
-			model_name = 'model_best_UUnet4ConvLSTM_jun_cv_criteria_0_92.h5'
-			model.graph=load_model(model_name, compile=False)		
+			self.model_name = 'model_best_fit2.h5'
+			self.model_name = 'model_lm_mar_nomask_good.h5'
+			self.model_name = 'model_lm_jun_maize_nomask_good.h5'
+			self.model_name = 'model_lm_jun_maize_nomask_good.h5'
+			self.model_name = 'model_best_UUnet4ConvLSTM_jun.h5'
+			self.model_name = 'model_cv_may_3classes_nomask.h5'
+			self.model_name = 'model_best_fit2.h5'
+			self.model_name = 'model_lm_mar_nomask_good.h5'
+			self.model_name = 'model_best_UUnet4ConvLSTM_jun_cv_criteria_0_92.h5'
+			model.graph=load_model(self.model_name, compile=False)		
 
 		else:
 			model.graph.compile(loss=loss,
@@ -317,4 +294,17 @@ class TrainTest():
 		model.evaluate(data)
 
 if __name__ == '__main__':
-	TrainTest().trainEvaluate(paramsTrain.model_name)
+	paramsTrain.dataSource = SARSource()
+
+	trainTest = TrainTest(paramsTrain)
+
+	patchExtractor = PatchExtractor(paramsTrain, trainTest.ds)	
+	if paramsTrain.getFullIms == True:
+		patchExtractor.getFullIms()	
+	else:
+		patchExtractor.fullImsLoad()
+
+	if paramsTrain.coordsExtract == True:
+		patchExtractor.extract()
+
+	trainTest.trainAndEvaluate(paramsTrain.model_name)

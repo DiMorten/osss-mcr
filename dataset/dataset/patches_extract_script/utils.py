@@ -49,7 +49,7 @@ class DataForNet(object):
 		train_test_mask_name="TrainTestMask.tif",test_overlap_full=True,ram_store=True,patches_save=False,
 		patch_test_overlap=0, dataSource=SARSource(), dataset=LEM()):
 		#self.useHumidity=True
-		self.dataset = dataset
+		self.dataset = dataset #ds
 		self.dataSource = dataSource
 
 		deb.prints(self.dataSource,color=deb.bcolors.OKBLUE)
@@ -60,8 +60,6 @@ class DataForNet(object):
 		deb.prints(patches_save)
 		self.patches_save=patches_save
 		self.ram_store=ram_store
-		self.conf={"t_len":self.dataset.t_len, "path": self.dataset.path, "class_n":self.dataset.class_n, 'label':{}, 'seq':{}}
-		self.conf['band_n']=self.dataSource.band_n
 
 		deb.prints(self.conf['path'])
 		remove_folder(".."/self.conf['path']/'summaries')
