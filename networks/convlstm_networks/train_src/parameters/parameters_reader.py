@@ -49,8 +49,8 @@ class ParamsTrain(Params):
 
         # ============== OPEN SET MODE ================= #
 
-        #self.openMode = 'SaveNonaugmentedTrainPatches'
-        self.openMode = 'OpenSet'
+        self.openMode = 'SaveNonaugmentedTrainPatches'
+#        self.openMode = 'OpenSet'
         
         if self.openMode == 'OpenSet':
             json_path = folder_path+'parameters_openset.json'

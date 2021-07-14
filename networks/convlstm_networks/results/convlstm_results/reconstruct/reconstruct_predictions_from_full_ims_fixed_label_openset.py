@@ -40,7 +40,7 @@ dataset=paramsTrain.dataset
 
 deb.prints(dataset)
 deb.prints(paramsTrain.model_type)
-deb.prints(direct_execution)
+#deb.prints(direct_execution)
 
 def patch_file_id_order_from_folder(folder_path):
 	paths=glob.glob(folder_path+'*.npy')
@@ -136,6 +136,7 @@ print("Mask shape",mask.shape)
 full_path = '../../../../../dataset/dataset/'+dataset+'_data/full_ims/' 
 full_ims_test = np.load(full_path+'full_ims_test.npy')
 full_label_test = np.load(full_path+'full_label_test.npy').astype(np.uint8)
+full_label_train = np.load(full_path+'full_label_train.npy').astype(np.uint8)
 
 ic(full_ims_test.shape)
 ic(full_label_test.shape)
@@ -219,7 +220,10 @@ print("Full label test unique",np.unique(full_label_test,return_counts=True))
 sequence_len, row, col, bands = full_ims_test.shape
 #pdb.set_trace()
 
-label_rebuilt=full_label_test[-1]
+if pr.label_entire_save==True:
+	label_rebuilt = full_label_train[-1] + full_label_test[-1]
+else:
+	label_rebuilt=full_label_test[-1]
 print("full_label_test.shape, label_rebuilt.shape", full_label_test.shape, label_rebuilt.shape)
 print("label_rebuilt.shape",label_rebuilt.shape)
 print("label_rebuilt.unique",np.unique(label_rebuilt,return_counts=True))

@@ -8,11 +8,13 @@ class ParamsReconstruct():
         self.save_input_im = False
 
         self.croppedFlag = False
-        self.open_set_mode = True
+
+        self.open_set_mode = False
+
         self.mosaic_flag = False
 
         self.threshold_idx = 4
-        self.overlap = 0.5
+        self.overlap = 0
 
         if self.overlap > 0:
             self.add_padding_flag = True
@@ -39,6 +41,7 @@ class ParamsReconstruct():
 
         self.prediction_dtype = np.float16
 
+        self.label_entire_save = True
     def setModelPath(self, model_path):
                 
         self.model_path=model_path
