@@ -204,7 +204,7 @@ class PatchExtractor():
 
 				if np.any(mask_patch==1): # Train sample
 					coords_train.append(indexes)
-				elif np.any(mask_patch==2): # Test sample
+				if np.any(mask_patch==2): # Test sample
 					coords_test.append(indexes)
 				
 		coords_train = np.asarray(coords_train)
