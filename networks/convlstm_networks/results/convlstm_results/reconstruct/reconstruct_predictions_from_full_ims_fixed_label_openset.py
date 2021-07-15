@@ -83,24 +83,7 @@ path_test='../../../../../dataset/dataset/'+dataset+'_data/patches_bckndfixed/te
 print('path_test',path_test)
 
 #pr.prediction_type = 'model'
-if pr.prediction_type=='npy':
-	predictionsLoader = PredictionsLoaderNPY()
-	predictions, labels = predictionsLoader.loadPredictions(pr.predictions_path,model_path+'labels.npy')
-elif pr.prediction_type=='model':	
-	#model_path=results_path + 'model/'+dataset+'/'+prediction_filename
-	print('model_path',pr.predictions_path)
 
-	# predictionsLoader = PredictionsLoaderModel(path_test)
-	
-	
-	#PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet
-	predictionsLoaderTest = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset)
-#predictions, label_test, test_pred_proba, model = predictionsLoaderTest.loadPredictions(pr.predictions_path, seq_date=paramsTrain.seq_date, 
-#		model_dataset=paramsTrain.model_dataset)	
-# load the full ims ... then create the known classes and unknown class
-# using the paramsTrain values...
-# maybe use the mim object (although not sure if needed)
-	model = predictionsLoaderTest.loadModel(pr.predictions_path)
 #================= load labels and predictions
 
 
@@ -128,7 +111,8 @@ elif pr.prediction_type=='model':
 
 # Load mask
 mask=cv2.imread(pr.mask_path,-1)
-mask[mask==1]=0 # training as background
+if pr.label_entire_save == False:
+	mask[mask==1]=0 # training as background
 print("Mask shape",mask.shape)
 #print((sequence_len,)+mask.shape)
 
@@ -221,12 +205,66 @@ sequence_len, row, col, bands = full_ims_test.shape
 #pdb.set_trace()
 
 if pr.label_entire_save==True:
-	label_rebuilt = full_label_train[-1] + full_label_test[-1]
-else:
-	label_rebuilt=full_label_test[-1]
+	#label_rebuilt = (full_label_train[-1] + full_label_test[-1])//2
+	label_rebuilt = cv2.bitwise_or(full_label_train[-1], full_label_test[-1])
+	#label_rebuilt = full_label_test[-1]
+if pr.label_entire_save==True:
+	ic(np.unique(label_rebuilt, return_counts = True))
+
+	label_rebuilt = label_rebuilt - 1
+	ic(np.unique(label_rebuilt, return_counts = True))
+	label_rebuilt[mask==0]=255
+	ic(np.unique(label_rebuilt, return_counts = True))
+
+	label_rgb=cv2.cvtColor(label_rebuilt,cv2.COLOR_GRAY2RGB)
+	ic(np.unique(label_rgb, return_counts = True))
+
+	label_rgb_tmp = label_rgb.copy()
+	deb.prints(pr.custom_colormap)
+	print("Starting coloring...")
+	for idx in range(pr.custom_colormap.shape[0]):
+		#print("Assigning color. class:",idx)
+
+		for chan in [0,1,2]:
+			#deb.prints(np.unique(label_rgb[...,chan],return_counts=True))
+
+			label_rgb[...,chan][label_rgb_tmp[...,chan]==idx]=pr.custom_colormap[idx,chan]
+	ic(np.unique(label_rgb, return_counts = True))
+
+	print("Finished coloring")
+	label_rgb=cv2.cvtColor(label_rgb,cv2.COLOR_BGR2RGB)
+
+	cv2.imwrite("label_rgb_"+paramsTrain.dataset+"_"+paramsTrain.seq_date+"_"+".png", label_rgb)
+	
+	sys.exit()
+
+
+label_rebuilt=full_label_test[-1]
 print("full_label_test.shape, label_rebuilt.shape", full_label_test.shape, label_rebuilt.shape)
 print("label_rebuilt.shape",label_rebuilt.shape)
 print("label_rebuilt.unique",np.unique(label_rebuilt,return_counts=True))
+
+
+
+if pr.prediction_type=='npy':
+	predictionsLoader = PredictionsLoaderNPY()
+	predictions, labels = predictionsLoader.loadPredictions(pr.predictions_path,model_path+'labels.npy')
+elif pr.prediction_type=='model':	
+	#model_path=results_path + 'model/'+dataset+'/'+prediction_filename
+	print('model_path',pr.predictions_path)
+
+	# predictionsLoader = PredictionsLoaderModel(path_test)
+	
+	
+	#PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet
+	predictionsLoaderTest = PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(path_test, dataset=dataset)
+#predictions, label_test, test_pred_proba, model = predictionsLoaderTest.loadPredictions(pr.predictions_path, seq_date=paramsTrain.seq_date, 
+#		model_dataset=paramsTrain.model_dataset)	
+# load the full ims ... then create the known classes and unknown class
+# using the paramsTrain values...
+# maybe use the mim object (although not sure if needed)
+	model = predictionsLoaderTest.loadModel(pr.predictions_path)
+
 
 ##pdb.set_trace()
 lm_labeled_dates = ['20170612', '20170706', '20170811', '20170916', '20171010', '20171115', 
@@ -854,16 +892,16 @@ def save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask,
 	deb.prints(custom_colormap)
 	prediction_rgb_tmp = prediction_rgb.copy()
 	label_rgb_tmp = label_rgb.copy()
-	
+	ic(np.unique(label_rgb, return_counts = True))
 	for idx in range(custom_colormap.shape[0]):
 		print("Assigning color. class:",idx)
 
 		for chan in [0,1,2]:
-			deb.prints(np.unique(label_rgb[...,chan],return_counts=True))
+			#deb.prints(np.unique(label_rgb[...,chan],return_counts=True))
 
 			prediction_rgb[...,chan][prediction_rgb_tmp[...,chan]==idx]=custom_colormap[idx,chan]
 			label_rgb[...,chan][label_rgb_tmp[...,chan]==idx]=custom_colormap[idx,chan]
-
+	ic(np.unique(label_rgb, return_counts = True))
 	# color the unknown
 	red_rgb = [255, 0, 0]
 	for chan in [0,1,2]:
@@ -894,8 +932,14 @@ def save_prediction_label_rebuilt_Nto1(label_rebuilt, prediction_rebuilt, mask,
 		print("no file to remove")
 	ret = cv2.imwrite(prediction_savename, prediction_rgb)
 	deb.prints(ret)
-	ic(save_folder+"label_t_"+paramsTrain.seq_date+"_"+paramsTrain.model_type+"_"+name_id+".png")
-	ret = cv2.imwrite(save_folder+"label_t_"+paramsTrain.seq_date+"_"+paramsTrain.model_type+"_"+name_id+".png",label_rgb)
+
+	label_savename = save_folder+"label_t_"+paramsTrain.seq_date+"_"+paramsTrain.model_type+"_"+name_id+".png"
+	try:
+		os.remove(label_savename)
+	except:
+		print("no file to remove")
+	ic(label_savename)
+	ret = cv2.imwrite(label_savename,label_rgb)
 	deb.prints(ret)
 	ret = cv2.imwrite(save_folder+"mask.png",mask*200)
 	deb.prints(ret)

@@ -46,6 +46,7 @@ class ParamsTrain(Params):
 
         self.getFullIms = True
         self.coordsExtract = True
+        self.train = False
 
         # ============== OPEN SET MODE ================= #
 
@@ -60,8 +61,15 @@ class ParamsTrain(Params):
             json_path = folder_path+'save_nonaugmented_train_patches.json'
 
         # DATASET AND DATA
-        self.dataset = 'cv'
-        self.seq_date = 'jun'
+        self.dataset = 'lm'
+        #self.seq_date = 'jun'
+#        self.seq_date = 'mar'
+#        self.seq_date = 'dec'
+
+#        self.seq_date = 'jun'
+#        self.seq_date = 'sep'
+        self.seq_date = 'mar'
+        
         self.model_name = 'criteria_0_92'
         self.learning_rate = 0.0001
         self.id = "checking_deleted_files_ok"
@@ -73,6 +81,7 @@ class ParamsTrain(Params):
         super().__init__(json_path)
         ic(self.seq_date)
 #        pdb.set_trace()
+        self.known_classes = []
         if self.dataset == 'lm':
             if self.seq_date == 'mar':
                 self.known_classes = [0, 1, 10, 12]
@@ -89,7 +98,6 @@ class ParamsTrain(Params):
             elif self.seq_date == 'jun':
                 #self.known_classes = [1, 2, 8]
                 self.known_classes = [1, 2, 6, 8]
-
         print("self.known_classes", self.known_classes)
         self.known_classes_percentage = 0.92
 

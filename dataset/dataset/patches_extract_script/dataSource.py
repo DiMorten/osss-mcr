@@ -414,7 +414,37 @@ class CampoVerde(Dataset):
 					assert len(self.im_list)==11
 					assert self.im_list[-1]=='20160520_S1'
 
-
+				elif self.seq_date=='mar':
+					date_id = 6
+					self.im_list=im_list_full[-date_id-9+1:-date_id+1]
+					assert len(self.im_list)==9
+					assert self.im_list[-1]=='20160321_S1'
+				elif self.seq_date=='feb':
+					date_id = 7
+					self.im_list=im_list_full[-date_id-7+1:-date_id+1]
+					assert len(self.im_list)==7
+					assert self.im_list[-1]=='20160214_S1'
+				elif self.seq_date=='jan':
+					date_id = 8
+					self.im_list=im_list_full[-date_id-6+1:-date_id+1]
+					assert len(self.im_list)==6
+					assert self.im_list[-1]=='20160121_S1'
+				elif self.seq_date=='dec':
+					date_id = 10
+					self.im_list=im_list_full[-date_id-5+1:-date_id+1]
+					ic(self.im_list)
+					assert len(self.im_list)==5
+					assert self.im_list[-1]=='20151216_S1'
+				elif self.seq_date=='nov':
+					date_id = 12
+					self.im_list=im_list_full[-date_id-3+1:-date_id+1]
+					assert len(self.im_list)==3
+					assert self.im_list[-1]=='20151122_S1'
+				elif self.seq_date=='oct':
+					date_id = 14
+					self.im_list=im_list_full[-date_id-1+1:-date_id+1]
+					assert len(self.im_list)==1
+					assert self.im_list[-1]=='20151029_S1'					
 		elif self.dataSource.name == 'OpticalSource':
 			self.im_list=[]
 			self.label_list=self.im_list.copy()

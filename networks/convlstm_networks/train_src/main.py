@@ -305,4 +305,5 @@ if __name__ == '__main__':
 	if paramsTrain.coordsExtract == True:
 		patchExtractor.extract()
 
-	trainTest.trainAndEvaluate(paramsTrain.model_name)
+	if paramsTrain.train == True:
+		trainTest.trainAndEvaluate(paramsTrain.model_name)

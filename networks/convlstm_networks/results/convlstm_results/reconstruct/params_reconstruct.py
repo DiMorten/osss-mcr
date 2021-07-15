@@ -14,7 +14,7 @@ class ParamsReconstruct():
         self.mosaic_flag = False
 
         self.threshold_idx = 4
-        self.overlap = 0
+        self.overlap = 0.5
 
         if self.overlap > 0:
             self.add_padding_flag = True
