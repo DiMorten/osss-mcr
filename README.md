@@ -21,13 +21,25 @@ dataset/
 Where dataset_folder is cv_data for Campo Verde and lm_data for LEM
   
   
-## Instructions for default parameters
+## Instructions for traditional training and evaluation
 
 The main routine is in main.py. For default training use:
+
 ```
 cd src/...train_src/
 python main.py
 ```
+
+Finally for metrics and qualitative (reconstructed) results:
+
+```
+cd src/...reconstruct/
+python reconstruct.py
+```
+
+## Instructions for Open Set training and evaluation
+
+
 For open set training, in params_reader.py, change the parameter:
 ```
 mode='OpenSet'
