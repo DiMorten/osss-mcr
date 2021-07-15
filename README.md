@@ -52,15 +52,15 @@ python reconstruct...py
 ### Training parameters 
 In params_reader.py, edit the next parameters:
 
-self.dataset: 'cv' for CV dataset and 'lm' for LEM dataset
-self.date: 'jun' for CV dataset and 'jun', 'mar' for LEM dataset
+- self.dataset: 'cv' for CV dataset and 'lm' for LEM dataset
+- self.date: 'jun' for CV dataset and 'jun', 'mar' for LEM dataset
 
 ### AUC ROC metric and qualitative results parameters
 
 In params_analysis.py, edit the next parameters:
 
-self.open_mode: 'SoftmaxThresholding', 'OpenPCS'
-self.covMatrixInvert: False for OpenPCS, True for OpenPCS++
+- self.open_mode: 'SoftmaxThresholding', 'OpenPCS'
+- self.covMatrixInvert: False for OpenPCS, True for OpenPCS++
 
 
 
