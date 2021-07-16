@@ -44,8 +44,8 @@ class ParamsTrain(Params):
 
         # ============= PATCH EXTRACTION ============== #
 
-        self.getFullIms = False
-        self.coordsExtract = False
+        self.getFullIms = True
+        self.coordsExtract = True
         self.train = True
 
         # ============== OPEN SET MODE ================= #
