@@ -53,7 +53,7 @@ class SARSource(DataSource):
 	def __init__(self):
 		name='SARSource'
 		band_n = 2
-		foldernameInput = "in_np2/"
+		foldernameInput = "in_sar/"
 		label_folder = 'labels'
 		super().__init__(band_n, foldernameInput, label_folder,name)
 
