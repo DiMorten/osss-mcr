@@ -4,6 +4,8 @@ class ParamsReconstruct():
     def __init__(self, paramsTrain):
         self.paramsTrain = paramsTrain
 
+        self.metrics_flag = False
+
         self.prediction_type = 'model'
         self.save_input_im = False
 
@@ -33,20 +35,21 @@ class ParamsReconstruct():
 
         self.prediction_mask = False
 
-        self.conditionType = 'test'
-#        self.conditionType = 'all'
-        
-        self.data_path='../../../../../dataset/dataset/'
+#        self.conditionType = 'test'
+        self.conditionType = 'all'
+
+        self.data_path='../../' / self.paramsTrain.path
         self.setModelPath('../model/') 
 
         self.prediction_dtype = np.float16
 
-        self.label_entire_save = True
+        self.label_entire_save = False
     def setModelPath(self, model_path):
                 
         self.model_path=model_path
         
         if self.paramsTrain.model_type == 'UUnet4ConvLSTM':
+            self.paramsTrain.model_type_specific = self.paramsTrain.model_type
             self.paramsTrain.model_type = 'unet'
         if self.paramsTrain.dataset=='lm':
 
@@ -75,6 +78,7 @@ class ParamsReconstruct():
 
                     
 
+
             elif self.paramsTrain.model_type=='atrous':
                 self.predictions_path=self.model_path+'prediction_BAtrousConvLSTM_2convins5.npy'
             elif self.paramsTrain.model_type=='atrousgap':
@@ -82,11 +86,14 @@ class ParamsReconstruct():
                 #self.predictions_path=self.model_path+'prediction_BAtrousGAPConvLSTM_repeating3.npy'
                 #self.predictions_path=self.model_path+'prediction_BAtrousGAPConvLSTM_repeating4.npy'
                 
+            self.predictions_path = self.model_path+'model_best_' + self.paramsTrain.model_type_specific + '_' + \
+                self.paramsTrain.seq_date + '_' + self.paramsTrain.dataset + '_' + \
+                self.paramsTrain.model_name + '.h5'
             ic(self.predictions_path)
 
-            self.mask_path=self.data_path+'lm_data/TrainTestMask.tif'
-            self.location_path=self.data_path+'lm_data/locations/'
-            self.folder_load_path=self.data_path+'lm_data/train_test/test/labels/'
+            self.mask_path=self.data_path / 'TrainTestMask.tif'
+            self.location_path=self.data_path / 'locations/'
+            self.folder_load_path=self.data_path / 'train_test/test/labels/'
 
             self.custom_colormap = np.array([[255,146,36],
                             [255,255,0],
@@ -130,10 +137,10 @@ class ParamsReconstruct():
             elif self.paramsTrain.model_type=='allinputs':
                 self.predictions_path=self.model_path+'prediction_bconvlstm_wholeinput.npy'			
 
-            self.mask_path=self.data_path+'cv_data/TrainTestMask.tif'
-            self.location_path=self.data_path+'cv_data/locations/'
+            self.mask_path=self.data_path / 'TrainTestMask.tif'
+            self.location_path=self.data_path / 'locations/'
 
-            self.folder_load_path=self.data_path+'cv_data/train_test/test/labels/'
+            self.folder_load_path=self.data_path / 'train_test/test/labels/'
 
             self.custom_colormap = np.array([[255, 146, 36],
                         [255, 255, 0],
@@ -156,9 +163,9 @@ class ParamsReconstruct():
                 self.predictions_path = self.model_path+'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+self.paramsTrain.seq_date+'.h5'
                 self.predictions_path = self.model_path+'model_best_UUnet4ConvLSTM_doty_fixed_label_fixed_'+self.paramsTrain.seq_date+'_700perclass.h5'
         #		self.predictions_path = self.model_path+'model_best_UUnet4ConvLSTM_doty_fixed_label_dec_good_slvc05.h5'
-            self.mask_path=self.data_path+'l2_data/TrainTestMask.tif'
-            self.location_path=self.data_path+'l2_data/locations/'
-            self.folder_load_path=self.data_path+'l2_data/train_test/test/labels/'
+            self.mask_path=self.data_path / 'TrainTestMask.tif'
+            self.location_path=self.data_path / 'locations/'
+            self.folder_load_path=self.data_path / 'train_test/test/labels/'
 
             self.custom_colormap = np.array([[255,146,36],
                             [255,255,0],

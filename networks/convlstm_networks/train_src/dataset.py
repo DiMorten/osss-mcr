@@ -827,23 +827,23 @@ class DatasetWithCoords(Dataset):
 		unique_sorted = sorted(zip(count_percentage, unique), reverse=True)
 		unique_sorted = np.asarray(unique_sorted)
 		ic(unique_sorted)
-
-		cum_percentage = 0.
-		self.paramsTrain.known_classes = []
-		ic(unique.shape[0])
-		ic(self.paramsTrain.known_classes_percentage)
-		for idx in range(unique.shape[0]):
-			cum_percentage += unique_sorted[idx, 0]
-			ic(idx, unique_sorted[idx], cum_percentage)
-			if cum_percentage<self.paramsTrain.known_classes_percentage:
-				self.paramsTrain.known_classes.append(int(unique_sorted[idx, 1]))
-			else:
-				break
-#				print("Unknown class")
-#			else:
-#				break
-		self.paramsTrain.known_classes = sorted(self.paramsTrain.known_classes)
-		ic(self.paramsTrain.known_classes)
+		if self.paramsTrain.openMode != 'NoMode':
+			cum_percentage = 0.
+			self.paramsTrain.known_classes = []
+			ic(unique.shape[0])
+			ic(self.paramsTrain.known_classes_percentage)
+			for idx in range(unique.shape[0]):
+				cum_percentage += unique_sorted[idx, 0]
+				ic(idx, unique_sorted[idx], cum_percentage)
+				if cum_percentage<self.paramsTrain.known_classes_percentage:
+					self.paramsTrain.known_classes.append(int(unique_sorted[idx, 1]))
+				else:
+					break
+	#				print("Unknown class")
+	#			else:
+	#				break
+			self.paramsTrain.known_classes = sorted(self.paramsTrain.known_classes)
+			ic(self.paramsTrain.known_classes)
 		#pdb.set_trace()
 
 #		self.known_classes = #
@@ -860,6 +860,9 @@ class DatasetWithCoords(Dataset):
 		ic(np.unique(self.full_label_train, return_counts=True))
 		ic(np.unique(self.full_label_test, return_counts=True))
 
+		if self.paramsTrain.openMode == 'NoMode':
+			self.paramsTrain.known_classes = np.unique(self.full_label_train)[1:] - 1
+			ic(self.paramsTrain.known_classes)
 #		pdb.set_trace()
 		
 		#ic(self.unknown_classes)

@@ -184,9 +184,7 @@ class TrainTest():
 
 	def trainAndEvaluate(self, model_name_id):
 		
-		self.model_name = 'model_best_' + self.paramsTrain.model_type + '_' + \
-			self.paramsTrain.seq_date + '_' + self.paramsTrain.dataset + '_' + \
-			model_name_id + '.h5'
+		self.model_name = model_name_id
 		ic(self.model_name)
 		if self.paramsTrain.sliceFromCoords == False:
 			datasetClass = Dataset
@@ -305,5 +303,11 @@ if __name__ == '__main__':
 	if paramsTrain.coordsExtract == True:
 		patchExtractor.extract()
 
+
+	model_name_id = 'model_best_' + paramsTrain.model_type + '_' + \
+			paramsTrain.seq_date + '_' + paramsTrain.dataset + '_' + \
+			paramsTrain.model_name + '.h5'
+
 	if paramsTrain.train == True:
-		trainTest.trainAndEvaluate(paramsTrain.model_name)
+		trainTest.trainAndEvaluate(model_name_id)
+		

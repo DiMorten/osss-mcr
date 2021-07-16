@@ -44,14 +44,15 @@ class ParamsTrain(Params):
 
         # ============= PATCH EXTRACTION ============== #
 
-        self.getFullIms = True
-        self.coordsExtract = True
-        self.train = False
+        self.getFullIms = False
+        self.coordsExtract = False
+        self.train = True
 
         # ============== OPEN SET MODE ================= #
 
-        self.openMode = 'SaveNonaugmentedTrainPatches'
+#        self.openMode = 'SaveNonaugmentedTrainPatches'
 #        self.openMode = 'OpenSet'
+        self.openMode = 'NoMode'
         
         if self.openMode == 'OpenSet':
             json_path = folder_path+'parameters_openset.json'
@@ -59,6 +60,8 @@ class ParamsTrain(Params):
             json_path = folder_path+'parameters_closedset_groupclasses.json'
         elif self.openMode == 'SaveNonaugmentedTrainPatches':
             json_path = folder_path+'save_nonaugmented_train_patches.json'
+        elif self.openMode == 'NoMode':
+            json_path = folder_path+'no_mode.json'
 
         # DATASET AND DATA
         self.dataset = 'lm'
@@ -70,7 +73,7 @@ class ParamsTrain(Params):
 #        self.seq_date = 'sep'
         self.seq_date = 'mar'
         
-        self.model_name = 'criteria_0_92'
+        self.model_name = 'nomode'
         self.learning_rate = 0.0001
         self.id = "checking_deleted_files_ok"
         
@@ -85,13 +88,15 @@ class ParamsTrain(Params):
         if self.dataset == 'lm':
             if self.seq_date == 'mar':
                 self.known_classes = [0, 1, 10, 12]
-#                self.known_classes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+#                
 #                self.samples_per_class = 700
 
             elif self.seq_date == 'jun':
 #                self.known_classes = [1, 6, 10, 12]
                 self.known_classes = [1, 5, 6, 10, 12]
 
+            if self.openMode == 'NoMode':
+                self.known_classes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
         elif self.dataset == 'cv':
             if self.seq_date == 'may':
                 self.known_classes = [1, 2, 6]

@@ -110,7 +110,8 @@ print('path_test',path_test)
 #patch_len=labels.shape[2]
 
 # Load mask
-mask=cv2.imread(pr.mask_path,-1)
+ic(str(pr.mask_path))
+mask=cv2.imread(str(pr.mask_path),-1)
 if pr.label_entire_save == False:
 	mask[mask==1]=0 # training as background
 print("Mask shape",mask.shape)
@@ -264,6 +265,7 @@ elif pr.prediction_type=='model':
 # using the paramsTrain values...
 # maybe use the mim object (although not sure if needed)
 	model = predictionsLoaderTest.loadModel(pr.predictions_path)
+	ic(model.summary())
 
 
 ##pdb.set_trace()
@@ -391,6 +393,10 @@ ic(paramsAnalysis.openSetMethod)
 ic(threshold)
 ic(paramsAnalysis.makeCovMatrixIdentity)
 
+if paramsTrain.openMode == 'NoMode':
+	paramsTrain.known_classes = np.unique(full_label_train[-1])[1:] - 1
+	ic(paramsTrain.known_classes)
+	
 known_classes = [x + 1 for x in paramsTrain.known_classes]
 deb.prints(known_classes)
 if paramsAnalysis.openSetMethod == 'OpenPCS':
@@ -492,18 +498,19 @@ if pr.mosaic_flag == True:
 				ic(test_pred_proba_patches.shape) # h, w, classes
 			test_pred_proba_patches = np.reshape(test_pred_proba_patches, (test_pred_proba_patches.shape[0], -1, test_pred_proba_patches.shape[-1]))
 
-	test_pred_proba_patches = test_pred_proba_patches.astype(pr.prediction_dtype)
-	ic(test_pred_proba_patches.dtype, test_pred_proba_patches.shape)
+		test_pred_proba_patches = test_pred_proba_patches.astype(pr.prediction_dtype)
+		ic(test_pred_proba_patches.dtype, test_pred_proba_patches.shape)
 	#pdb.set_trace()
 
 	count_mask = 0
-
+	ic(pr.conditionType)
 	for m in range(patch_size//2,row-patch_size//2,stride): 
 		for n in range(patch_size//2,col-patch_size//2,stride):
 			
 			patch_mask = mask_pad[m-patch_size//2:m+patch_size//2 + patch_size%2,
 						n-patch_size//2:n+patch_size//2 + patch_size%2]
 
+			
 			if pr.conditionType == 'test':
 				condition = np.any(patch_mask==2)
 			else:
@@ -661,7 +668,8 @@ if pr.mosaic_flag == True:
 	ic(np.unique(prediction_rebuilt, return_counts=True))
 	if pr.open_set_mode == False:
 		prediction_rebuilt = prediction_logits_rebuilt.argmax(axis=-1).astype(np.uint8)
-		prediction_rebuilt[mask_pad != 2] = 255
+		if pr.conditionType == 'test':
+			prediction_rebuilt[mask_pad != 2] = 255
 	ic(np.unique(prediction_rebuilt, return_counts=True))
 #	pdb.set_trace()
 	if pr.add_padding_flag==True:
@@ -729,12 +737,12 @@ if pr.open_set_mode == False:
 
 deb.prints(prediction_rebuilt.shape)
 #pdb.set_trace()
-deb.prints(np.unique(prediction_rebuilt,return_counts=True))
+ic(np.unique(prediction_rebuilt,return_counts=True))
 
 
 ic(time.time()-t0)
-metrics_flag=True
-if metrics_flag==True:
+# metrics_flag=True
+if pr.metrics_flag==True:
 	# ========== metrics get =======#
 	def my_f1_score(label,prediction):
 		f1_values=f1_score(label,prediction,average=None)
@@ -816,6 +824,8 @@ if metrics_flag==True:
 label_rebuilt = label_rebuilt - 1
 prediction_rebuilt = prediction_rebuilt - 1
 
+ic(np.unique(prediction_rebuilt, return_counts = True))
+
 #if dataset=='lm':
 #	important_classes_idx = [0, 1, 10, 12]
 important_classes_idx = paramsTrain.known_classes
@@ -836,11 +846,12 @@ def small_classes_ignore(label, predictions, important_classes_idx):
 
 	return label, predictions, important_classes_idx
 
-label_rebuilt, prediction_rebuilt, important_classes_idx = small_classes_ignore(
-			label_rebuilt, prediction_rebuilt,important_classes_idx)
+if paramsTrain.openMode != 'NoMode':
+	label_rebuilt, prediction_rebuilt, important_classes_idx = small_classes_ignore(
+				label_rebuilt, prediction_rebuilt,important_classes_idx)
 
-prediction_rebuilt[prediction_rebuilt==39] = 20
-label_rebuilt[label_rebuilt==39] = 20
+	prediction_rebuilt[prediction_rebuilt==39] = 20
+	label_rebuilt[label_rebuilt==39] = 20
 
 deb.prints(np.unique(label_rebuilt,return_counts=True))
 deb.prints(np.unique(prediction_rebuilt,return_counts=True))
