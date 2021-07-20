@@ -1,4 +1,7 @@
-# This is the code for the paper "Open Set + Fully Convolutional Recurrent Networks for Multidate Crop Recognition from Multitemporal Image Sequence"
+# This is the code for the following papers:
+
+1. Fully Convolutional Recurrent Networks for Multidate Crop Recognition From Multitemporal Image Sequences
+2. "Open Set + Fully Convolutional Recurrent Networks for Multidate Crop Recognition from Multitemporal Image Sequence"
 
 
 ## Installing the required python packages
@@ -10,18 +13,18 @@ The list of anaconda commands to recreate the environment for this project is in
 Download the input images from the following links. 
 
 
-The dataset structure is as follows. Place the sequence of NPY input images in the in_np2/ folder, and the sequence of TIF labels in the labels/ folder.
+The dataset structure is as follows. Place the sequence of NPY input images in the in_sar/ folder, and the sequence of TIF labels in the labels/ folder.
 ```
 dataset/  
   dataset/  
     {dataset_folder}/  
-      in_np2/  
+      in_sar/  
       labels/  
 ```  
 Where dataset_folder is cv_data for Campo Verde and lm_data for LEM
   
   
-## Instructions for traditional training and evaluation
+## Paper 1: Instructions for training and evaluation
 
 The main routine is in main.py. For default training use:
 
@@ -37,7 +40,7 @@ cd src/...reconstruct/
 python reconstruct.py
 ```
 
-## Instructions for Open Set training and evaluation
+## Paper 2: Instructions for Open Set training and evaluation
 
 
 For open set training, in params_reader.py, change the parameter:
