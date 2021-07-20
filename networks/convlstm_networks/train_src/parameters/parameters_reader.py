@@ -64,7 +64,7 @@ class ParamsTrain(Params):
             json_path = folder_path+'no_mode.json'
 
         # DATASET AND DATA
-        self.dataset = 'lm'
+        self.dataset = 'cv'
         #self.seq_date = 'jun'
 #        self.seq_date = 'mar'
 #        self.seq_date = 'dec'
