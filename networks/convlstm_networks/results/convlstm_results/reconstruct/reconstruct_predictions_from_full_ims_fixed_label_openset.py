@@ -139,7 +139,7 @@ if pr.croppedFlag == True:
 	mask = mask[5100:6100,4900:5900]
 
 if pr.save_input_im == True:
-	im = np.load('../../../../../dataset/dataset/'+dataset+'_data/in_np2/20180315_S1.npy')
+	im = np.load('../../../../../dataset/dataset/'+dataset+'_data/in_sar/20180315_S1.npy')
 	ic(im.shape)
 	im = im[5100:6100,4900:5900, 1]
 	ic(im.shape)
@@ -148,7 +148,23 @@ if pr.save_input_im == True:
 	im = im * 255/max_val
 	ic(np.min(im), np.average(im), np.max(im))
 	cv2.imwrite('sample_im.png', im.astype(np.uint8))
-	#pdb.set_trace()
+	
+	im_tmp = np.rot90(im,1,(0,1))
+	cv2.imwrite('sample_im_rot90_1.png', im_tmp.astype(np.uint8))
+	
+	im_tmp = np.rot90(im,2,(0,1))
+	cv2.imwrite('sample_im_rot90_2.png', im_tmp.astype(np.uint8))
+	
+	im_tmp = np.rot90(im,3,(0,1))
+	cv2.imwrite('sample_im_rot90_3.png', im_tmp.astype(np.uint8))
+	
+	im_tmp = np.flip(im,0)
+	cv2.imwrite('sample_im_flip_0.png', im_tmp.astype(np.uint8))
+	
+	im_tmp = np.flip(im,1)
+	cv2.imwrite('sample_im_flip_1.png', im_tmp.astype(np.uint8))
+	
+	pdb.set_trace()
 # convert labels; background is last
 #class_n=len(np.unique(full_label_test))-1
 #full_label_test=full_label_test-1

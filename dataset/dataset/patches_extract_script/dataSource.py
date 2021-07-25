@@ -373,6 +373,10 @@ class Dataset(object):
 		
 		deb.prints(np.unique(patch['full_label_ims'],return_counts=True))
 		return patch
+
+		# more cohesive, implement im_load_loop (same as up) in SARSource.
+		# Then create SARSource_GEE(SARSource) and load differently.
+		# self.dataSource.im_load_loop(patch,im_names,label_names,add_id,conf)
 	def getChannelsToMask(self):
 		return self.dataSource.channelsToMask
 class CampoVerde(Dataset):
