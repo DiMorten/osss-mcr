@@ -1023,7 +1023,7 @@ class DatasetWithCoords(Dataset):
 		ic(unique_train)
 		bcknd_idx = unique_train[-1]
 		ic(bcknd_idx)
-		psize = 32 # 32
+		psize = self.paramsTrain.patch_len # 32
 		ic(psize)
 
 

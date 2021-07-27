@@ -61,7 +61,7 @@ from model import NetModel, ModelFit, ModelLoadGenerator, ModelLoadGeneratorDebu
 from dataset import Dataset, DatasetWithCoords
 
 from patch_extractor import PatchExtractor
-ic.configureOutput(includeContext=False)
+ic.configureOutput(includeContext=True)
 np.random.seed(2021)
 tf.set_random_seed(2021)
 
@@ -310,4 +310,3 @@ if __name__ == '__main__':
 
 	if paramsTrain.train == True:
 		trainTest.trainAndEvaluate(model_name_id)
-		

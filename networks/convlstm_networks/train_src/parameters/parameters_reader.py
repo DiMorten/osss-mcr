@@ -44,7 +44,7 @@ class ParamsTrain(Params):
 
         # ============= PATCH EXTRACTION ============== #
 
-        self.getFullIms = True
+        self.getFullIms = False
         self.coordsExtract = True
         self.train = True
 
@@ -69,9 +69,9 @@ class ParamsTrain(Params):
 #        self.seq_date = 'mar'
 #        self.seq_date = 'dec'
 
-        self.seq_date = 'jun'
+#        self.seq_date = 'jun'
 #        self.seq_date = 'sep'
-#        self.seq_date = 'mar'
+        self.seq_date = 'mar'
         
         self.model_name = 'nomode'
         self.learning_rate = 0.0001
@@ -136,7 +136,9 @@ class ParamsTrain(Params):
         self.channel_n = 2
 
         self.stop_epoch = 400
-        self.patch_len = 32
+#        self.patch_len = 32
+        self.patch_len = 64
+        
         self.stride = self.patch_len
         self.patch_step_train = self.stride
         self.patch_step_test = self.patch_len
