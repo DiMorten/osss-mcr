@@ -45,8 +45,9 @@ class ParamsTrain(Params):
         # ============= PATCH EXTRACTION ============== #
 
         self.getFullIms = False
-        self.coordsExtract = True
+        self.coordsExtract = False
         self.train = True
+        self.model_load = True
 
         # ============== OPEN SET MODE ================= #
 
@@ -78,10 +79,7 @@ class ParamsTrain(Params):
         self.id = "checking_deleted_files_ok"
         
         
-        self.path = Path("../../../dataset/dataset/") / (self.dataset + "_data")
 
-        print(os.listdir(folder_path))
-        super().__init__(json_path)
         ic(self.seq_date)
 #        pdb.set_trace()
         self.known_classes = []
@@ -136,10 +134,16 @@ class ParamsTrain(Params):
         self.channel_n = 2
 
         self.stop_epoch = 400
-#        self.patch_len = 32
-        self.patch_len = 64
+        self.patch_len = 32
+#        self.patch_len = 64
         
-        self.stride = self.patch_len
+        #self.stride = self.patch_len
+        self.train_overlap_percentage = 0
+        self.stride = int(self.patch_len - self.patch_len * self.train_overlap_percentage)
+        ic(self.stride)
+
+        self.test_overlap_percentage = 0
+
         self.patch_step_train = self.stride
         self.patch_step_test = self.patch_len
         self.batch_size_train = 16
@@ -153,7 +157,10 @@ class ParamsTrain(Params):
         
         self.loco_class = 8 # legacy. delete
 
-        
+        self.path = Path("../../../dataset/dataset/") / (self.dataset + "_data")
+
+        print(os.listdir(folder_path))
+        super().__init__(json_path)        
 
 
 #        pdb.set_trace()

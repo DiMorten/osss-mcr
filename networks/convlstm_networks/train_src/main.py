@@ -57,7 +57,7 @@ from parameters.parameters_reader import ParamsTrain
 from icecream import ic
 from monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerator
 import natsort
-from model import NetModel, ModelFit, ModelLoadGenerator, ModelLoadGeneratorDebug, ModelLoadGeneratorWithCoords, ModelLoadEachBatch
+from model import ModelLoadGeneratorWithCoords
 from dataset import Dataset, DatasetWithCoords
 
 from patch_extractor import PatchExtractor
@@ -182,7 +182,7 @@ class TrainTest():
 		self.paramsTrain.dotys_sin_cos = dotys_sin_cos
 		self.dotys_sin_cos = dotys_sin_cos
 
-	def trainAndEvaluate(self, model_name_id):
+	def train(self, model_name_id):
 		
 		self.model_name = model_name_id
 		ic(self.model_name)
@@ -190,12 +190,12 @@ class TrainTest():
 			datasetClass = Dataset
 		else:
 			datasetClass = DatasetWithCoords
-		data = datasetClass(paramsTrain = self.paramsTrain, ds = self.ds,
+		self.data = datasetClass(paramsTrain = self.paramsTrain, ds = self.ds,
 			dotys_sin_cos = self.dotys_sin_cos)
 
-		data.create_load()
+		self.data.create_load()
 		
-		self.paramsTrain.class_n = data.class_n
+		self.paramsTrain.class_n = self.data.class_n
 		ic(self.paramsTrain.class_n)
 
 		adam = Adam(lr=self.paramsTrain.learning_rate, beta_1=0.9)
@@ -213,31 +213,31 @@ class TrainTest():
 			modelClass = ModelLoadGeneratorWithCoords
 
 
-		model = modelClass(paramsTrain = self.paramsTrain, ds = self.ds, 
-						) # , data = data
+		self.model = modelClass(paramsTrain = self.paramsTrain, ds = self.ds, 
+						) # , self.data = self.data
 
-		model.name = self.model_name
+		self.model.name = self.model_name
 		
-		model.class_n=data.class_n-1 # Model is designed without background class
-		deb.prints(data.class_n)
-		model.build()
+		self.model.class_n=self.data.class_n-1 # Model is designed without background class
+		deb.prints(self.data.class_n)
+		self.model.build()
 
 
-		model.class_n+=1 # This is used in loss_weights_estimate, val_set_get, semantic_balance (To-do: Eliminate bcknd class)
+		self.model.class_n+=1 # This is used in loss_weights_estimate, val_set_get, semantic_balance (To-do: Eliminate bcknd class)
 
 		print("=== SELECT VALIDATION SET FROM TRAIN SET")
 			
 		#val_set = False # fix this
 		if self.paramsTrain.val_set==True:
 			deb.prints(self.paramsTrain.val_set_mode)
-			data.val_set_get(self.paramsTrain.val_set_mode,0.15)
+			self.data.val_set_get(self.paramsTrain.val_set_mode,0.15)
 		else:
-			data.patches['val']={}
+			self.data.patches['val']={}
 
-			data.patches['val']['label']=np.zeros((1,1))
-			data.patches['val']['in']=np.zeros((1,1))
+			self.data.patches['val']['label']=np.zeros((1,1))
+			self.data.patches['val']['in']=np.zeros((1,1))
 			
-			deb.prints(data.patches['val']['label'].shape)
+			deb.prints(self.data.patches['val']['label'].shape)
 			
 		#balancing=False
 		
@@ -251,23 +251,25 @@ class TrainTest():
 			deb.prints(label_type)
 			print("Before balancing:")
 
-			data.semantic_balance(self.paramsTrain.samples_per_class,label_type = label_type) #More for known classes few. Compare with 500 later
+			self.data.semantic_balance(self.paramsTrain.samples_per_class,label_type = label_type) #More for known classes few. Compare with 500 later
 						
-		model.class_n-=1
+		self.model.class_n-=1
 
 		# Label background from 0 to last. 
-		deb.prints(data.patches['train']['coords'].shape)
+		deb.prints(self.data.patches['train']['coords'].shape)
 
 		#=========== End of moving bcknd label from 0 to last value
 
 		metrics=['accuracy']
 
-		#loss=weighted_categorical_crossentropy_ignoring_last_label(model.loss_weights_ones)
+		#loss=weighted_categorical_crossentropy_ignoring_last_label(self.model.loss_weights_ones)
 		loss=categorical_focal_ignoring_last_label(alpha=0.25,gamma=2)
-		#loss=weighted_categorical_focal_ignoring_last_label(model.loss_weights,alpha=0.25,gamma=2)
+		#loss=weighted_categorical_focal_ignoring_last_label(self.model.loss_weights,alpha=0.25,gamma=2)
 
 
 	#	self.paramsTrain.model_load=False
+		ic(self.paramsTrain.model_load)
+		#pdb.set_trace()
 		if self.paramsTrain.model_load:
 			
 			self.model_name = 'model_best_fit2.h5'
@@ -277,17 +279,20 @@ class TrainTest():
 			self.model_name = 'model_best_UUnet4ConvLSTM_jun.h5'
 			self.model_name = 'model_cv_may_3classes_nomask.h5'
 			self.model_name = 'model_best_fit2.h5'
-			self.model_name = 'model_lm_mar_nomask_good.h5'
+#			self.model_name = 'model_lm_mar_nomask_good.h5'
 #			self.model_name = 'model_best_UUnet4ConvLSTM_jun_cv_criteria_0_92.h5'
-			model.graph=load_model(self.model_name, compile=False)		
+			self.model.graph=load_model(self.model_name, compile=False)		
 
 		else:
-			model.graph.compile(loss=loss,
+			self.model.graph.compile(loss=loss,
 						optimizer=adam, metrics=metrics)
 
-			model.train(data)
+			self.model.train(self.data)
 		
-		model.evaluate(data)
+#		self.model.evaluate(self.data)
+	def evaluate(self):
+		self.data.loadMask()
+		self.model.evaluate(self.data)
 
 if __name__ == '__main__':
 	paramsTrain.dataSource = SARSource()
@@ -309,4 +314,9 @@ if __name__ == '__main__':
 			paramsTrain.model_name + '.h5'
 
 	if paramsTrain.train == True:
-		trainTest.trainAndEvaluate(model_name_id)
+		trainTest.train(model_name_id)
+	
+	trainTest.evaluate()
+
+
+

@@ -974,6 +974,8 @@ class DatasetWithCoords(Dataset):
 
 		self.patches['val']={'n':int(self.patches['train']['n']*validation_split)}
 		ic(self.patches['train']['n'], self.patches['val']['n'])
+		ic(self.patches['train']['coords'].shape)
+
 		#===== CHOOSE VAL IDX
 		if mode=='random':
 			self.patches['val']['idx']=np.random.choice(self.patches['train']['idx'],self.patches['val']['n'],replace=False)
@@ -1129,3 +1131,117 @@ class DatasetWithCoords(Dataset):
 		ic(np.unique(self.patches['train']['label'].argmax(axis=-1)[0:16], return_counts=True))
 		ic(np.unique(Y, return_counts=True))
 		pdb.set_trace()
+
+	def loadMask(self):
+		ic(str(self.paramsTrain.path))
+		self.mask=cv2.imread(str(self.paramsTrain.path / 'TrainTestMask.tif'),-1)
+		ic(self.mask.shape)
+		#return mask
+
+
+	def setDateList(self, paramsTrain):
+		lm_labeled_dates = ['20170612', '20170706', '20170811', '20170916', '20171010', '20171115', 
+							'20171209', '20180114', '20180219', '20180315', '20180420', '20180514']
+		l2_labeled_dates = ['20191012','20191117','20191223','20200116','20200221','20200316',
+							'20200421','20200515','20200620','20200714','20200819','20200912']
+		cv_labeled_dates = ['20151029', '20151110', '20151122', '20151204', '20151216', '20160121', 
+							'20160214', '20160309', '20160321', '20160508', '20160520', '20160613', 
+							'20160707', '20160731']
+		if paramsTrain.dataset == 'lm':
+			if paramsTrain.seq_date=='jan':
+				self.dataset_date = lm_labeled_dates[7]
+				l2_date = l2_labeled_dates[3]
+
+			elif paramsTrain.seq_date=='feb':
+				self.dataset_date = lm_labeled_dates[8]
+				l2_date = l2_labeled_dates[4]
+
+			elif paramsTrain.seq_date=='mar':
+				self.dataset_date = lm_labeled_dates[9]
+				l2_date = l2_labeled_dates[5]
+
+			elif paramsTrain.seq_date=='apr':
+				self.dataset_date = lm_labeled_dates[10]
+				l2_date = l2_labeled_dates[6]
+
+			elif paramsTrain.seq_date=='may':
+				self.dataset_date = lm_labeled_dates[11]
+				l2_date = l2_labeled_dates[7]
+
+			elif paramsTrain.seq_date=='jun':
+				self.dataset_date = lm_labeled_dates[0]
+				l2_date = l2_labeled_dates[8]
+
+			elif paramsTrain.seq_date=='jul':
+				self.dataset_date = lm_labeled_dates[1]
+				l2_date = l2_labeled_dates[9]
+
+			elif paramsTrain.seq_date=='aug':
+				self.dataset_date = lm_labeled_dates[2]
+				l2_date = l2_labeled_dates[10]
+
+			elif paramsTrain.seq_date=='sep':
+				self.dataset_date = lm_labeled_dates[3]
+				l2_date = l2_labeled_dates[11]
+
+			elif paramsTrain.seq_date=='oct':
+				self.dataset_date = lm_labeled_dates[4]
+				l2_date = l2_labeled_dates[0]
+
+			elif paramsTrain.seq_date=='nov':
+				self.dataset_date = lm_labeled_dates[5]
+				l2_date = l2_labeled_dates[1]
+
+			if paramsTrain.seq_date=='dec':
+			#dec
+				self.dataset_date = lm_labeled_dates[6]
+				l2_date = l2_labeled_dates[2]
+		elif paramsTrain.dataset == 'cv':
+			if paramsTrain.seq_date=='jun':
+				self.dataset_date = cv_labeled_dates[11]
+
+
+	def newLabel2labelTranslate(self, label, filename, bcknd_flag=False, debug = 1):
+
+		if debug == 1:
+			print("Entering newLabel2labelTranslate")
+		label = label.astype(np.uint8)
+		# bcknd to 0
+		if debug == 1:
+			deb.prints(np.unique(label,return_counts=True))
+			deb.prints(np.unique(label)[-1])
+		if bcknd_flag == True:
+			label[label==np.unique(label)[-1]] = 255 # this -1 will be different for each dataset
+		if debug == 1:
+			deb.prints(np.unique(label,return_counts=True))
+		label = label + 1
+		if debug == 1:
+			deb.prints(np.unique(label,return_counts=True))
+
+		# translate 
+		f = open(filename, "rb")
+		new_labels2labels = pickle.load(f)
+		if debug == 1:
+			print("new_labels2labels filename",f)
+			deb.prints(new_labels2labels)
+
+		classes = np.unique(label)
+		if debug == 1:
+			deb.prints(classes)
+		translated_label = label.copy()
+		for j in range(len(classes)):
+			if debug == 1:
+				print(classes[j])
+			
+			try:
+				if debug == 1:
+					print("Translated",new_labels2labels[classes[j]])
+				translated_label[label == classes[j]] = new_labels2labels[classes[j]]
+			except:
+				if debug == 1:
+					print("Translation of class {} failed. Not in dictionary. Continuing anyway...", classes[j])
+
+		# bcknd to last
+		##label = label - 1 # bcknd is 255
+		##label[label==255] = np.unique(label)[-2]
+		return translated_label 

@@ -141,16 +141,9 @@ class PatchExtractor():
 		self.full_label_test = np.load(self.paramsTrain.path / 'full_ims/full_label_test.npy')
 		self.full_label_train = np.load(self.paramsTrain.path / 'full_ims/full_label_train.npy')
 
-		
-
-
-	# Is this correct??
-	def is_mask_from_train(self,mask_patch,label_patch): 
-		condition_1=(mask_patch[self.conf["center_pixel"],self.conf["center_pixel"]]==1)
-		condition_2=(label_patch[self.conf["center_pixel"],self.conf["center_pixel"]]>0)
-		return (condition_1 and condition_2)
-
-	def extract(self):
+	def extract(self): # maybe do this twice, once for train and once for test with different stride.
+						# Now test would not be valid, because test patches with stride are wrong.
+						# Thus do the evaluation for for loop before this....
 		print("STARTED PATCH EXTRACTION")
 
 		self.full_label = self.full_ims_train + self.full_ims_test

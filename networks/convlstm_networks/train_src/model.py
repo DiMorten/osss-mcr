@@ -58,6 +58,8 @@ from icecream import ic
 from monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerator
 import natsort
 
+from mosaic import seq_add_padding, add_padding, Mosaic
+
 def load_obj(name ):
 	with open('obj/' + name + '.pkl', 'rb') as f:
 		return pickle.load(f)
@@ -69,6 +71,7 @@ class NetModel(object):
 
 		print("Initializing object...")
 		print(paramsTrain.t_len, paramsTrain.channel_n)
+		self.paramsTrain = paramsTrain
 		self.patch_len = paramsTrain.patch_len
 		self.path = {"v": paramsTrain.path, 'train': {}, 'test': {}}
 		self.image = {'train': {}, 'test': {}}
@@ -2149,73 +2152,6 @@ class ModelFit(NetModel):
 		deb.prints(metrics_test)
 		
 
-class ModelLoadGenerator(ModelFit):
-	def applyFitMethod(self,data):
-		params_train = {
-			'dim': (self.t_len,self.patch_len,self.patch_len),
-			'label_dim': (self.t_len,self.patch_len,self.patch_len,1),
-			'batch_size': self.batch['train']['size'],
-#			'n_classes': self.class_n,
-			'n_classes': self.class_n + 1, # is it 6 or 5
-
-			'n_channels': 2,
-			'shuffle': False,
-			'augm': False}
-
-		params_validation = params_train.copy()
-		params_validation['augm'] = False
-
-		training_generator = DataGenerator(data.patches['train']['in'], data.patches['train']['label'], **params_train)
-		validation_generator = DataGenerator(data.patches['val']['in'], data.patches['val']['label'], **params_validation)
-
-		history = self.graph.fit_generator(generator = training_generator,
-#			batch_size = self.batch['train']['size'], 
-			epochs = 70, 
-#			validation_data=(data.patches['val']['in'], data.patches['val']['label']),
-			validation_data=validation_generator,
-#			callbacks = [es])
-#			callbacks = [MonitorNPY(
-			callbacks = [MonitorGenerator(
-				validation=validation_generator,
-				patience=10, classes=self.class_n)],
-			shuffle = False
-			)
-		return history
-class ModelLoadGeneratorDebug(ModelFit):
-	def applyFitMethod(self,data):
-		params_train = {
-			'dim': (self.t_len,self.patch_len,self.patch_len),
-			'label_dim': (self.t_len,self.patch_len,self.patch_len,1),
-			'batch_size': self.batch['train']['size'],
-#			'n_classes': self.class_n,
-			'n_classes': self.class_n + 1, # is it 6 or 5
-
-			'n_channels': 2,
-			'shuffle': True}
-
-		training_generator = DataGenerator(data.patches['train']['in'], data.patches['train']['label'], **params_train)
-
-		history = self.graph.fit(data.patches['train']['in'], data.patches['train']['label'],
-			batch_size = self.batch['train']['size'], 
-			epochs = 3, 
-			validation_data=(data.patches['val']['in'], data.patches['val']['label']),
-#			callbacks = [es])
-			callbacks = [MonitorNPY(
-				validation=(data.patches['val']['in'], data.patches['val']['label']),
-				patience=10, classes=self.class_n)]
-			)
-		
-		history = self.graph.fit_generator(generator = training_generator,
-#			batch_size = self.batch['train']['size'], 
-			epochs = 3, 
-			validation_data=(data.patches['val']['in'], data.patches['val']['label']),
-#			callbacks = [es])
-			callbacks = [MonitorNPY(
-				validation=(data.patches['val']['in'], data.patches['val']['label']),
-				patience=10, classes=self.class_n)]
-			)
-		pdb.set_trace()
-		return history
 class ModelLoadGeneratorWithCoords(ModelFit):
 
 	def applyFitMethod(self,data):
@@ -2295,36 +2231,34 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 		metrics_test=data.metrics_get(data.patches['test']['prediction'],
 			data.patches['test']['label'],debug=2)
 		deb.prints(metrics_test)
-class ModelLoadEachBatch(NetModel):
-	def train(self,data):
 
-		params_train = {
-			'dim': (self.t_len,self.patch_len,self.patch_len),
-			'label_dim': (self.t_len,self.patch_len,self.patch_len,1),
-			'batch_size': self.batch['train']['size'],
-			'n_classes': self.class_n,
+	def evaluate(self, data):	
+		params_test = {
+			'dim': (self.model_t_len,self.patch_len,self.patch_len),
+			'label_dim': (self.patch_len,self.patch_len),
+			'batch_size': 1,
+#			'n_classes': self.class_n,
+			'n_classes': self.class_n + 1, # it was 6. Now it is 13 + 1 = 14
+
 			'n_channels': 2,
-			'shuffle': True}
+			'shuffle': False,
+#			'printCoords': False,
+			'augm': False}	
 
-		params_validation = {
-			'dim': (self.t_len,self.patch_len,self.patch_len),
-			'label_dim': (self.t_len,self.patch_len,self.patch_len,1),
-			'batch_size': self.batch['val']['size'],
-			'n_classes': self.class_n,
-			'n_channels': 2,
-			'shuffle': False}
+		data.full_ims_test = data.addPaddingToInput(
+			self.model_t_len, data.full_ims_test)
 
-		training_generator = DataGenerator(data.partition['train']['in'], data.partition['train']['label'], **params_train)
-		validation_generator = DataGenerator(data.partition['val']['in'], data.partition['val']['label'], **params_validation)
+		_, h,w,channel_n = data.full_ims_test.shape
 
-		# the model was already compiled using model.compile in __main__ 
-		#model.compile(optimizer=Adam(lr=0.01, decay=0.00016667),
-		#				loss='binary_crossentropy',
-		#				metrics=['accuracy'], options = run_opts)
-		es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=5)
-		# Train model on dataset
-		self.graph.fit_generator(generator=training_generator,
-							validation_data=validation_generator,
-							use_multiprocessing=True,
-							workers=9, 
-							callbacks=[es])
+		self.paramsTrain.add_padding_flag = True
+		self.paramsTrain.overlap = 0
+
+		mosaic = Mosaic(self.paramsTrain)
+		mosaic.create(self.paramsTrain, self.graph, data)
+
+
+		pdb.set_trace()
+	
+
+
+
