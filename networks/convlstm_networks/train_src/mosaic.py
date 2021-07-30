@@ -56,14 +56,15 @@ class Mosaic():
 	def create(self, paramsTrain, model, data):
 
 
-		if paramsTrain.add_padding_flag==True:
+		if self.pr.add_padding_flag==True:
 			data.full_ims_test, stride, step_row, step_col, overlap = seq_add_padding(
-				data.full_ims_test, paramsTrain.patch_len, paramsTrain.overlap)
-			mask_pad, _, _, _, _ = add_padding(data.mask,paramsTrain.patch_len,overlap)
+				data.full_ims_test, paramsTrain.patch_len, self.pr.overlap)
+			mask_pad, _, _, _, _ = add_padding(data.mask,paramsTrain.patch_len,self.pr.overlap)
 		else:
-			#mask_pad=mask.copy()
+			mask_pad=data.mask.copy()
 			stride=paramsTrain.patch_len
 			overlap=0
+			
 
 		t_len, h, w, _ = data.full_ims_test.shape
 		ic(data.class_n)
@@ -71,8 +72,8 @@ class Mosaic():
 		ic(np.unique(data.full_label_train), len(np.unique(data.full_label_train)))
 		class_n = len(np.unique(data.full_label_train)) - 1
 #		pdb.set_trace()
-		cl_img = np.zeros((h,w,class_n)) # is it class_n + 1?
-		cl_img = cl_img.astype('float16')
+#		cl_img = np.zeros((h,w,class_n)) # is it class_n + 1?
+#		cl_img = cl_img.astype('float16')
 
 		prediction_mosaic=np.ones((h,w)).astype(np.uint8)*255
 		scores_mosaic=np.zeros((h,w)).astype(np.float16)
@@ -112,7 +113,7 @@ class Mosaic():
 						prediction_mosaic[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred[0,overlap//2:x-overlap//2,overlap//2:y-overlap//2]
 
 			
-			if pr.open_set_mode == False:
+			if self.pr.open_set_mode == False:
 				prediction_mosaic = prediction_logits_mosaic.argmax(axis=-1).astype(np.uint8)
 
 			if self.pr.add_padding_flag==True:
@@ -137,10 +138,11 @@ class Mosaic():
 
 		ic(time.time()-t0)
 
-		data.full_label_test = data.full_label_test[overlap//2:-step_row,overlap//2:-step_col]
+		if self.pr.add_padding_flag==True:
+			data.full_label_test = data.full_label_test[overlap//2:-step_row,overlap//2:-step_col]
 
 
-		ic(cl_img.shape)
+
 		ic(data.full_label_test.shape)
 
 		
@@ -155,12 +157,133 @@ class Mosaic():
 		cv2.imwrite('sample_translate.png', prediction_mosaic.astype(np.uint8)*10)
 
 		ic(data.full_label_test.shape)
-		label_mosaic = data.full_label_test.shape
+		ic(np.unique(data.full_label_test, return_counts=True))
+		label_mosaic = data.full_label_test
+		ic(np.unique(label_mosaic, return_counts=True))
+		ic(np.unique(prediction_mosaic, return_counts=True))
+
 		# bcknd to 255
 		label_mosaic = label_mosaic - 1
 		prediction_mosaic = prediction_mosaic - 1
 
-		pdb.set_trace()
+		ic(np.unique(label_mosaic, return_counts=True))
+		ic(np.unique(prediction_mosaic, return_counts=True))
+#		pdb.set_trace()
+		important_classes_idx = paramsTrain.known_classes
+
+
+		label_mosaic, prediction_mosaic, important_classes_idx = data.small_classes_ignore(
+					label_mosaic, prediction_mosaic,important_classes_idx)
+
+		prediction_mosaic[prediction_mosaic==39] = 20
+		label_mosaic[label_mosaic==39] = 20
+
+
+		deb.prints(np.unique(label_mosaic,return_counts=True))
+		deb.prints(np.unique(prediction_mosaic,return_counts=True))
+		deb.prints(label_mosaic.shape)
+		deb.prints(prediction_mosaic.shape)
+		deb.prints(important_classes_idx)
+
+		ic(data.mask.shape, mask_pad.shape, label_mosaic.shape, prediction_mosaic.shape)
+		self.save_prediction_label_mosaic_Nto1(label_mosaic, prediction_mosaic, mask_pad, 
+				self.pr.custom_colormap, self.pr.spatial_results_path, paramsTrain, 
+				small_classes_ignore=True,
+				name_id = name_id)
+
+	def save_prediction_label_mosaic_Nto1(self, label_mosaic, prediction_mosaic, mask, 
+			custom_colormap, path, paramsTrain, small_classes_ignore=True, name_id=""):
+	#	for t_step in range(t_len):
+
+		ic(np.unique(mask, return_counts=True))
+
+		label_mosaic[mask!=2]=255
+		
+		if self.pr.prediction_mask == True:
+			prediction_mosaic[mask!=2]=255	
+		deb.prints(np.unique(label_mosaic,return_counts=True))
+		deb.prints(np.unique(prediction_mosaic,return_counts=True))
+
+
+		print("everything outside mask is 255")
+		ic(np.unique(label_mosaic,return_counts=True))
+		ic(np.unique(prediction_mosaic,return_counts=True))
+
+		# Paint it!
+
+		print(custom_colormap.shape)
+		#class_n=custom_colormap.shape[0]
+		#=== change to rgb
+		print("Gray",prediction_mosaic.dtype)
+		prediction_rgb=np.zeros((prediction_mosaic.shape+(3,))).astype(np.uint8)
+		label_rgb=np.zeros_like(prediction_rgb)
+		print("Adding color...")
+
+
+		prediction_rgb=cv2.cvtColor(prediction_mosaic,cv2.COLOR_GRAY2RGB)
+		label_rgb=cv2.cvtColor(label_mosaic,cv2.COLOR_GRAY2RGB)
+
+		print("RGB",prediction_rgb.dtype,prediction_rgb.shape)
+
+	#	for chan in [0,1,2]:
+	#		prediction_rgb[...,chan][prediction_rgb[...,chan]==255]=custom_colormap[idx,chan]
+	#		label_rgb[...,chan][label_rgb[...,chan]==255]=custom_colormap[idx,chan]
+
+
+		deb.prints(custom_colormap)
+		prediction_rgb_tmp = prediction_rgb.copy()
+		label_rgb_tmp = label_rgb.copy()
+
+		print("Assigning color...")
+
+		for idx in range(custom_colormap.shape[0]):
+
+			for chan in [0,1,2]:
+				#deb.prints(np.unique(label_rgb[...,chan],return_counts=True))
+
+				prediction_rgb[...,chan][prediction_rgb_tmp[...,chan]==idx]=custom_colormap[idx,chan]
+				label_rgb[...,chan][label_rgb_tmp[...,chan]==idx]=custom_colormap[idx,chan]
+
+		# color the unknown
+		red_rgb = [255, 0, 0]
+		for chan in [0,1,2]:
+			prediction_rgb[...,chan][prediction_rgb[...,chan]==20]=red_rgb[chan]
+			label_rgb[...,chan][label_rgb[...,chan]==20]=red_rgb[chan]
+
+		print("RGB",prediction_rgb.dtype,prediction_rgb.shape)
+
+		print("Saving the resulting images...")
+
+		label_rgb=cv2.cvtColor(label_rgb,cv2.COLOR_BGR2RGB)
+		prediction_rgb=cv2.cvtColor(prediction_rgb,cv2.COLOR_BGR2RGB)
+		save_folder=path / paramsTrain.dataset / paramsTrain.model_type / paramsTrain.seq_date
+		save_folder.mkdir(parents=True, exist_ok=True)
+		deb.prints(save_folder)
+
+		if self.pr.open_set_mode == True:
+			threshIdxName = "_TPR" + tpr_threshold_names[self.pr.threshold_idx]
+			prediction_savename = save_folder / ("prediction_t_" + paramsTrain.seq_date + "_" + paramsTrain.model_type +
+				"_" + name_id+threshIdxName + "_overl" + str(self.pr.overlap) + ".png")
+
+		else:
+			prediction_savename = save_folder / ("prediction_t_" + paramsTrain.seq_date + "_" + paramsTrain.model_type +
+				"_closedset_" + name_id + "_overl" + str(self.pr.overlap) + ".png")
+
+		ic(prediction_savename)
+		print("saving...")
+		try:
+
+			os.remove(prediction_savename)
+		except:
+			print("no file to remove")
+		ret = cv2.imwrite(str(prediction_savename), prediction_rgb)
+		deb.prints(ret)
+		ic(save_folder / ("label_t_"+paramsTrain.seq_date+"_"+paramsTrain.model_type+"_"+name_id+".png"))
+		ret = cv2.imwrite(str(save_folder / ("label_t_"+paramsTrain.seq_date+"_"+paramsTrain.model_type+"_"+name_id+".png")),label_rgb)
+		deb.prints(ret)
+		ret = cv2.imwrite(str(save_folder / "mask.png"),mask*200)
+		deb.prints(ret)
+
 
 
 def add_padding(img, psize, overl):

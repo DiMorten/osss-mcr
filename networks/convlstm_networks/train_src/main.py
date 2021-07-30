@@ -182,10 +182,7 @@ class TrainTest():
 		self.paramsTrain.dotys_sin_cos = dotys_sin_cos
 		self.dotys_sin_cos = dotys_sin_cos
 
-	def train(self, model_name_id):
-		
-		self.model_name = model_name_id
-		ic(self.model_name)
+	def setData(self):
 		if self.paramsTrain.sliceFromCoords == False:
 			datasetClass = Dataset
 		else:
@@ -193,17 +190,7 @@ class TrainTest():
 		self.data = datasetClass(paramsTrain = self.paramsTrain, ds = self.ds,
 			dotys_sin_cos = self.dotys_sin_cos)
 
-		self.data.create_load()
-		
-		self.paramsTrain.class_n = self.data.class_n
-		ic(self.paramsTrain.class_n)
-
-		adam = Adam(lr=self.paramsTrain.learning_rate, beta_1=0.9)
-		
-		#model = ModelLoadEachBatch(epochs=self.paramsTrain.epochs, patch_len=self.paramsTrain.patch_len,
-	##	modelClass = NetModel
-	##	modelClass = ModelFit
-	##	modelClass = ModelLoadGenerator
+	def setModel(self):
 		if self.paramsTrain.sliceFromCoords == False:
 			#modelClass = NetModel
 	#		modelClass = ModelFit
@@ -212,18 +199,32 @@ class TrainTest():
 		else:
 			modelClass = ModelLoadGeneratorWithCoords
 
-
 		self.model = modelClass(paramsTrain = self.paramsTrain, ds = self.ds, 
 						) # , self.data = self.data
 
-		self.model.name = self.model_name
-		
 		self.model.class_n=self.data.class_n-1 # Model is designed without background class
+
 		deb.prints(self.data.class_n)
 		self.model.build()
 
-
 		self.model.class_n+=1 # This is used in loss_weights_estimate, val_set_get, semantic_balance (To-do: Eliminate bcknd class)
+
+	def preprocess(self):
+		
+		self.model_name = model_name_id
+		ic(self.model_name)
+
+		self.data.create_load()
+		
+		self.paramsTrain.class_n = self.data.class_n
+		ic(self.paramsTrain.class_n)
+
+		
+		#model = ModelLoadEachBatch(epochs=self.paramsTrain.epochs, patch_len=self.paramsTrain.patch_len,
+	##	modelClass = NetModel
+	##	modelClass = ModelFit
+	##	modelClass = ModelLoadGenerator
+		self.model.name = self.model_name		
 
 		print("=== SELECT VALIDATION SET FROM TRAIN SET")
 			
@@ -260,35 +261,34 @@ class TrainTest():
 
 		#=========== End of moving bcknd label from 0 to last value
 
+	def train(self):
+
 		metrics=['accuracy']
+
+		optim = Adam(lr=self.paramsTrain.learning_rate, beta_1=0.9)
 
 		#loss=weighted_categorical_crossentropy_ignoring_last_label(self.model.loss_weights_ones)
 		loss=categorical_focal_ignoring_last_label(alpha=0.25,gamma=2)
 		#loss=weighted_categorical_focal_ignoring_last_label(self.model.loss_weights,alpha=0.25,gamma=2)
 
+		self.model.graph.compile(loss=loss,
+					optimizer=optim, metrics=metrics)
 
-	#	self.paramsTrain.model_load=False
-		ic(self.paramsTrain.model_load)
-		#pdb.set_trace()
-		if self.paramsTrain.model_load:
-			
-			self.model_name = 'model_best_fit2.h5'
-			self.model_name = 'model_lm_mar_nomask_good.h5'
-			self.model_name = 'model_lm_jun_maize_nomask_good.h5'
-			self.model_name = 'model_lm_jun_maize_nomask_good.h5'
-			self.model_name = 'model_best_UUnet4ConvLSTM_jun.h5'
-			self.model_name = 'model_cv_may_3classes_nomask.h5'
-			self.model_name = 'model_best_fit2.h5'
+		self.model.train(self.data)
+
+	def modelLoad(self, model_name_id):
+
+		self.model_name = 'model_best_fit2.h5'
+		self.model_name = 'model_lm_mar_nomask_good.h5'
+		self.model_name = 'model_lm_jun_maize_nomask_good.h5'
+		self.model_name = 'model_lm_jun_maize_nomask_good.h5'
+		self.model_name = 'model_best_UUnet4ConvLSTM_jun.h5'
+		self.model_name = 'model_cv_may_3classes_nomask.h5'
+		self.model_name = 'model_best_fit2.h5'
 #			self.model_name = 'model_lm_mar_nomask_good.h5'
 #			self.model_name = 'model_best_UUnet4ConvLSTM_jun_cv_criteria_0_92.h5'
-			self.model.graph=load_model(self.model_name, compile=False)		
+		self.model.graph=load_model(self.model_name, compile=False)		
 
-		else:
-			self.model.graph.compile(loss=loss,
-						optimizer=adam, metrics=metrics)
-
-			self.model.train(self.data)
-		
 #		self.model.evaluate(self.data)
 	def evaluate(self):
 		self.data.loadMask()
@@ -313,9 +313,15 @@ if __name__ == '__main__':
 			paramsTrain.seq_date + '_' + paramsTrain.dataset + '_' + \
 			paramsTrain.model_name + '.h5'
 
+	trainTest.setData()
+	trainTest.setModel()
+
+	trainTest.preprocess() # move into if
 	if paramsTrain.train == True:
-		trainTest.train(model_name_id)
-	
+		trainTest.model.train()
+	else:
+		trainTest.modelLoad(model_name_id)
+
 	trainTest.evaluate()
 
 

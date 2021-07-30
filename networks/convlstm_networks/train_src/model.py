@@ -2250,9 +2250,7 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 
 		_, h,w,channel_n = data.full_ims_test.shape
 
-		self.paramsTrain.add_padding_flag = True
-		self.paramsTrain.overlap = 0
-
+		data.reloadLabel()
 		mosaic = Mosaic(self.paramsTrain)
 		mosaic.create(self.paramsTrain, self.graph, data)
 

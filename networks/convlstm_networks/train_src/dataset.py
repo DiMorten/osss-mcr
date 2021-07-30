@@ -758,6 +758,10 @@ class Dataset(object):
 		#print(unique,counts)
 
 class DatasetWithCoords(Dataset):
+	def reloadLabel(self):
+		self.full_label_test = np.load(self.path['v'] / 'full_ims' / 'full_label_test.npy').astype(np.uint8)
+		self.full_label_test = self.full_label_test[-1]
+
 	def create_load(self):
 #		super().create_load()
 		ic(os.path.dirname(os.path.abspath(__file__)))
@@ -1245,3 +1249,20 @@ class DatasetWithCoords(Dataset):
 		##label = label - 1 # bcknd is 255
 		##label[label==255] = np.unique(label)[-2]
 		return translated_label 
+
+	def small_classes_ignore(self, label, predictions, important_classes_idx):
+		class_n = 15
+		important_classes_idx = list(important_classes_idx)
+		ic(important_classes_idx)
+		important_classes_idx.append(255) # bcknd
+		for idx in range(class_n):
+			if idx not in important_classes_idx:
+				predictions[predictions==idx]=20
+				label[label==idx]=20	
+		important_classes_idx = important_classes_idx[:-1]
+		deb.prints(important_classes_idx)
+
+		deb.prints(np.unique(label,return_counts=True))
+		deb.prints(np.unique(predictions,return_counts=True))
+
+		return label, predictions, important_classes_idx

@@ -7,6 +7,8 @@ class ParamsReconstruct():
         self.spatial_results_path = Path('results/spatial_results')
         self.paramsTrain = paramsTrain
 
+        self.mosaic_flag = False
+
         self.metrics_flag = False
 
         self.prediction_type = 'model'
@@ -16,10 +18,9 @@ class ParamsReconstruct():
 
         self.open_set_mode = False
 
-        self.mosaic_flag = True
 
         self.threshold_idx = 4
-        self.overlap = 0.5
+        self.overlap = 0 # 0.5
 
         if self.overlap > 0:
             self.add_padding_flag = True
@@ -36,7 +37,7 @@ class ParamsReconstruct():
 
         ic(self.overlap, self.threshold_idx)
 
-        self.prediction_mask = False
+        self.prediction_mask = True
 
         self.conditionType = 'test'
 #        self.conditionType = 'all'
