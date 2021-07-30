@@ -263,11 +263,11 @@ class Mosaic():
 		if self.pr.open_set_mode == True:
 			threshIdxName = "_TPR" + tpr_threshold_names[self.pr.threshold_idx]
 			prediction_savename = save_folder / ("prediction_t_" + paramsTrain.seq_date + "_" + paramsTrain.model_type +
-				"_" + name_id+threshIdxName + "_overl" + str(self.pr.overlap) + ".png")
+				"_" + name_id+threshIdxName + "_overl" + str(self.pr.overlap) + "_" + self.pr.condition_type + ".png")
 
 		else:
 			prediction_savename = save_folder / ("prediction_t_" + paramsTrain.seq_date + "_" + paramsTrain.model_type +
-				"_closedset_" + name_id + "_overl" + str(self.pr.overlap) + ".png")
+				"_closedset_" + name_id + "_overl" + str(self.pr.overlap) + "_" + self.pr.condition_type + ".png")
 
 		ic(prediction_savename)
 		print("saving...")
@@ -277,6 +277,7 @@ class Mosaic():
 		except:
 			print("no file to remove")
 		ret = cv2.imwrite(str(prediction_savename), prediction_rgb)
+
 		deb.prints(ret)
 		ic(save_folder / ("label_t_"+paramsTrain.seq_date+"_"+paramsTrain.model_type+"_"+name_id+".png"))
 		ret = cv2.imwrite(str(save_folder / ("label_t_"+paramsTrain.seq_date+"_"+paramsTrain.model_type+"_"+name_id+".png")),label_rgb)
