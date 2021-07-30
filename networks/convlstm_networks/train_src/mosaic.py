@@ -263,11 +263,11 @@ class Mosaic():
 		if self.pr.open_set_mode == True:
 			threshIdxName = "_TPR" + tpr_threshold_names[self.pr.threshold_idx]
 			prediction_savename = save_folder / ("prediction_t_" + paramsTrain.seq_date + "_" + paramsTrain.model_type +
-				"_" + name_id+threshIdxName + "_overl" + str(self.pr.overlap) + "_" + self.pr.condition_type + ".png")
+				"_" + name_id+threshIdxName + "_overl" + str(self.pr.overlap) + "_" + self.pr.conditionType + ".png")
 
 		else:
 			prediction_savename = save_folder / ("prediction_t_" + paramsTrain.seq_date + "_" + paramsTrain.model_type +
-				"_closedset_" + name_id + "_overl" + str(self.pr.overlap) + "_" + self.pr.condition_type + ".png")
+				"_closedset_" + name_id + "_overl" + str(self.pr.overlap) + "_" + self.pr.conditionType + ".png")
 
 		ic(prediction_savename)
 		print("saving...")

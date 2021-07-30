@@ -7,7 +7,8 @@ class ParamsReconstruct():
         self.spatial_results_path = Path('results/spatial_results')
         self.paramsTrain = paramsTrain
 
-        self.mosaic_flag = True
+        self.mosaic_flag = False
+        self.prediction_mask = False
 
         self.metrics_flag = False
 
@@ -37,7 +38,7 @@ class ParamsReconstruct():
 
         ic(self.overlap, self.threshold_idx)
 
-        self.prediction_mask = True
+
 
 #        self.conditionType = 'test'
         self.conditionType = 'all'
