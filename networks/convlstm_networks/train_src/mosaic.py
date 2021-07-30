@@ -190,6 +190,9 @@ class Mosaic():
 				self.pr.custom_colormap, self.pr.spatial_results_path, paramsTrain, 
 				small_classes_ignore=True,
 				name_id = name_id)
+		
+		self.prediction_mosaic = prediction_mosaic
+		self.label_mosaic = label_mosaic
 
 	def save_prediction_label_mosaic_Nto1(self, label_mosaic, prediction_mosaic, mask, 
 			custom_colormap, path, paramsTrain, small_classes_ignore=True, name_id=""):

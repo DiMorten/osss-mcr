@@ -285,7 +285,7 @@ class TrainTest():
 		self.model_name = 'model_best_UUnet4ConvLSTM_jun.h5'
 		self.model_name = 'model_cv_may_3classes_nomask.h5'
 		self.model_name = 'model_best_fit2.h5'
-#			self.model_name = 'model_lm_mar_nomask_good.h5'
+#		self.model_name = 'model_lm_mar_nomask_good.h5'
 #			self.model_name = 'model_best_UUnet4ConvLSTM_jun_cv_criteria_0_92.h5'
 		self.model.graph=load_model(self.model_name, compile=False)		
 

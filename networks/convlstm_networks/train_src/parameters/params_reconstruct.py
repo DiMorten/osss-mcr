@@ -8,7 +8,7 @@ class ParamsReconstruct():
         self.paramsTrain = paramsTrain
 
         self.mosaic_flag = False
-        self.prediction_mask = False
+        self.prediction_mask = True
 
         self.metrics_flag = False
 
@@ -40,8 +40,8 @@ class ParamsReconstruct():
 
 
 
-#        self.conditionType = 'test'
-        self.conditionType = 'all'
+        self.conditionType = 'test'
+#        self.conditionType = 'all'
 
         self.data_path='../../' / self.paramsTrain.path
         self.setModelPath('../model/') 

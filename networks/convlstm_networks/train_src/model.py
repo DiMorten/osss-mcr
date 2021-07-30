@@ -59,6 +59,7 @@ from monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerato
 import natsort
 
 from mosaic import seq_add_padding, add_padding, Mosaic
+from metrics import Metrics, MetricsTranslated
 
 def load_obj(name ):
 	with open('obj/' + name + '.pkl', 'rb') as f:
@@ -2206,6 +2207,8 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 			)
 
 		return history
+
+	
 	def evaluate(self, data):	
 		params_test = {
 			'dim': (self.model_t_len,self.patch_len,self.patch_len),
@@ -2228,9 +2231,15 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 		data.patches['test']['prediction'] = self.graph.predict_generator(test_generator)
 		data.patches['test']['label'] = data.getPatchesFromCoords(
 			data.full_label_test, data.patches['test']['coords'])
-		metrics_test=data.metrics_get(data.patches['test']['prediction'],
+
+		metrics = Metrics(self.paramsTrain)
+
+		metrics_test=metrics.get(data.patches['test']['prediction'],
 			data.patches['test']['label'],debug=2)
 		deb.prints(metrics_test)
+
+
+
 
 	def evaluate(self, data):	
 		params_test = {
@@ -2254,9 +2263,6 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 		mosaic = Mosaic(self.paramsTrain)
 		mosaic.create(self.paramsTrain, self.graph, data)
 
-
-		#pdb.set_trace()
-	
-
-
-
+		metrics = MetricsTranslated(self.paramsTrain)
+		metrics_test = metrics.get(mosaic.prediction_mosaic, mosaic.label_mosaic)
+		deb.prints(metrics_test)
