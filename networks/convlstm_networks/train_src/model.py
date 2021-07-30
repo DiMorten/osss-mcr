@@ -2257,7 +2257,7 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 		mosaic.create(self.paramsTrain, self.graph, data)
 
 
-		pdb.set_trace()
+		#pdb.set_trace()
 	
 
 

@@ -1,7 +1,10 @@
 from icecream import ic
 import numpy as np
+from pathlib import Path
 class ParamsReconstruct():
     def __init__(self, paramsTrain):
+
+        self.spatial_results_path = Path('results/spatial_results')
         self.paramsTrain = paramsTrain
 
         self.metrics_flag = False
@@ -13,7 +16,7 @@ class ParamsReconstruct():
 
         self.open_set_mode = False
 
-        self.mosaic_flag = False
+        self.mosaic_flag = True
 
         self.threshold_idx = 4
         self.overlap = 0.5
@@ -35,8 +38,8 @@ class ParamsReconstruct():
 
         self.prediction_mask = False
 
-#        self.conditionType = 'test'
-        self.conditionType = 'all'
+        self.conditionType = 'test'
+#        self.conditionType = 'all'
 
         self.data_path='../../' / self.paramsTrain.path
         self.setModelPath('../model/') 

@@ -74,12 +74,15 @@ class Mosaic():
 		cl_img = np.zeros((h,w,class_n)) # is it class_n + 1?
 		cl_img = cl_img.astype('float16')
 
-		prediction_mosaic=np.ones((row,col)).astype(np.uint8)*255
-		scores_mosaic=np.zeros((row,col)).astype(np.float16)
-		prediction_logits_mosaic=np.ones((row,col, class_n)).astype(np.float16)
+		prediction_mosaic=np.ones((h,w)).astype(np.uint8)*255
+		scores_mosaic=np.zeros((h,w)).astype(np.float16)
+		prediction_logits_mosaic=np.ones((h,w, class_n)).astype(np.float16)
 		
 		t0 = time.time()
-		if pr.mosaic_flag == True:
+
+		data.setDateList(paramsTrain)
+		name_id = 'closed_set'
+		if self.pr.mosaic_flag == True:
 		
 			for m in range(paramsTrain.patch_len//2,h-paramsTrain.patch_len//2,stride): 
 				for n in range(paramsTrain.patch_len//2,w-paramsTrain.patch_len//2,stride):
@@ -100,42 +103,64 @@ class Mosaic():
 						pred_logits = model.predict(patch)
 						pred = pred_logits.argmax(axis=-1).astype(np.uint8)
 						_, x, y, c = pred_logits.shape
+
+						#ic(pred_logits.shape, pred.shape)
+						#ic(prediction_logits_mosaic.shape, prediction_mosaic.shape)
+						
 							
-						prediction_logits_mosaic[m-stride//2:m+stride//2,n-stride//2:n+stride//2,:] = pred_logits[0,overlap//2:x-overlap//2,overlap//2:y-overlap//2,:]
-						prediction_mosaic[m-stride//2:m+stride//2,n-stride//2:n+stride//2,:] = pred[0,overlap//2:x-overlap//2,overlap//2:y-overlap//2,:]
+						prediction_logits_mosaic[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_logits[0,overlap//2:x-overlap//2,overlap//2:y-overlap//2]
+						prediction_mosaic[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred[0,overlap//2:x-overlap//2,overlap//2:y-overlap//2]
 
 			
-			prediction_logits_mosaic = prediction_logits_mosaic[overlap//2:-step_row,overlap//2:-step_col,:]
-			np.save(self.spatial_results_path / 
-				('prediction_mosaic_'+dataset_date+'_'+name_id+'_overl'+str(pr.overlap)+'.npy'),prediction_mosaic)
-			if pr.open_set_mode == True:
-				np.save(self.spatial_results_path / 
-					('scores_mosaic_'+dataset_date+'_'+name_id+'_overl'+str(pr.overlap)+'.npy'),scores_mosaic)
+			if pr.open_set_mode == False:
+				prediction_mosaic = prediction_logits_mosaic.argmax(axis=-1).astype(np.uint8)
+
+			if self.pr.add_padding_flag==True:
+				prediction_mosaic=prediction_mosaic[overlap//2:-step_row,overlap//2:-step_col]
+				scores_mosaic=scores_mosaic[overlap//2:-step_row,overlap//2:-step_col]
+			ic(prediction_mosaic.shape, mask_pad.shape, data.full_label_test.shape)
+			ic(np.unique(data.full_label_test, return_counts=True))
+			ic(np.unique(prediction_mosaic, return_counts=True))
+			np.save(self.pr.spatial_results_path / 
+				('prediction_mosaic_'+data.dataset_date+'_'+name_id+'_overl'+str(self.pr.overlap)+'.npy'),prediction_mosaic)
+			if self.pr.open_set_mode == True:
+				np.save(self.pr.spatial_results_path / 
+					('scores_mosaic_'+data.dataset_date+'_'+name_id+'_overl'+str(self.pr.overlap)+'.npy'),scores_mosaic)
 
 		else:
 
-			prediction_mosaic = np.load(self.spatial_results_path / 
-				('prediction_mosaic_'+dataset_date+'_'+name_id+'_overl'+str(pr.overlap)+'.npy'))
-			if pr.open_set_mode == True:
-				scores_mosaic = np.load(self.spatial_results_path / 
-					('scores_mosaic_'+dataset_date+'_'+name_id+'_overl'+str(pr.overlap)+'.npy'))
+			prediction_mosaic = np.load(self.pr.spatial_results_path / 
+				('prediction_mosaic_'+data.dataset_date+'_'+name_id+'_overl'+str(self.pr.overlap)+'.npy'))
+			if self.pr.open_set_mode == True:
+				scores_mosaic = np.load(self.pr.spatial_results_path / 
+					('scores_mosaic_'+data.dataset_date+'_'+name_id+'_overl'+str(self.pr.overlap)+'.npy'))
+
+		ic(time.time()-t0)
 
 		data.full_label_test = data.full_label_test[overlap//2:-step_row,overlap//2:-step_col]
 
-		data.setDateList(paramsTrain)
+
 		ic(cl_img.shape)
 		ic(data.full_label_test.shape)
 
 		
-		cv2.imwrite('sample.png', cl_img.argmax(axis=-1).astype(np.uint8)*10)
+		cv2.imwrite('sample.png', prediction_logits_mosaic.argmax(axis=-1).astype(np.uint8)*10)
 		cv2.imwrite('label_sample.png', data.full_label_test.astype(np.uint8)*10)
-		cl_img_int = cl_img.argmax(axis=-1)
-		ic(np.unique(cl_img_int, return_counts=True))
 
-		cl_img_int = data.newLabel2labelTranslate(cl_img_int, 
+		ic(np.unique(prediction_mosaic, return_counts=True))
+
+		prediction_mosaic = data.newLabel2labelTranslate(prediction_mosaic, 
 				'new_labels2labels_'+paramsTrain.dataset+'_'+data.dataset_date+'_S1.pkl')
-		ic(np.unique(cl_img_int, return_counts=True))
-		cv2.imwrite('sample_translate.png', cl_img_int.astype(np.uint8)*10)
+		ic(np.unique(prediction_mosaic, return_counts=True))
+		cv2.imwrite('sample_translate.png', prediction_mosaic.astype(np.uint8)*10)
+
+		ic(data.full_label_test.shape)
+		label_mosaic = data.full_label_test.shape
+		# bcknd to 255
+		label_mosaic = label_mosaic - 1
+		prediction_mosaic = prediction_mosaic - 1
+
+		pdb.set_trace()
 
 
 def add_padding(img, psize, overl):
