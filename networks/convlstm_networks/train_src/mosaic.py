@@ -138,8 +138,8 @@ class Mosaic():
 
 		ic(time.time()-t0)
 
-		if self.pr.add_padding_flag==True:
-			data.full_label_test = data.full_label_test[overlap//2:-step_row,overlap//2:-step_col]
+#		if self.pr.add_padding_flag==True:
+#			data.full_label_test = data.full_label_test[overlap//2:-step_row,overlap//2:-step_col]
 
 
 
@@ -186,7 +186,7 @@ class Mosaic():
 		deb.prints(important_classes_idx)
 
 		ic(data.mask.shape, mask_pad.shape, label_mosaic.shape, prediction_mosaic.shape)
-		self.save_prediction_label_mosaic_Nto1(label_mosaic, prediction_mosaic, mask_pad, 
+		self.save_prediction_label_mosaic_Nto1(label_mosaic, prediction_mosaic, data.mask, 
 				self.pr.custom_colormap, self.pr.spatial_results_path, paramsTrain, 
 				small_classes_ignore=True,
 				name_id = name_id)
