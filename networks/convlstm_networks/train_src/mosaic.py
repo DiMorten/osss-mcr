@@ -122,6 +122,7 @@ class Mosaic():
 			ic(prediction_mosaic.shape, mask_pad.shape, data.full_label_test.shape)
 			ic(np.unique(data.full_label_test, return_counts=True))
 			ic(np.unique(prediction_mosaic, return_counts=True))
+			self.pr.spatial_results_path.mkdir(parents=True, exist_ok=True)
 			np.save(self.pr.spatial_results_path / 
 				('prediction_mosaic_'+data.dataset_date+'_'+name_id+'_overl'+str(self.pr.overlap)+'.npy'),prediction_mosaic)
 			if self.pr.open_set_mode == True:
