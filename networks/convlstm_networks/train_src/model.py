@@ -2180,8 +2180,11 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 		ic(data.patches['val']['coords'][0:16])
 		generator_type="coords"
 		if generator_type=="coords":
-			training_generator = DataGeneratorWithCoordsRandom(data.full_ims_train, data.full_label_train, 
-				data.patches['train']['coords'], samples_per_epoch = 9000, **params_train)
+			training_generator = DataGeneratorWithCoords(data.full_ims_train, data.full_label_train, 
+				data.patches['train']['coords'], **params_train)
+#			training_generator = DataGeneratorWithCoordsRandom(data.full_ims_train, data.full_label_train, 
+#				data.patches['train']['coords'], samples_per_epoch = 9000, **params_train)
+
 			validation_generator = DataGeneratorWithCoords(data.full_ims_train, data.full_label_train, 
 				data.patches['val']['coords'], **params_validation)
 

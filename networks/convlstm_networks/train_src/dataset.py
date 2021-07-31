@@ -92,6 +92,9 @@ class Dataset(object):
 		deb.prints(self.channel_n)
 		self.debug = self.paramsTrain.debug
 		self.class_n = self.paramsTrain.class_n
+		self.reloadLabel(train=True)
+		self.class_n = len(np.unique(self.full_label_train))
+		ic(self.class_n)
 		self.report={'best':{}, 'val':{}}
 		self.report['exp_id']=self.paramsTrain.exp_id
 		self.report['best']['text_name']='result_'+self.paramsTrain.exp_id+'.txt'
@@ -675,11 +678,15 @@ class Dataset(object):
 
 		#unique,counts=np.unique(train_flat,axis=1,return_counts=True)
 		#print(unique,counts)
-
-class DatasetWithCoords(Dataset):
-	def reloadLabel(self):
+	def reloadLabel(self, train=False):
 		self.full_label_test = np.load(self.path['v'] / 'full_ims' / 'full_label_test.npy').astype(np.uint8)
 		self.full_label_test = self.full_label_test[-1]
+
+		if train == True:
+			self.full_label_train = np.load(self.path['v'] / 'full_ims' / 'full_label_train.npy').astype(np.uint8)
+			self.full_label_train = self.full_label_train[-1]
+
+class DatasetWithCoords(Dataset):
 
 	def create_load(self):
 #		super().create_load()
@@ -720,7 +727,8 @@ class DatasetWithCoords(Dataset):
 
 		unique,count=np.unique(self.full_label_train,return_counts=True)
 		self.class_n=unique.shape[0]
-#		pdb.set_trace()
+		ic(np.unique(self.full_label_train,return_counts=True))
+		ic(self.class_n)
 		'''
 		self.patches['train']['label'] = self.patches['train']['label']-1
 		self.patches['test']['label'] = self.patches['test']['label']-1

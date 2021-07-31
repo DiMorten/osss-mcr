@@ -189,7 +189,8 @@ class TrainTest():
 			datasetClass = DatasetWithCoords
 		self.data = datasetClass(paramsTrain = self.paramsTrain, ds = self.ds,
 			dotys_sin_cos = self.dotys_sin_cos)
-
+		ic(self.data.class_n)
+#		pdb.set_trace()
 	def setModel(self):
 		if self.paramsTrain.sliceFromCoords == False:
 			#modelClass = NetModel
@@ -201,10 +202,11 @@ class TrainTest():
 
 		self.model = modelClass(paramsTrain = self.paramsTrain, ds = self.ds, 
 						) # , self.data = self.data
-
 		self.model.class_n=self.data.class_n-1 # Model is designed without background class
-
+		ic(self.model.class_n)
+		ic(self.data.class_n)
 		deb.prints(self.data.class_n)
+
 		self.model.build()
 
 		self.model.class_n+=1 # This is used in loss_weights_estimate, val_set_get, semantic_balance (To-do: Eliminate bcknd class)

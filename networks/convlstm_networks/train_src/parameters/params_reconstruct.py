@@ -40,8 +40,8 @@ class ParamsReconstruct():
 
 
 
-        self.conditionType = 'test'
-#        self.conditionType = 'all'
+#        self.conditionType = 'test'
+        self.conditionType = 'all'
 
         self.data_path='../../' / self.paramsTrain.path
         self.setModelPath('../model/') 

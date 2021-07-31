@@ -45,7 +45,7 @@ class ParamsTrain(Params):
         # ============= PATCH EXTRACTION ============== #
 
         self.getFullIms = False
-        self.coordsExtract = False
+        self.coordsExtract = True
         self.train = True
 #        self.model_load = True
 
