@@ -211,7 +211,7 @@ class TrainTest():
 
 		self.model.class_n+=1 # This is used in loss_weights_estimate, val_set_get, semantic_balance (To-do: Eliminate bcknd class)
 
-	def preprocess(self):
+	def preprocess(self, model_name_id):
 		
 		self.model_name = model_name_id
 		ic(self.model_name)
@@ -324,7 +324,7 @@ if __name__ == '__main__':
 	trainTest.setData()
 	trainTest.setModel()
 
-	trainTest.preprocess() # move into if
+	trainTest.preprocess(model_name_id) # move into if
 	if paramsTrain.train == True:
 		trainTest.train()
 	else:
