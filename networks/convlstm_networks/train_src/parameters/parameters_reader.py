@@ -49,6 +49,15 @@ class ParamsTrain(Params):
         self.train = True
 #        self.model_load = True
 
+        self.train_overlap_percentage = 0.8
+
+        if self.train_overlap_percentage>0:
+            self.trainGeneratorRandom = True
+        else:
+            self.trainGeneratorRandom = False
+        self.patch_len = 128
+#        self.patch_len = 64
+
         # ============== OPEN SET MODE ================= #
 
         self.openMode = 'SaveNonaugmentedTrainPatches'
@@ -134,11 +143,10 @@ class ParamsTrain(Params):
         self.channel_n = 2
 
         self.stop_epoch = 400
-        self.patch_len = 32
-#        self.patch_len = 64
+
         
         #self.stride = self.patch_len
-        self.train_overlap_percentage = 0
+
         self.stride = int(self.patch_len - self.patch_len * self.train_overlap_percentage)
         ic(self.stride)
 
