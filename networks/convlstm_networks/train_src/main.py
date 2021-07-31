@@ -247,10 +247,10 @@ class TrainTest():
 		if self.paramsTrain.balancing==True:
 			print("=== AUGMENTING TRAINING DATA")
 
-			ic(self.data.class_n)
-			self.paramsTrain.samples_per_class = self.data.patches['train']['coords'].shape[0] / self.data.class_n
-			ic(self.paramsTrain.samples_per_class)
-			pdb.set_trace()
+			#ic(self.data.class_n)
+			#self.paramsTrain.samples_per_class = int(self.data.patches['train']['coords'].shape[0] / self.data.class_n)
+			#ic(self.paramsTrain.samples_per_class)
+#			pdb.set_trace()
 
 			if self.paramsTrain.seq_mode=='fixed' or self.paramsTrain.seq_mode=='fixed_label_len':
 				label_type = 'Nto1'

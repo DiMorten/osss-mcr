@@ -45,8 +45,8 @@ class ParamsTrain(Params):
         # ============= PATCH EXTRACTION ============== #
 
         self.getFullIms = False
-        self.coordsExtract = True
-        self.train = True
+        self.coordsExtract = False
+        self.train = False
 #        self.model_load = True
 
         self.train_overlap_percentage = 0.8
@@ -57,6 +57,8 @@ class ParamsTrain(Params):
             self.trainGeneratorRandom = False
         self.patch_len = 128
 #        self.patch_len = 64
+
+        self.test_overlap_percentage = 0.5
 
         # ============== OPEN SET MODE ================= #
 
@@ -150,7 +152,6 @@ class ParamsTrain(Params):
         self.stride = int(self.patch_len - self.patch_len * self.train_overlap_percentage)
         ic(self.stride)
 
-        self.test_overlap_percentage = 0
 
         self.patch_step_train = self.stride
         self.patch_step_test = self.patch_len
