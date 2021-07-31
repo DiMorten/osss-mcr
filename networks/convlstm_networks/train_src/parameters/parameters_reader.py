@@ -46,7 +46,7 @@ class ParamsTrain(Params):
 
         self.getFullIms = False
         self.coordsExtract = False
-        self.train = False
+        self.train = True
 #        self.model_load = True
 
         # ============== OPEN SET MODE ================= #

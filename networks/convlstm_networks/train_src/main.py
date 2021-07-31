@@ -46,7 +46,7 @@ from collections import Counter
 
 
 #from datagenerator import DataGenerator
-from generator import DataGenerator, DataGeneratorWithCoords, DataGeneratorWithCoordsPatches
+from generator import DataGenerator, DataGeneratorWithCoords
 
 import matplotlib.pyplot as plt
 sys.path.append('../../../dataset/dataset/patches_extract_script/')
@@ -290,6 +290,7 @@ class TrainTest():
 		self.model.graph=load_model(self.model_name, compile=False)		
 
 #		self.model.evaluate(self.data)
+
 	def evaluate(self):
 		self.data.loadMask()
 		self.model.evaluate(self.data)
@@ -318,7 +319,7 @@ if __name__ == '__main__':
 
 	trainTest.preprocess() # move into if
 	if paramsTrain.train == True:
-		trainTest.model.train()
+		trainTest.train()
 	else:
 		trainTest.modelLoad(model_name_id)
 

@@ -44,7 +44,7 @@ from keras.callbacks import EarlyStopping
 import tensorflow as tf
 from collections import Counter
 
-from generator import DataGenerator, DataGeneratorWithCoords, DataGeneratorWithCoordsPatches
+from generator import DataGenerator, DataGeneratorWithCoords, DataGeneratorWithCoordsRandom
 
 import matplotlib.pyplot as plt
 sys.path.append('../../../dataset/dataset/patches_extract_script/')
