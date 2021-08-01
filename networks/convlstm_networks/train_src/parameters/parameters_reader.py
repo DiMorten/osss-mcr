@@ -58,7 +58,7 @@ class ParamsTrain(Params):
         self.patch_len = 128
 #        self.patch_len = 64
 
-        self.test_overlap_percentage = 0.5
+        self.test_overlap_percentage = 0
 
         # ============== OPEN SET MODE ================= #
 
