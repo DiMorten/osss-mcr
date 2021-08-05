@@ -10,8 +10,8 @@ class ParamsReconstruct():
 		self.mosaic_flag = True
 		self.prediction_mask = False
 
-#		self.conditionType = 'test'
-		self.conditionType = 'all'
+		self.conditionType = 'test'
+#		self.conditionType = 'all'
 
 		self.metrics_flag = False
 

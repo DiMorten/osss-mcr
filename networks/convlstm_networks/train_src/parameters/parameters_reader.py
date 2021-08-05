@@ -49,18 +49,22 @@ class ParamsTrain(Params):
         self.train = False
 #        self.model_load = True
 
-        self.train_overlap_percentage = 0.8
+        self.train_overlap_percentage = 0
 
         if self.train_overlap_percentage>0:
             self.trainGeneratorRandom = True
         else:
             self.trainGeneratorRandom = False
-        self.patch_len = 128
+#        self.patch_len = 128
 #        self.patch_len = 64
+        self.patch_len = 32
 
         self.test_overlap_percentage = 0
 
-        # ============== OPEN SET MODE ================= #
+
+        self.openSetMethod = None
+
+        # ============== SCRIPT MODE: CLOSED SET, OPEN SET... ================= #
 
         self.openMode = 'SaveNonaugmentedTrainPatches'
 #        self.openMode = 'OpenSet'

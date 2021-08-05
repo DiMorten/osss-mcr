@@ -13,5 +13,7 @@
     "seq_len": 12,
     "seq_mode": "fixed",
 
-    "sliceFromCoords": true   
+    "sliceFromCoords": true,  
+    
+    "openSetMethod": "OpenPCS"
 }

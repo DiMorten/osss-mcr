@@ -324,9 +324,9 @@ def openSetPredict(predictions, predictions_train=None,
 		print('************* predicting open set postprocessing')
 		if paramsAnalysis.metricsOnTrain == False:
 
-			predictions = openModel.predict(predictions) #label_test
+			predictions = openModel.applyThreshold(predictions) #label_test
 		else:
-			predictions = openModel.predict(predictions_train) #label_train
+			predictions = openModel.applyThreshold(predictions_train) #label_train
 		predictions[predictions == 40] = 39
 	deb.prints(predictions.shape)
 

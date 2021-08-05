@@ -27,7 +27,7 @@ from parameters.parameters_reader import ParamsTrain, ParamsAnalysis
 from analysis.open_set import SoftmaxThresholding, OpenPCS
 from parameters.params_reconstruct import ParamsReconstruct
 from parameters.params_batchprocessing import ParamsBatchProcessing
-
+from postprocessing import PostProcessingMosaic
 ic.configureOutput(includeContext=False, prefix='[@debug] ')
 
 
@@ -50,182 +50,186 @@ class Mosaic():
 #		deb.prints(direct_execution)
 
 
-	def evaluate(self):
-		pass
+	def loopOverImage(self, paramsTrain):
 
-	def create(self, paramsTrain, model, data):
+		for m in range(paramsTrain.patch_len//2,self.h-paramsTrain.patch_len//2,self.stride): 
+			for n in range(paramsTrain.patch_len//2,self.w-paramsTrain.patch_len//2,self.stride):
 
+				patch_mask = self.mask_pad[m-paramsTrain.patch_len//2:m+paramsTrain.patch_len//2 + paramsTrain.patch_len%2,
+						n-paramsTrain.patch_len//2:n+paramsTrain.patch_len//2 + paramsTrain.patch_len%2]
+
+				if self.pr.conditionType == 'test':
+					condition = np.any(patch_mask==2)
+				else:
+					condition = True	
+				if condition:		
+
+					patch = self.data.full_ims_test[:, 
+								m-paramsTrain.patch_len//2:m+paramsTrain.patch_len//2 + paramsTrain.patch_len%2,
+								n-paramsTrain.patch_len//2:n+paramsTrain.patch_len//2 + paramsTrain.patch_len%2]
+					patch = np.expand_dims(patch, axis = 0)
+					pred_logits = self.model.graph.predict(patch)
+					pred = pred_logits.argmax(axis=-1).astype(np.uint8)
+					_, x, y, c = pred_logits.shape
+
+					#ic(pred_logits.shape, pred.shape)
+					#ic(self.prediction_logits_mosaic.shape, self.prediction_mosaic.shape)
+					
+						
+					self.prediction_logits_mosaic[m-self.stride//2:m+self.stride//2,n-self.stride//2:n+self.stride//2] = pred_logits[0,self.overlap//2:x-self.overlap//2,self.overlap//2:y-self.overlap//2]
+					self.prediction_mosaic[m-self.stride//2:m+self.stride//2,n-self.stride//2:n+self.stride//2] = pred[0,self.overlap//2:x-self.overlap//2,self.overlap//2:y-self.overlap//2]
+
+		
+		if self.pr.open_set_mode == False:
+			self.prediction_mosaic = self.prediction_logits_mosaic.argmax(axis=-1).astype(np.uint8)
 
 		if self.pr.add_padding_flag==True:
-			data.full_ims_test, stride, step_row, step_col, overlap = seq_add_padding(
-				data.full_ims_test, paramsTrain.patch_len, self.pr.overlap)
-			mask_pad, _, _, _, _ = add_padding(data.mask,paramsTrain.patch_len,self.pr.overlap)
+			self.prediction_mosaic=self.prediction_mosaic[self.overlap//2:-step_row,self.overlap//2:-step_col]
+			self.scores_mosaic=self.scores_mosaic[self.overlap//2:-step_row,self.overlap//2:-step_col]
+		ic(self.prediction_mosaic.shape, self.mask_pad.shape, self.data.full_label_test.shape)
+		ic(np.unique(self.data.full_label_test, return_counts=True))
+		ic(np.unique(self.prediction_mosaic, return_counts=True))
+		self.pr.spatial_results_path.mkdir(parents=True, exist_ok=True)
+		np.save(self.pr.spatial_results_path / 
+			('prediction_mosaic_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.pr.overlap)+'.npy'),self.prediction_mosaic)
+		if self.pr.open_set_mode == True:
+			np.save(self.pr.spatial_results_path / 
+				('scores_mosaic_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.pr.overlap)+'.npy'),self.scores_mosaic)
+
+	def loadMosaic(self):
+		self.prediction_mosaic = np.load(self.pr.spatial_results_path / 
+			('prediction_mosaic_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.pr.overlap)+'.npy'))
+		if self.pr.open_set_mode == True:
+			self.scores_mosaic = np.load(self.pr.spatial_results_path / 
+				('scores_mosaic_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.pr.overlap)+'.npy'))
+
+	def defineMosaicVars(self, h, w, class_n):
+		self.prediction_mosaic=np.ones((h,w)).astype(np.uint8)*255
+		self.scores_mosaic=np.zeros((h,w)).astype(np.float16)
+		self.prediction_logits_mosaic=np.ones((h,w, class_n)).astype(np.float16)
+		self.h = h
+		self.w = w
+	def create(self, paramsTrain, model, data, postProcessing = None):
+		self.model = model
+		self.data = data
+		
+		if self.pr.add_padding_flag==True:
+			self.data.full_ims_test, self.stride, step_row, step_col, self.overlap = seq_add_padding(
+				self.data.full_ims_test, paramsTrain.patch_len, self.pr.overlap)
+			self.mask_pad, _, _, _, _ = add_padding(self.data.mask,paramsTrain.patch_len,self.pr.overlap)
 		else:
-			mask_pad=data.mask.copy()
-			stride=paramsTrain.patch_len
-			overlap=0
+			self.mask_pad=self.data.mask.copy()
+			self.stride=paramsTrain.patch_len
+			self.overlap=0
 			
 
-		t_len, h, w, _ = data.full_ims_test.shape
-		ic(data.class_n)
-		ic(np.unique(data.full_label_test), len(np.unique(data.full_label_test)))
-		ic(np.unique(data.full_label_train), len(np.unique(data.full_label_train)))
-		class_n = len(np.unique(data.full_label_train)) - 1
-#		pdb.set_trace()
-#		cl_img = np.zeros((h,w,class_n)) # is it class_n + 1?
-#		cl_img = cl_img.astype('float16')
+		t_len, h, w, _ = self.data.full_ims_test.shape
+		ic(self.data.class_n)
+		ic(np.unique(self.data.full_label_test), len(np.unique(self.data.full_label_test)))
+		ic(np.unique(self.data.full_label_train), len(np.unique(self.data.full_label_train)))
+		class_n = len(np.unique(self.data.full_label_train)) - 1
 
-		prediction_mosaic=np.ones((h,w)).astype(np.uint8)*255
-		scores_mosaic=np.zeros((h,w)).astype(np.float16)
-		prediction_logits_mosaic=np.ones((h,w, class_n)).astype(np.float16)
+		self.defineMosaicVars(h, w, class_n)
 		
 		t0 = time.time()
 
-		data.setDateList(paramsTrain)
-		name_id = 'closed_set'
+		self.data.setDateList(paramsTrain)
+		self.name_id = 'closed_set'
+
 		if self.pr.mosaic_flag == True:
-		
-			for m in range(paramsTrain.patch_len//2,h-paramsTrain.patch_len//2,stride): 
-				for n in range(paramsTrain.patch_len//2,w-paramsTrain.patch_len//2,stride):
-
-					patch_mask = mask_pad[m-paramsTrain.patch_len//2:m+paramsTrain.patch_len//2 + paramsTrain.patch_len%2,
-							n-paramsTrain.patch_len//2:n+paramsTrain.patch_len//2 + paramsTrain.patch_len%2]
-
-					if self.pr.conditionType == 'test':
-						condition = np.any(patch_mask==2)
-					else:
-						condition = True	
-					if condition:		
-
-						patch = data.full_ims_test[:, 
-									m-paramsTrain.patch_len//2:m+paramsTrain.patch_len//2 + paramsTrain.patch_len%2,
-									n-paramsTrain.patch_len//2:n+paramsTrain.patch_len//2 + paramsTrain.patch_len%2]
-						patch = np.expand_dims(patch, axis = 0)
-						pred_logits = model.predict(patch)
-						pred = pred_logits.argmax(axis=-1).astype(np.uint8)
-						_, x, y, c = pred_logits.shape
-
-						#ic(pred_logits.shape, pred.shape)
-						#ic(prediction_logits_mosaic.shape, prediction_mosaic.shape)
-						
-							
-						prediction_logits_mosaic[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_logits[0,overlap//2:x-overlap//2,overlap//2:y-overlap//2]
-						prediction_mosaic[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred[0,overlap//2:x-overlap//2,overlap//2:y-overlap//2]
-
-			
-			if self.pr.open_set_mode == False:
-				prediction_mosaic = prediction_logits_mosaic.argmax(axis=-1).astype(np.uint8)
-
-			if self.pr.add_padding_flag==True:
-				prediction_mosaic=prediction_mosaic[overlap//2:-step_row,overlap//2:-step_col]
-				scores_mosaic=scores_mosaic[overlap//2:-step_row,overlap//2:-step_col]
-			ic(prediction_mosaic.shape, mask_pad.shape, data.full_label_test.shape)
-			ic(np.unique(data.full_label_test, return_counts=True))
-			ic(np.unique(prediction_mosaic, return_counts=True))
-			self.pr.spatial_results_path.mkdir(parents=True, exist_ok=True)
-			np.save(self.pr.spatial_results_path / 
-				('prediction_mosaic_'+data.dataset_date+'_'+name_id+'_overl'+str(self.pr.overlap)+'.npy'),prediction_mosaic)
-			if self.pr.open_set_mode == True:
-				np.save(self.pr.spatial_results_path / 
-					('scores_mosaic_'+data.dataset_date+'_'+name_id+'_overl'+str(self.pr.overlap)+'.npy'),scores_mosaic)
-
+			self.loopOverImage(paramsTrain)
 		else:
+			self.loadMosaic()
 
-			prediction_mosaic = np.load(self.pr.spatial_results_path / 
-				('prediction_mosaic_'+data.dataset_date+'_'+name_id+'_overl'+str(self.pr.overlap)+'.npy'))
-			if self.pr.open_set_mode == True:
-				scores_mosaic = np.load(self.pr.spatial_results_path / 
-					('scores_mosaic_'+data.dataset_date+'_'+name_id+'_overl'+str(self.pr.overlap)+'.npy'))
+		self.postProcess(paramsTrain)
+			
+		ic(np.unique(self.prediction_mosaic, return_counts=True))
 
 		ic(time.time()-t0)
 
-#		if self.pr.add_padding_flag==True:
-#			data.full_label_test = data.full_label_test[overlap//2:-step_row,overlap//2:-step_col]
 
-
-
-		ic(data.full_label_test.shape)
+		ic(self.data.full_label_test.shape)
 
 		
-		cv2.imwrite('sample.png', prediction_logits_mosaic.argmax(axis=-1).astype(np.uint8)*10)
-		cv2.imwrite('label_sample.png', data.full_label_test.astype(np.uint8)*10)
+		cv2.imwrite('sample.png', self.prediction_logits_mosaic.argmax(axis=-1).astype(np.uint8)*10)
+		cv2.imwrite('label_sample.png', self.data.full_label_test.astype(np.uint8)*10)
 
-		ic(np.unique(prediction_mosaic, return_counts=True))
+		ic(np.unique(self.prediction_mosaic, return_counts=True))
 
-		prediction_mosaic = data.newLabel2labelTranslate(prediction_mosaic, 
-				'new_labels2labels_'+paramsTrain.dataset+'_'+data.dataset_date+'_S1.pkl')
-		ic(np.unique(prediction_mosaic, return_counts=True))
-		cv2.imwrite('sample_translate.png', prediction_mosaic.astype(np.uint8)*10)
 
-		ic(data.full_label_test.shape)
-		ic(np.unique(data.full_label_test, return_counts=True))
-		label_mosaic = data.full_label_test
-		ic(np.unique(label_mosaic, return_counts=True))
-		ic(np.unique(prediction_mosaic, return_counts=True))
+
+
+		cv2.imwrite('sample_translate.png', self.prediction_mosaic.astype(np.uint8)*10)
+
+		ic(self.data.full_label_test.shape)
+		ic(np.unique(self.data.full_label_test, return_counts=True))
+		self.label_mosaic = self.data.full_label_test
+		ic(np.unique(self.label_mosaic, return_counts=True))
+		ic(np.unique(self.prediction_mosaic, return_counts=True))
 
 		# bcknd to 255
-		label_mosaic = label_mosaic - 1
-		prediction_mosaic = prediction_mosaic - 1
+		self.label_mosaic = self.label_mosaic - 1
+		self.prediction_mosaic = self.prediction_mosaic - 1
 
-		ic(np.unique(label_mosaic, return_counts=True))
-		ic(np.unique(prediction_mosaic, return_counts=True))
+		ic(np.unique(self.label_mosaic, return_counts=True))
+		ic(np.unique(self.prediction_mosaic, return_counts=True))
 #		pdb.set_trace()
 		important_classes_idx = paramsTrain.known_classes
 
 
-		label_mosaic, prediction_mosaic, important_classes_idx = data.small_classes_ignore(
-					label_mosaic, prediction_mosaic,important_classes_idx)
+		self.label_mosaic, self.prediction_mosaic, important_classes_idx = self.data.small_classes_ignore(
+					self.label_mosaic, self.prediction_mosaic,important_classes_idx)
 
-		prediction_mosaic[prediction_mosaic==39] = 20
-		label_mosaic[label_mosaic==39] = 20
+		self.prediction_mosaic[self.prediction_mosaic==39] = 20
+		self.label_mosaic[self.label_mosaic==39] = 20
 
 
-		deb.prints(np.unique(label_mosaic,return_counts=True))
-		deb.prints(np.unique(prediction_mosaic,return_counts=True))
-		deb.prints(label_mosaic.shape)
-		deb.prints(prediction_mosaic.shape)
+		deb.prints(np.unique(self.label_mosaic,return_counts=True))
+		deb.prints(np.unique(self.prediction_mosaic,return_counts=True))
+		deb.prints(self.label_mosaic.shape)
+		deb.prints(self.prediction_mosaic.shape)
 		deb.prints(important_classes_idx)
 
-		ic(data.mask.shape, mask_pad.shape, label_mosaic.shape, prediction_mosaic.shape)
-		self.save_prediction_label_mosaic_Nto1(label_mosaic, prediction_mosaic, data.mask, 
+		ic(self.data.mask.shape, self.mask_pad.shape, self.label_mosaic.shape, self.prediction_mosaic.shape)
+		self.save_prediction_label_mosaic_Nto1(self.data.mask, 
 				self.pr.custom_colormap, self.pr.spatial_results_path, paramsTrain, 
-				small_classes_ignore=True,
-				name_id = name_id)
-		
-		self.prediction_mosaic = prediction_mosaic
-		self.label_mosaic = label_mosaic
+				small_classes_ignore=True)
 
-	def save_prediction_label_mosaic_Nto1(self, label_mosaic, prediction_mosaic, mask, 
-			custom_colormap, path, paramsTrain, small_classes_ignore=True, name_id=""):
+
+	def postProcess(self, paramsTrain):
+		self.prediction_mosaic = self.data.newLabel2labelTranslate(self.prediction_mosaic, 
+					'new_labels2labels_'+paramsTrain.dataset+'_'+self.data.dataset_date+'_S1.pkl')
+	def save_prediction_label_mosaic_Nto1(self, mask, 
+			custom_colormap, path, paramsTrain, small_classes_ignore=True):
 	#	for t_step in range(t_len):
 
 		ic(np.unique(mask, return_counts=True))
 
-		label_mosaic[mask!=2]=255
+		self.label_mosaic[mask!=2]=255
 		
 		if self.pr.prediction_mask == True:
-			prediction_mosaic[mask!=2]=255	
-		deb.prints(np.unique(label_mosaic,return_counts=True))
-		deb.prints(np.unique(prediction_mosaic,return_counts=True))
+			self.prediction_mosaic[mask!=2]=255	
+		deb.prints(np.unique(self.label_mosaic,return_counts=True))
+		deb.prints(np.unique(self.prediction_mosaic,return_counts=True))
 
 
 		print("everything outside mask is 255")
-		ic(np.unique(label_mosaic,return_counts=True))
-		ic(np.unique(prediction_mosaic,return_counts=True))
+		ic(np.unique(self.label_mosaic,return_counts=True))
+		ic(np.unique(self.prediction_mosaic,return_counts=True))
 
 		# Paint it!
 
 		print(custom_colormap.shape)
 		#class_n=custom_colormap.shape[0]
 		#=== change to rgb
-		print("Gray",prediction_mosaic.dtype)
-		prediction_rgb=np.zeros((prediction_mosaic.shape+(3,))).astype(np.uint8)
+		print("Gray",self.prediction_mosaic.dtype)
+		prediction_rgb=np.zeros((self.prediction_mosaic.shape+(3,))).astype(np.uint8)
 		label_rgb=np.zeros_like(prediction_rgb)
 		print("Adding color...")
 
 
-		prediction_rgb=cv2.cvtColor(prediction_mosaic,cv2.COLOR_GRAY2RGB)
-		label_rgb=cv2.cvtColor(label_mosaic,cv2.COLOR_GRAY2RGB)
+		prediction_rgb=cv2.cvtColor(self.prediction_mosaic,cv2.COLOR_GRAY2RGB)
+		label_rgb=cv2.cvtColor(self.label_mosaic,cv2.COLOR_GRAY2RGB)
 
 		print("RGB",prediction_rgb.dtype,prediction_rgb.shape)
 
@@ -267,11 +271,11 @@ class Mosaic():
 		if self.pr.open_set_mode == True:
 			threshIdxName = "_TPR" + tpr_threshold_names[self.pr.threshold_idx]
 			prediction_savename = save_folder / ("prediction_t_" + paramsTrain.seq_date + "_" + paramsTrain.model_type +
-				"_" + name_id+threshIdxName + "_overl" + str(self.pr.overlap) + "_" + self.pr.conditionType + ".png")
+				"_" + self.name_id+threshIdxName + "_overl" + str(self.pr.overlap) + "_" + self.pr.conditionType + ".png")
 
 		else:
 			prediction_savename = save_folder / ("prediction_t_" + paramsTrain.seq_date + "_" + paramsTrain.model_type +
-				"_closedset_" + name_id + "_overl" + str(self.pr.overlap) + "_" + self.pr.conditionType + ".png")
+				"_closedset_" + self.name_id + "_overl" + str(self.pr.overlap) + "_" + self.pr.conditionType + ".png")
 
 		ic(prediction_savename)
 		print("saving...")
@@ -283,91 +287,312 @@ class Mosaic():
 		ret = cv2.imwrite(str(prediction_savename), prediction_rgb)
 
 		deb.prints(ret)
-		ic(save_folder / ("label_t_"+paramsTrain.seq_date+"_"+paramsTrain.model_type+"_"+name_id+".png"))
-		ret = cv2.imwrite(str(save_folder / ("label_t_"+paramsTrain.seq_date+"_"+paramsTrain.model_type+"_"+name_id+".png")),label_rgb)
+		ic(save_folder / ("label_t_"+paramsTrain.seq_date+"_"+paramsTrain.model_type+"_"+self.name_id+".png"))
+		ret = cv2.imwrite(str(save_folder / ("label_t_"+paramsTrain.seq_date+"_"+paramsTrain.model_type+"_"+self.name_id+".png")),label_rgb)
 		deb.prints(ret)
 		ret = cv2.imwrite(str(save_folder / "mask.png"),mask*200)
 		deb.prints(ret)
 
+class MosaicHighRAMPostProcessing(Mosaic):
+	def postProcess(self, paramsTrain):
+		self.prediction_mosaic = self.postProcessing.applyThreshold(self.prediction_mosaic, 
+			debug = debug)
+		ic(self.prediction_mosaic.shape)
+
+
+	def create(self, paramsTrain, model, data, postProcessing):
+		self.postProcessing = postProcessing
+		self.postProcessing.openSetActivate(paramsTrain.openSetMethod)
+
+		super().create(paramsTrain, model, data)
+	def loopOverImage(self, paramsTrain):
+		class_n = len(paramsTrain.known_classes)
+
+		print("stride", self.stride)
+		print(len(range(paramsTrain.patch_len//2,self.h-paramsTrain.patch_len//2,self.stride)))
+		print(len(range(paramsTrain.patch_len//2,self.w-paramsTrain.patch_len//2,self.stride)))
+
+		self.count = 0
+		self.count_mask = 0
+
+		self.loopToCountValidPatches()
+		self.getPatchesPerBatch()
+		
+		self.count_mask = 0
+		self.count_mask_overall = 0
+		self.count_mask_batch = 0
+
+		for self.batch in range(self.pb.batch_processing_n):
+			print("================== starting self.batch ... ==================")
+
+			self.count_mask_overall += self.count_mask_batch
+			ic(self.count_mask_overall)
+			ic(self.batch)
+			ic(self.batch * self.patches_per_batch)
+			ic((self.batch + 1) * self.patches_per_batch)
+			self.count_mask_batch = 0
+			self.count_mask = 0
+
+			patches_in = self.loopToGetInputPatchesInBatch(h, w)
+			
+
+			ic(self.count_mask_batch)
+			ic(self.count_mask)
+			#pdb.set_trace()
+
+
+			pred_logits_patches = self.model.graph.predict(patches_in).astype(self.pr.prediction_dtype)
+			ic(pred_logits_patches.dtype)
+			ic(pred_logits_patches.shape)	
+
+
+	#		self.postProcessing = PostProcessing()
+	#		self.postProcessing.openSetActivate()
+
+	#		test_pred_proba_patches = self.postProcessing.predict(self.model, patches_in)
+
+			#self.postProcessing.load_decoder_features(self.model, patches_in, )
+			self.test_pred_proba_patches = self.postProcessing.load_intermediate_features(
+				self.paramsTrain.openSetMethod, self.model, patches_in, pred_logits_patches, debug = 0)	
+			
+			self.test_pred_proba_patches = self.test_pred_proba_patches.astype(self.pr.prediction_dtype)
+
+			ic(self.test_pred_proba_patches.dtype, self.test_pred_proba_patches.shape)
+			ic(self.count_mask)
+			self.count_mask = 0
+			self.count_mask_batch = 0
+			
+			self.loopToPredict(h, w)
+
+			ic(np.unique(self.prediction_mosaic, return_counts=True))
+			if self.pr.open_set_mode == False:
+				self.prediction_mosaic = self.prediction_logits_mosaic.argmax(axis=-1).astype(np.uint8)
+				self.prediction_mosaic[self.mask_pad != 2] = 255
+			ic(np.unique(self.prediction_mosaic, return_counts=True))
+
+			if self.pr.add_padding_flag==True:
+				ic(prediction_mosaic.shape)
+				ic(self.overlap)
+				ic(step_row)
+				self.prediction_mosaic=self.prediction_mosaic[self.overlap//2:-step_row,self.overlap//2:-step_col]
+				self.postProcessing.openSet.scores_mosaic=self.postProcessing.openSet.scores_mosaic[self.overlap//2:-step_row,self.overlap//2:-step_col]
+
+			np.save('prediction_rebuilt_'+dataset_date+'_'+name_id+'_overl'+str(self.pr.overlap)+'.npy',self.prediction_mosaic)
+			if self.pr.open_set_mode == True:
+				np.save('scores_rebuilt_'+dataset_date+'_'+name_id+'_overl'+str(self.pr.overlap)+'.npy',self.postProcessing.openSet.scores_mosaic)
+
+
+	def loopToGetInputPatchesInBatch(self):
+		patches_in = []
+			
+		for m in range(self.paramsTrain.patch_len//2,self.h-self.paramsTrain.patch_len//2,stride): 
+			for n in range(self.paramsTrain.patch_len//2,self.w-self.paramsTrain.patch_len//2,stride):
+				
+				patch_mask = self.mask_pad[m-self.paramsTrain.patch_len//2:m+self.paramsTrain.patch_len//2 + self.paramsTrain.patch_len%2,
+							n-self.paramsTrain.patch_len//2:n+self.paramsTrain.patch_len//2 + self.paramsTrain.patch_len%2]
+
+				if self.pr.conditionType == 'test':
+					condition_masking = np.any(patch_mask==2)
+				else:
+					condition_masking = True
+						
+				condition = condition_masking and self.count_mask >= self.batch * self.patches_per_batch and self.count_mask < (self.batch + 1) * self.patches_per_batch
+				if condition:
+
+					patch = {}			
+					patch['in'] = self.data.full_ims_test[:,m-self.paramsTrain.patch_len//2:m+self.paramsTrain.patch_len//2 + self.paramsTrain.patch_len%2,
+								n-self.paramsTrain.patch_len//2:n+self.paramsTrain.patch_len//2 + self.paramsTrain.patch_len%2]
+
+					patch['in'] = np.expand_dims(patch['in'], axis = 0)
+
+					patch['shape'] = (patch['in'].shape[0], self.paramsTrain.seq_len) + patch['in'].shape[2:]
+
+
+					input_ = self.mim.batchTrainPreprocess(patch, ds,  
+								label_date_id = -1) # tstep is -12 to -1
+
+					patches_in.append(input_)
+					self.count_mask_batch += 1
+				if condition_masking:
+					self.count_mask += 1
+		patches_in = np.concatenate(patches_in, axis=0)
+		return patches_in
+
+	def loopToCountValidPatches(self):
+
+		for m in range(self.paramsTrain.patch_len//2,self.h-self.paramsTrain.patch_len//2,stride): 
+			for n in range(self.paramsTrain.patch_len//2,self.w-self.paramsTrain.patch_len//2,stride):
+				patch_mask = self.mask_pad[m-self.paramsTrain.patch_len//2:m+self.paramsTrain.patch_len//2 + self.paramsTrain.patch_len%2,
+							n-self.paramsTrain.patch_len//2:n+self.paramsTrain.patch_len//2 + self.paramsTrain.patch_len%2]
+				if self.pr.conditionType == 'test':
+					condition = np.any(patch_mask==2)
+				else:
+					condition = True			
+				if condition:
+					self.count_mask += 1
+
+	def loopToPredict(self):
+		
+		for m in range(self.paramsTrain.patch_len//2,self.h-self.paramsTrain.patch_len//2,self.stride): 
+			for n in range(self.paramsTrain.patch_len//2,self.w-self.paramsTrain.patch_len//2,self.stride):
+
+				patch_mask = self.mask_pad[m-self.paramsTrain.patch_len//2:m+self.paramsTrain.patch_len//2 + self.paramsTrain.patch_len%2,
+						n-self.paramsTrain.patch_len//2:n+self.paramsTrain.patch_len//2 + self.paramsTrain.patch_len%2]
+
+				if self.pr.conditionType == 'test':
+					condition = np.any(patch_mask==2)
+				else:
+					condition = True	
+				condition = condition_masking and self.count_mask >= self.batch * self.patches_per_batch and self.count_mask < (self.batch + 1) * self.patches_per_batch
+
+				if condition:
+	##				t0=time.time()
+					#pred_logits = np.squeeze(model.predict(input_))
+					pred_logits = np.squeeze(pred_logits_patches[self.count_mask_batch])
+					pred_cl = pred_logits.argmax(axis=-1)
+
+					if self.pr.open_set_mode == True: # do in postProcessing
+						self.test_pred_proba = np.squeeze(self.test_pred_proba_patches[self.count_mask_batch])
+
+
+					x, y = pred_cl.shape
+					prediction_shape = pred_cl.shape
+
+					if debug>-1: # do in postProcessing
+						
+						print('*'*20, "Starting openModel predict")
+						ic(pred_cl.shape)
+						ic(self.test_pred_proba.shape)
+
+						ic(np.min(self.test_pred_proba), np.average(self.test_pred_proba), np.median(self.test_pred_proba), np.max(self.test_pred_proba))
+
+					if self.pr.open_set_mode == True:
+						# translate the preddictions.
+
+						pred_cl = self.data.newLabel2labelTranslate(pred_cl, 
+								'new_labels2labels_'+self.paramsTrain.dataset+'_'+self.data.dataset_date+'_S1.pkl')
+
+						if debug>0:
+							ic(pred_cl.shape)
+
+						self.postProcessing.predictPatch(pred_cl, self.test_pred_proba,
+									debug = debug)
+						
+
+					if self.pr.overlap_mode == 'replace':
+						self.prediction_mosaic[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_cl[self.overlap//2:x-self.overlap//2,self.overlap//2:y-self.overlap//2]
+						self.prediction_logits_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_logits[self.overlap//2:x-self.overlap//2,self.overlap//2:y-self.overlap//2]						
+					self.count_mask_batch += 1
+				if condition_masking:				
+					self.count_mask += 1
+
+			self.count = self.count + 1
+			if self.count % 50000 == 0:
+				print(self.count)
+
+		ic(self.count_mask_batch)
+		ic(self.count_mask)
+	
+
+		
+	def getPatchesPerBatch():
+		ic(self.count_mask)
+		self.patches_per_batch = self.count_mask // self.pb.batch_processing_n
+		ic(self.patches_per_batch)
+		ic(self.patches_per_batch * self.pb.batch_processing_n)
+		ic(self.pb.batch_processing_n)
+		assert self.patches_per_batch * self.pb.batch_processing_n == self.count_mask
+		assert self.patches_per_batch < 10200
+
+
+
+'''
+class MosaicOpenSet(MosaicHighRAM):
+	def __init__(self, paramsTrain):
+
+		self.postProcessing = PostProcessing()
+		self.postProcessing.addMethod(OpenSet())
+'''
+
 
 
 def add_padding(img, psize, overl):
-    '''Function to padding image
-        input:
-            patches_size: psize
-            stride: stride
-            img: image (row,col,bands)
-    '''    
+	'''Function to padding image
+		input:
+			patches_size: psize
+			stride: stride
+			img: image (row,col,bands)
+	'''    
 
-    try:
-        row, col, bands = img.shape
-    except:
-        bands = 0
-        row, col = img.shape
-        
-    # Percent of overlap between consecutive patches.
-    # The overlap will be multiple of 2
-    overlap = int(round(psize * overl))
-    overlap -= overlap % 2
-    stride = psize - overlap
+	try:
+		row, col, bands = img.shape
+	except:
+		bands = 0
+		row, col = img.shape
+		
+	# Percent of overlap between consecutive patches.
+	# The overlap will be multiple of 2
+	overlap = int(round(psize * overl))
+	overlap -= overlap % 2
+	stride = psize - overlap
 
-    # Add Padding to the image to match with the patch size and the overlap
-    row += overlap//2
-    col += overlap//2
-    step_row = (stride - row % stride) % stride
-    step_col = (stride - col % stride) % stride
-    
-    if bands>0:
-        npad_img = ((overlap//2, step_row), (overlap//2, step_col),(0,0))
-    else:        
-        npad_img = ((overlap//2, step_row), (overlap//2, step_col))  
-        
-    # padd with symetric (espelhado)    
-    pad_img = np.pad(img, npad_img, mode='symmetric')
+	# Add Padding to the image to match with the patch size and the overlap
+	row += overlap//2
+	col += overlap//2
+	step_row = (stride - row % stride) % stride
+	step_col = (stride - col % stride) % stride
+	
+	if bands>0:
+		npad_img = ((overlap//2, step_row), (overlap//2, step_col),(0,0))
+	else:        
+		npad_img = ((overlap//2, step_row), (overlap//2, step_col))  
+		
+	# padd with symetric (espelhado)    
+	pad_img = np.pad(img, npad_img, mode='symmetric')
 
-    # Number of patches: k1xk2
-    k1, k2 = (row+step_row)//stride, (col+step_col)//stride
-    print('Number of patches: %d' %(k1 * k2))
+	# Number of patches: k1xk2
+	k1, k2 = (row+step_row)//stride, (col+step_col)//stride
+	print('Number of patches: %d' %(k1 * k2))
 
-    return pad_img, stride, step_row, step_col, overlap
+	return pad_img, stride, step_row, step_col, overlap
 
 def seq_add_padding(img, psize, overl):
-    '''Function to padding image
-        input:
-            patches_size: psize
-            stride: stride
-            img: image (row,col,bands)
-    '''    
-    try:
-        t_len, row, col, bands = img.shape
-    except:
-        bands = 0
-        t_len, row, col = img.shape
-        
-    # Percent of overlap between consecutive patches.
-    # The overlap will be multiple of 2
-    overlap = int(round(psize * overl))
-    overlap -= overlap % 2
-    stride = psize - overlap
+	'''Function to padding image
+		input:
+			patches_size: psize
+			stride: stride
+			img: image (row,col,bands)
+	'''    
+	try:
+		t_len, row, col, bands = img.shape
+	except:
+		bands = 0
+		t_len, row, col = img.shape
+		
+	# Percent of overlap between consecutive patches.
+	# The overlap will be multiple of 2
+	overlap = int(round(psize * overl))
+	overlap -= overlap % 2
+	stride = psize - overlap
 
-    # Add Padding to the image to match with the patch size and the overlap
-    row += overlap//2
-    col += overlap//2
-    step_row = (stride - row % stride) % stride
-    step_col = (stride - col % stride) % stride
-    
-    if bands>0:
-        npad_img = ((0,0),(overlap//2, step_row), (overlap//2, step_col),(0,0))
-    else:        
-        npad_img = ((0,0),(overlap//2, step_row), (overlap//2, step_col))  
-    
-    #pad_img = np.zeros((t_len,row, col, bands))
-    # padd with symetric (espelhado)    
-    #for t_step in t_len:
-    #    pad_img[t_step] = np.pad(img[t_step], npad_img, mode='symmetric')
-    pad_img = np.pad(img, npad_img, mode='symmetric')
-    # Number of patches: k1xk2
-    k1, k2 = (row+step_row)//stride, (col+step_col)//stride
-    print('Number of patches: %d' %(k1 * k2))
+	# Add Padding to the image to match with the patch size and the overlap
+	row += overlap//2
+	col += overlap//2
+	step_row = (stride - row % stride) % stride
+	step_col = (stride - col % stride) % stride
+	
+	if bands>0:
+		npad_img = ((0,0),(overlap//2, step_row), (overlap//2, step_col),(0,0))
+	else:        
+		npad_img = ((0,0),(overlap//2, step_row), (overlap//2, step_col))  
+	
+	#pad_img = np.zeros((t_len,row, col, bands))
+	# padd with symetric (espelhado)    
+	#for t_step in t_len:
+	#    pad_img[t_step] = np.pad(img[t_step], npad_img, mode='symmetric')
+	pad_img = np.pad(img, npad_img, mode='symmetric')
+	# Number of patches: k1xk2
+	k1, k2 = (row+step_row)//stride, (col+step_col)//stride
+	print('Number of patches: %d' %(k1 * k2))
 
-    return pad_img, stride, step_row, step_col, overlap
+	return pad_img, stride, step_row, step_col, overlap

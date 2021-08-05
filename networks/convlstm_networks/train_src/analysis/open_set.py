@@ -144,7 +144,7 @@ class OpenSetMethodGaussian(OpenSetMethod):
         print("*"*20, "model was loaded")
         #self.fittedFlag = True
         return loaded_list
-    def predict(self, predictions_test, scores = None, debug = 1):
+    def applyThreshold(self, predictions_test, scores = None, debug = 1):
         if np.all(scores) == None:
             scores = self.scores
         if debug > 0:

@@ -60,6 +60,8 @@ import natsort
 
 from mosaic import seq_add_padding, add_padding, Mosaic
 from metrics import Metrics, MetricsTranslated
+from postprocessing import PostProcessingMosaic
+
 
 def load_obj(name ):
 	with open('obj/' + name + '.pkl', 'rb') as f:
@@ -80,7 +82,7 @@ class NetModel(object):
 
 		self.patches['train']['step']=paramsTrain.patch_step_train
 		self.patches['test']['step']=paramsTrain.patch_step_test 
-      
+	  
 		self.path['train']['in'] = paramsTrain.path / 'train_test/train/ims/'
 		self.path['test']['in'] = paramsTrain.path / 'train_test/test/ims/'
 		self.path['train']['label'] = paramsTrain.path / 'train_test/train/labels/'
@@ -1868,7 +1870,7 @@ class NetModel(object):
 			#pdb.set_trace()
 			#if self.train_predict:
 
-            
+			
 			#================== VAL LOOP=====================#
 			if self.val_set:
 				deb.prints(data.patches['val']['label'].shape)
@@ -2266,8 +2268,53 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 
 		data.reloadLabel()
 		mosaic = Mosaic(self.paramsTrain)
-		mosaic.create(self.paramsTrain, self.graph, data)
+
+		self.postProcessing = PostProcessingMosaic(self.paramsTrain, h, w)
+
+		mosaic.create(self.paramsTrain, self, data, self.postProcessing)
 
 		metrics = MetricsTranslated(self.paramsTrain)
 		metrics_test = metrics.get(mosaic.prediction_mosaic, mosaic.label_mosaic)
 		deb.prints(metrics_test)
+
+	def load_decoder_features(self, model, in_, prediction_dtype = np.float16, debug  = 1):
+	#print(model.summary())
+
+		layer_names = ['conv_lst_m2d_1', 'activation_6', 'activation_8', 'activation_10']
+		upsample_ratios = [8, 4, 2, 1]
+
+		out1 = UpSampling2D(size=(upsample_ratios[0], upsample_ratios[0]))(model.get_layer(layer_names[0]).output)
+		out2 = UpSampling2D(size=(upsample_ratios[1], upsample_ratios[1]))(model.get_layer(layer_names[1]).output)
+		out3 = UpSampling2D(size=(upsample_ratios[2], upsample_ratios[2]))(model.get_layer(layer_names[2]).output)
+		out4 = UpSampling2D(size=(upsample_ratios[3], upsample_ratios[3]))(model.get_layer(layer_names[3]).output)
+
+		intermediate_layer_model = Model(inputs=model.input, outputs=[out1, #4x4
+															out2, #8x8
+															out3, #16x16
+															out4]) #32x32
+
+		intermediate_features=intermediate_layer_model.predict(input_) 
+
+		if debug > 0:
+			deb.prints(intermediate_features[0].shape)
+	#		intermediate_features = np.concatenate(intermediate_features, axis = 0)
+	#		ic(intermediate_features.shape)
+	#		pdb.set_trace()
+		intermediate_features = [x.reshape(x.shape[0], -1, x.shape[-1]) for x in intermediate_features]
+		if debug > 0:
+			[deb.prints(intermediate_features[x].shape) for x in [0,1,2,3]]
+
+		intermediate_features = np.squeeze(np.concatenate(intermediate_features, axis=-1))# .astype(prediction_dtype)
+
+	#		open_features_flat = []
+	#		for feature in intermediate_features:
+	#			feature = feature.flatten()
+	#			deb.prints(feature.shape)
+
+
+
+
+		if debug > 0:
+			deb.prints(intermediate_features.shape)
+			print("intermediate_features stats", np.min(intermediate_features), np.average(intermediate_features), np.max(intermediate_features))
+		return intermediate_features

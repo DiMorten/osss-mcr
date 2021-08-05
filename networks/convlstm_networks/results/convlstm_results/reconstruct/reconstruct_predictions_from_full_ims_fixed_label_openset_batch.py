@@ -717,7 +717,7 @@ if pr.open_set_mode == True:
 
 		deb.prints(np.unique(prediction_rebuilt,return_counts=True))
 		ic(prediction_rebuilt.shape)
-	prediction_rebuilt = openModel.predict(prediction_rebuilt, scores_rebuilt, debug = debug)
+	prediction_rebuilt = openModel.applyThreshold(prediction_rebuilt, scores_rebuilt, debug = debug)
 	ic(prediction_rebuilt.shape)
 
 if debug>-1:
