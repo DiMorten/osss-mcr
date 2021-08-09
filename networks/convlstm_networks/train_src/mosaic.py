@@ -30,6 +30,7 @@ from parameters.params_batchprocessing import ParamsBatchProcessing
 from postprocessing import PostProcessingMosaic
 ic.configureOutput(includeContext=False, prefix='[@debug] ')
 
+from model_input_mode import MIMVarLabel_PaddedSeq, MIMFixed_PaddedSeq
 
 
 class Mosaic():
@@ -48,6 +49,8 @@ class Mosaic():
 		deb.prints(dataset)
 		deb.prints(paramsTrain.model_type)
 #		deb.prints(direct_execution)
+
+		self.debug = 0
 
 
 	def loopOverImage(self, paramsTrain):
@@ -109,10 +112,13 @@ class Mosaic():
 		self.prediction_logits_mosaic=np.ones((h,w, class_n)).astype(np.float16)
 		self.h = h
 		self.w = w
-	def create(self, paramsTrain, model, data, postProcessing = None):
+	def create(self, paramsTrain, model, data, ds, postProcessing = None):
 		self.model = model
 		self.data = data
-		
+		self.ds = ds
+		self.mim = MIMFixed_PaddedSeq()
+		self.ds.setDotyFlag(False)
+
 		if self.pr.add_padding_flag==True:
 			self.data.full_ims_test, self.stride, step_row, step_col, self.overlap = seq_add_padding(
 				self.data.full_ims_test, paramsTrain.patch_len, self.pr.overlap)
@@ -140,7 +146,6 @@ class Mosaic():
 			self.loopOverImage(paramsTrain)
 		else:
 			self.loadMosaic()
-
 		self.postProcess(paramsTrain)
 			
 		ic(np.unique(self.prediction_mosaic, return_counts=True))
@@ -293,18 +298,10 @@ class Mosaic():
 		ret = cv2.imwrite(str(save_folder / "mask.png"),mask*200)
 		deb.prints(ret)
 
-class MosaicHighRAMPostProcessing(Mosaic):
-	def postProcess(self, paramsTrain):
-		self.prediction_mosaic = self.postProcessing.applyThreshold(self.prediction_mosaic, 
-			debug = debug)
-		ic(self.prediction_mosaic.shape)
+class MosaicHighRAM(Mosaic):
 
 
-	def create(self, paramsTrain, model, data, postProcessing):
-		self.postProcessing = postProcessing
-		self.postProcessing.openSetActivate(paramsTrain.openSetMethod)
 
-		super().create(paramsTrain, model, data)
 	def loopOverImage(self, paramsTrain):
 		class_n = len(paramsTrain.known_classes)
 
@@ -333,7 +330,7 @@ class MosaicHighRAMPostProcessing(Mosaic):
 			self.count_mask_batch = 0
 			self.count_mask = 0
 
-			patches_in = self.loopToGetInputPatchesInBatch(h, w)
+			patches_in = self.loopToGetInputPatchesInBatch()
 			
 
 			ic(self.count_mask_batch)
@@ -341,9 +338,9 @@ class MosaicHighRAMPostProcessing(Mosaic):
 			#pdb.set_trace()
 
 
-			pred_logits_patches = self.model.graph.predict(patches_in).astype(self.pr.prediction_dtype)
-			ic(pred_logits_patches.dtype)
-			ic(pred_logits_patches.shape)	
+			self.pred_logits_patches = self.model.graph.predict(patches_in).astype(self.pr.prediction_dtype)
+			ic(self.pred_logits_patches.dtype)
+			ic(self.pred_logits_patches.shape)	
 
 
 	#		self.postProcessing = PostProcessing()
@@ -352,17 +349,18 @@ class MosaicHighRAMPostProcessing(Mosaic):
 	#		test_pred_proba_patches = self.postProcessing.predict(self.model, patches_in)
 
 			#self.postProcessing.load_decoder_features(self.model, patches_in, )
-			self.test_pred_proba_patches = self.postProcessing.load_intermediate_features(
-				self.paramsTrain.openSetMethod, self.model, patches_in, pred_logits_patches, debug = 0)	
+			if self.pr.open_set_mode == True:
+				self.test_pred_proba_patches = self.postProcessing.load_intermediate_features(
+					self.model, patches_in, self.pred_logits_patches, debug = 0)	
 			
-			self.test_pred_proba_patches = self.test_pred_proba_patches.astype(self.pr.prediction_dtype)
+				self.test_pred_proba_patches = self.test_pred_proba_patches.astype(self.pr.prediction_dtype)
 
-			ic(self.test_pred_proba_patches.dtype, self.test_pred_proba_patches.shape)
+				ic(self.test_pred_proba_patches.dtype, self.test_pred_proba_patches.shape)
 			ic(self.count_mask)
 			self.count_mask = 0
 			self.count_mask_batch = 0
 			
-			self.loopToPredict(h, w)
+			self.loopToPredict()
 
 			ic(np.unique(self.prediction_mosaic, return_counts=True))
 			if self.pr.open_set_mode == False:
@@ -377,16 +375,16 @@ class MosaicHighRAMPostProcessing(Mosaic):
 				self.prediction_mosaic=self.prediction_mosaic[self.overlap//2:-step_row,self.overlap//2:-step_col]
 				self.postProcessing.openSet.scores_mosaic=self.postProcessing.openSet.scores_mosaic[self.overlap//2:-step_row,self.overlap//2:-step_col]
 
-			np.save('prediction_rebuilt_'+dataset_date+'_'+name_id+'_overl'+str(self.pr.overlap)+'.npy',self.prediction_mosaic)
+			np.save('prediction_rebuilt_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.pr.overlap)+'.npy',self.prediction_mosaic)
 			if self.pr.open_set_mode == True:
-				np.save('scores_rebuilt_'+dataset_date+'_'+name_id+'_overl'+str(self.pr.overlap)+'.npy',self.postProcessing.openSet.scores_mosaic)
+				np.save('scores_rebuilt_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.pr.overlap)+'.npy',self.postProcessing.openSet.scores_mosaic)
 
 
 	def loopToGetInputPatchesInBatch(self):
 		patches_in = []
 			
-		for m in range(self.paramsTrain.patch_len//2,self.h-self.paramsTrain.patch_len//2,stride): 
-			for n in range(self.paramsTrain.patch_len//2,self.w-self.paramsTrain.patch_len//2,stride):
+		for m in range(self.paramsTrain.patch_len//2,self.h-self.paramsTrain.patch_len//2,self.stride): 
+			for n in range(self.paramsTrain.patch_len//2,self.w-self.paramsTrain.patch_len//2,self.stride):
 				
 				patch_mask = self.mask_pad[m-self.paramsTrain.patch_len//2:m+self.paramsTrain.patch_len//2 + self.paramsTrain.patch_len%2,
 							n-self.paramsTrain.patch_len//2:n+self.paramsTrain.patch_len//2 + self.paramsTrain.patch_len%2]
@@ -408,7 +406,7 @@ class MosaicHighRAMPostProcessing(Mosaic):
 					patch['shape'] = (patch['in'].shape[0], self.paramsTrain.seq_len) + patch['in'].shape[2:]
 
 
-					input_ = self.mim.batchTrainPreprocess(patch, ds,  
+					input_ = self.mim.batchTrainPreprocess(patch, self.ds,  
 								label_date_id = -1) # tstep is -12 to -1
 
 					patches_in.append(input_)
@@ -420,8 +418,8 @@ class MosaicHighRAMPostProcessing(Mosaic):
 
 	def loopToCountValidPatches(self):
 
-		for m in range(self.paramsTrain.patch_len//2,self.h-self.paramsTrain.patch_len//2,stride): 
-			for n in range(self.paramsTrain.patch_len//2,self.w-self.paramsTrain.patch_len//2,stride):
+		for m in range(self.paramsTrain.patch_len//2,self.h-self.paramsTrain.patch_len//2,self.stride): 
+			for n in range(self.paramsTrain.patch_len//2,self.w-self.paramsTrain.patch_len//2,self.stride):
 				patch_mask = self.mask_pad[m-self.paramsTrain.patch_len//2:m+self.paramsTrain.patch_len//2 + self.paramsTrain.patch_len%2,
 							n-self.paramsTrain.patch_len//2:n+self.paramsTrain.patch_len//2 + self.paramsTrain.patch_len%2]
 				if self.pr.conditionType == 'test':
@@ -440,15 +438,15 @@ class MosaicHighRAMPostProcessing(Mosaic):
 						n-self.paramsTrain.patch_len//2:n+self.paramsTrain.patch_len//2 + self.paramsTrain.patch_len%2]
 
 				if self.pr.conditionType == 'test':
-					condition = np.any(patch_mask==2)
+					condition_masking = np.any(patch_mask==2)
 				else:
-					condition = True	
+					condition_masking = True	
 				condition = condition_masking and self.count_mask >= self.batch * self.patches_per_batch and self.count_mask < (self.batch + 1) * self.patches_per_batch
 
 				if condition:
 	##				t0=time.time()
 					#pred_logits = np.squeeze(model.predict(input_))
-					pred_logits = np.squeeze(pred_logits_patches[self.count_mask_batch])
+					pred_logits = np.squeeze(self.pred_logits_patches[self.count_mask_batch])
 					pred_cl = pred_logits.argmax(axis=-1)
 
 					if self.pr.open_set_mode == True: # do in postProcessing
@@ -458,30 +456,31 @@ class MosaicHighRAMPostProcessing(Mosaic):
 					x, y = pred_cl.shape
 					prediction_shape = pred_cl.shape
 
-					if debug>-1: # do in postProcessing
-						
-						print('*'*20, "Starting openModel predict")
-						ic(pred_cl.shape)
-						ic(self.test_pred_proba.shape)
-
-						ic(np.min(self.test_pred_proba), np.average(self.test_pred_proba), np.median(self.test_pred_proba), np.max(self.test_pred_proba))
 
 					if self.pr.open_set_mode == True:
+						if self.debug>-1: # do in postProcessing
+							
+							print('*'*20, "Starting openModel predict")
+							ic(pred_cl.shape)
+							ic(self.test_pred_proba.shape)
+
+							ic(np.min(self.test_pred_proba), np.average(self.test_pred_proba), np.median(self.test_pred_proba), np.max(self.test_pred_proba))
+
 						# translate the preddictions.
 
 						pred_cl = self.data.newLabel2labelTranslate(pred_cl, 
 								'new_labels2labels_'+self.paramsTrain.dataset+'_'+self.data.dataset_date+'_S1.pkl')
 
-						if debug>0:
+						if self.debug>0:
 							ic(pred_cl.shape)
 
 						self.postProcessing.predictPatch(pred_cl, self.test_pred_proba,
-									debug = debug)
+									debug = self.debug)
 						
 
 					if self.pr.overlap_mode == 'replace':
-						self.prediction_mosaic[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_cl[self.overlap//2:x-self.overlap//2,self.overlap//2:y-self.overlap//2]
-						self.prediction_logits_rebuilt[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = pred_logits[self.overlap//2:x-self.overlap//2,self.overlap//2:y-self.overlap//2]						
+						self.prediction_mosaic[m-self.stride//2:m+self.stride//2,n-self.stride//2:n+self.stride//2] = pred_cl[self.overlap//2:x-self.overlap//2,self.overlap//2:y-self.overlap//2]
+						self.prediction_logits_rebuilt[m-self.stride//2:m+self.stride//2,n-self.stride//2:n+self.stride//2] = pred_logits[self.overlap//2:x-self.overlap//2,self.overlap//2:y-self.overlap//2]						
 					self.count_mask_batch += 1
 				if condition_masking:				
 					self.count_mask += 1
@@ -495,7 +494,7 @@ class MosaicHighRAMPostProcessing(Mosaic):
 	
 
 		
-	def getPatchesPerBatch():
+	def getPatchesPerBatch(self):
 		ic(self.count_mask)
 		self.patches_per_batch = self.count_mask // self.pb.batch_processing_n
 		ic(self.patches_per_batch)
@@ -504,6 +503,17 @@ class MosaicHighRAMPostProcessing(Mosaic):
 		assert self.patches_per_batch * self.pb.batch_processing_n == self.count_mask
 		assert self.patches_per_batch < 10200
 
+class MosaicHighRAMPostProcessing(MosaicHighRAM):
+	def create(self, paramsTrain, model, data, ds, postProcessing):
+		known_classes = [x + 1 for x in paramsTrain.known_classes]
+		super().create(paramsTrain, model, data, ds)
+		if self.pr.open_set_mode == True:
+			self.postProcessing = postProcessing
+			self.postProcessing.openSetActivate(paramsTrain.openSetMethod, known_classes)
+	def postProcess(self, paramsTrain):
+		self.prediction_mosaic = self.postProcessing.applyThreshold(self.prediction_mosaic, 
+			debug = self.debug)
+		ic(self.prediction_mosaic.shape)
 
 
 '''

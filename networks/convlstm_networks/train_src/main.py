@@ -300,7 +300,7 @@ class TrainTest():
 
 	def evaluate(self):
 		self.data.loadMask()
-		self.model.evaluate(self.data)
+		self.model.evaluate(self.data, self.ds)
 
 if __name__ == '__main__':
 	paramsTrain.dataSource = SARSource()

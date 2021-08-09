@@ -63,6 +63,7 @@ class ParamsTrain(Params):
 
 
         self.openSetMethod = None
+#        self.openSetMethod = 'OpenPCS' # leave this appart?
 
         # ============== SCRIPT MODE: CLOSED SET, OPEN SET... ================= #
 

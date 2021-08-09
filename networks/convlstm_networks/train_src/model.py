@@ -58,7 +58,7 @@ from icecream import ic
 from monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerator
 import natsort
 
-from mosaic import seq_add_padding, add_padding, Mosaic
+from mosaic import seq_add_padding, add_padding, Mosaic, MosaicHighRAM, MosaicHighRAMPostProcessing
 from metrics import Metrics, MetricsTranslated
 from postprocessing import PostProcessingMosaic
 
@@ -2144,7 +2144,7 @@ class ModelFit(NetModel):
 			)
 		return history
 
-	def evaluate(self, data):	
+	def evaluate(self, data, ds):	
 
 		data.patches['test']['in'] = data.addPaddingToInputPatches(
 			self.model_t_len, data.patches['test']['in'])
@@ -2216,7 +2216,7 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 		return history
 
 	
-	def evaluate(self, data):	
+	def evaluate(self, data, ds):	
 		params_test = {
 			'dim': (self.model_t_len,self.patch_len,self.patch_len),
 			'label_dim': (self.patch_len,self.patch_len),
@@ -2248,7 +2248,7 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 
 
 
-	def evaluate(self, data):	
+	def evaluate(self, data, ds):	
 		params_test = {
 			'dim': (self.model_t_len,self.patch_len,self.patch_len),
 			'label_dim': (self.patch_len,self.patch_len),
@@ -2267,33 +2267,35 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 		_, h,w,channel_n = data.full_ims_test.shape
 
 		data.reloadLabel()
-		mosaic = Mosaic(self.paramsTrain)
+#		mosaic = Mosaic(self.paramsTrain)
+		mosaic = MosaicHighRAM(self.paramsTrain)
+#		mosaic = MosaicHighRAMPostProcessing(self.paramsTrain)
 
 		self.postProcessing = PostProcessingMosaic(self.paramsTrain, h, w)
 
-		mosaic.create(self.paramsTrain, self, data, self.postProcessing)
+		mosaic.create(self.paramsTrain, self, data, ds, self.postProcessing)
 
 		metrics = MetricsTranslated(self.paramsTrain)
 		metrics_test = metrics.get(mosaic.prediction_mosaic, mosaic.label_mosaic)
 		deb.prints(metrics_test)
 
-	def load_decoder_features(self, model, in_, prediction_dtype = np.float16, debug  = 1):
+	def load_decoder_features(self, in_, prediction_dtype = np.float16, debug  = 1):
 	#print(model.summary())
 
 		layer_names = ['conv_lst_m2d_1', 'activation_6', 'activation_8', 'activation_10']
 		upsample_ratios = [8, 4, 2, 1]
 
-		out1 = UpSampling2D(size=(upsample_ratios[0], upsample_ratios[0]))(model.get_layer(layer_names[0]).output)
-		out2 = UpSampling2D(size=(upsample_ratios[1], upsample_ratios[1]))(model.get_layer(layer_names[1]).output)
-		out3 = UpSampling2D(size=(upsample_ratios[2], upsample_ratios[2]))(model.get_layer(layer_names[2]).output)
-		out4 = UpSampling2D(size=(upsample_ratios[3], upsample_ratios[3]))(model.get_layer(layer_names[3]).output)
+		out1 = UpSampling2D(size=(upsample_ratios[0], upsample_ratios[0]))(self.graph.get_layer(layer_names[0]).output)
+		out2 = UpSampling2D(size=(upsample_ratios[1], upsample_ratios[1]))(self.graph.get_layer(layer_names[1]).output)
+		out3 = UpSampling2D(size=(upsample_ratios[2], upsample_ratios[2]))(self.graph.get_layer(layer_names[2]).output)
+		out4 = UpSampling2D(size=(upsample_ratios[3], upsample_ratios[3]))(self.graph.get_layer(layer_names[3]).output)
 
-		intermediate_layer_model = Model(inputs=model.input, outputs=[out1, #4x4
+		intermediate_layer_model = Model(inputs=self.graph.input, outputs=[out1, #4x4
 															out2, #8x8
 															out3, #16x16
 															out4]) #32x32
 
-		intermediate_features=intermediate_layer_model.predict(input_) 
+		intermediate_features=intermediate_layer_model.predict(in_) 
 
 		if debug > 0:
 			deb.prints(intermediate_features[0].shape)
