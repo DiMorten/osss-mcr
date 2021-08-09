@@ -185,143 +185,6 @@ class NetModel(object):
 
 
 	def build(self):
-		deb.prints(self.t_len)
-		deb.prints(self.model_t_len)
-
-		in_im = Input(shape=(self.model_t_len,self.patch_len, self.patch_len, self.channel_n))
-		weight_decay=1E-4
-		def dilated_layer(x,filter_size,dilation_rate=1, kernel_size=3):
-			x = TimeDistributed(Conv2D(filter_size, kernel_size, padding='same',
-				dilation_rate=(dilation_rate, dilation_rate)))(x)
-			x = BatchNormalization(gamma_regularizer=l2(weight_decay),
-							   beta_regularizer=l2(weight_decay))(x)
-			x = Activation('relu')(x)
-			return x
-		def dilated_layer_Nto1(x,filter_size,dilation_rate=1, kernel_size=3):
-			x = Conv2D(filter_size, kernel_size, padding='same',
-				dilation_rate=(dilation_rate, dilation_rate))(x)
-			x = BatchNormalization(gamma_regularizer=l2(weight_decay),
-							   beta_regularizer=l2(weight_decay))(x)
-			x = Activation('relu')(x)
-			return x
-
-		def dilated_layer_3D(x,filter_size,dilation_rate=1, kernel_size=3):
-			if isinstance(dilation_rate, int):
-				dilation_rate = (dilation_rate, dilation_rate, dilation_rate)
-			x = Conv3D(filter_size, kernel_size, padding='same',
-				dilation_rate=dilation_rate)(x)
-			x = BatchNormalization(gamma_regularizer=l2(weight_decay),
-							   beta_regularizer=l2(weight_decay))(x)
-			x = Activation('relu')(x)
-			return x
-		def transpose_layer(x,filter_size,dilation_rate=1,
-			kernel_size=3, strides=(2,2)):
-			x = Conv2DTranspose(filter_size, 
-				kernel_size, strides=strides, padding='same')(x)
-			x = BatchNormalization(gamma_regularizer=l2(weight_decay),
-												beta_regularizer=l2(weight_decay))(x)
-			x = Activation('relu')(x)
-			return x	
-
-		def transpose_layer_3D(x,filter_size,dilation_rate=1,
-			kernel_size=3, strides=(1,2,2)):
-			x = Conv3DTranspose(filter_size,
-				kernel_size, strides=strides, padding='same')(x)
-			x = BatchNormalization(gamma_regularizer=l2(weight_decay),
-												beta_regularizer=l2(weight_decay))(x)
-			x = Activation('relu')(x)
-			return x	
-		def im_pooling_layer(x,filter_size):
-			pooling=True
-			shape_before=tf.shape(x)
-			print("im pooling")
-			deb.prints(K.int_shape(x))
-			if pooling==True:
-				mode=2
-				if mode==1:
-					x=TimeDistributed(GlobalAveragePooling2D())(x)
-					deb.prints(K.int_shape(x))
-					x=K.expand_dims(K.expand_dims(x,2),2)
-				elif mode==2:
-					x=TimeDistributed(AveragePooling2D((32,32)))(x)
-					deb.prints(K.int_shape(x))
-					
-			deb.prints(K.int_shape(x))
-			#x=dilated_layer(x,filter_size,1,kernel_size=1)
-			deb.prints(K.int_shape(x))
-
-			if pooling==True:
-				x = TimeDistributed(Lambda(lambda y: K.tf.image.resize_bilinear(y,size=(32,32))))(x)
-#				x = TimeDistributed(UpSampling2D(
-#					size=(self.patch_len,self.patch_len)))(x)
-			deb.prints(K.int_shape(x))
-			print("end im pooling")
-			# x=TimeDistributed(Lambda(
-			# 	lambda y: tf.compat.v1.image.resize(
-			# 		y, shape_before[2:4],
-			# 		method='bilinear',align_corners=True)))(x)
-			return x
-		def spatial_pyramid_pooling(in_im,filter_size,
-			max_rate=8,global_average_pooling=False):
-			x=[]
-			if max_rate>=1:
-				x.append(dilated_layer(in_im,filter_size,1)) # (1,1,1)
-			if max_rate>=2:
-				x.append(dilated_layer(in_im,filter_size,2)) #6 (1,2,2)
-			if max_rate>=4:
-				x.append(dilated_layer(in_im,filter_size,4)) #12 (2,4,4)
-			if max_rate>=8:
-				x.append(dilated_layer(in_im,filter_size,8)) #18 (4,8,8)
-			if global_average_pooling==True:
-				x.append(im_pooling_layer(in_im,filter_size))
-			out = keras.layers.concatenate(x, axis=-1)
-			return out
-
-		def spatial_pyramid_pooling_3D(in_im,filter_size,
-			max_rate=8,global_average_pooling=False):
-			x=[]
-			if max_rate>=1:
-				x.append(dilated_layer_3D(in_im,filter_size,1))
-			if max_rate>=2:
-				x.append(dilated_layer_3D(in_im,filter_size,(1,2,2))) #6
-			if max_rate>=4:
-				x.append(dilated_layer_3D(in_im,filter_size,(2,4,4))) #12
-			if max_rate>=8:
-				x.append(dilated_layer_3D(in_im,filter_size,(4,8,8))) #18
-			if global_average_pooling==True:
-				x.append(im_pooling_layer(in_im,filter_size))
-			out = keras.layers.concatenate(x, axis=-1)
-			return out
-
-		def temporal_pyramid_pooling(in_im,filter_size,
-			max_rate=4):
-			x=[]
-			if max_rate>=1:
-				x.append(dilated_layer_3D(in_im,filter_size,1))
-			if max_rate>=2:
-				x.append(dilated_layer_3D(in_im,filter_size,(2,1,1))) #2
-			if max_rate>=3:
-				x.append(dilated_layer_3D(in_im,filter_size,(3,1,1))) #2
-			if max_rate>=4:
-				x.append(dilated_layer_3D(in_im,filter_size,(4,1,1))) #4
-			if max_rate>=5:
-				x.append(dilated_layer_3D(in_im,filter_size,(5,1,1))) #4
-			out = keras.layers.concatenate(x, axis=4)
-			return out
-
-		def full_pyramid_pooling(in_im,filter_size,
-			max_rate=4):
-			x=[]
-			if max_rate>=1:
-				x.append(dilated_layer_3D(in_im,filter_size,1))
-			if max_rate>=2:
-				x.append(dilated_layer_3D(in_im,filter_size,(2,2,2))) #2
-			if max_rate>=3:
-				x.append(dilated_layer_3D(in_im,filter_size,(3,3,3))) #2
-			if max_rate>=4:
-				x.append(dilated_layer_3D(in_im,filter_size,(4,4,4))) #4
-			out = keras.layers.concatenate(x, axis=4)
-			return out
 
 		if self.model_type=='DenseNet':
 
@@ -856,62 +719,6 @@ class NetModel(object):
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 
-		def slice_tensor(x,output_shape):
-			deb.prints(output_shape)
-			deb.prints(K.int_shape(x))
-#				res1 = Lambda(lambda x: x[:,:,:,-1], output_shape=output_shape)(x)
-#				res2 = Lambda(lambda x: x[:,:,:,-1], output_shape=output_shape[1:])(x)
-			res2 = Lambda(lambda x: x[:,-1])(x)
-
-#				deb.prints(K.int_shape(res1))
-			deb.prints(K.int_shape(res2))
-			
-			return res2
-		if self.model_type=='UUnet4ConvLSTM':
-
-			
-			
-			concat_axis = 3
-
-			#fs=32
-			fs=16
-
-			p1=dilated_layer(in_im,fs)			
-			p1=dilated_layer(p1,fs)
-			e1 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p1)
-			p2=dilated_layer(e1,fs*2)
-			e2 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p2)
-			p3=dilated_layer(e2,fs*4)
-			e3 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p3)
-
-			x = ConvLSTM2D(256,3,return_sequences=False,
-					padding="same")(e3)
-
-			d3 = transpose_layer(x,fs*4)
-			p3 = slice_tensor(p3, output_shape = K.int_shape(d3))
-			deb.prints(K.int_shape(p3))
-			deb.prints(K.int_shape(d3))
-			
-			d3 = keras.layers.concatenate([d3, p3], axis=-1)
-			d3=dilated_layer_Nto1(d3,fs*4)
-			d2 = transpose_layer(d3,fs*2)
-			p2 = slice_tensor(p2, output_shape = K.int_shape(d2))
-			deb.prints(K.int_shape(p2))
-			deb.prints(K.int_shape(d2))
-
-			d2 = keras.layers.concatenate([d2, p2], axis=-1)
-			d2=dilated_layer_Nto1(d2,fs*2)
-			d1 = transpose_layer(d2,fs)
-			p1 = slice_tensor(p1, output_shape = K.int_shape(d1))
-			deb.prints(K.int_shape(p1))
-			deb.prints(K.int_shape(d1))
-
-			d1 = keras.layers.concatenate([d1, p1], axis=-1)
-			out=dilated_layer_Nto1(d1,fs)
-			out = Conv2D(self.class_n, (1, 1), activation=None,
-										padding='same')(out)
-			self.graph = Model(in_im, out)
-			print(self.graph.summary())
 		if self.model_type=='UUnet4ConvLSTM_doty':
 			#self.t_len = 20
 			metadata_in = Input(shape=(self.model_t_len,2))
@@ -971,40 +778,6 @@ class NetModel(object):
 			#keras.utils.plot_model(model, show_shapes=True, to_file="model.png")	
 
 
-		if self.model_type=='BUnet4ConvLSTM_SkipLSTM':
-			#fs=32
-			fs=16
-
-			p1=dilated_layer(in_im,fs)
-			p1=dilated_layer(p1,fs)
-			x_p1 = Bidirectional(ConvLSTM2D(64,3,return_sequences=True,
-					padding="same"),merge_mode='concat')(p1)
-			e1 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p1)
-			p2=dilated_layer(e1,fs*2)
-			x_p2 = Bidirectional(ConvLSTM2D(64,3,return_sequences=True,
-					padding="same"),merge_mode='concat')(p2)
-			e2 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p2)
-			p3=dilated_layer(e2,fs*4)
-			x_p3 = Bidirectional(ConvLSTM2D(64,3,return_sequences=True,
-					padding="same"),merge_mode='concat')(p3)
-			e3 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p3)
-
-			x = Bidirectional(ConvLSTM2D(64,3,return_sequences=True,
-					padding="same"),merge_mode='concat')(e3)
-
-			d3 = transpose_layer(x,fs*4)
-			d3 = keras.layers.concatenate([d3, x_p3], axis=4)
-			d3 = dilated_layer(d3,fs*4)
-			d2 = transpose_layer(d3,fs*2)
-			d2 = keras.layers.concatenate([d2, x_p2], axis=4)
-			d2 = dilated_layer(d2,fs*2)
-			d1 = transpose_layer(d2,fs)
-			d1 = keras.layers.concatenate([d1, x_p1], axis=4)
-			out = dilated_layer(d1,fs)
-			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
-										padding='same'))(out)
-			self.graph = Model(in_im, out)
-			print(self.graph.summary())
 		if self.model_type=='BUnet6ConvLSTM':
 
 
@@ -1136,25 +909,7 @@ class NetModel(object):
 										padding='same'))(x)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
-		elif self.model_type=='BAtrousGAPConvLSTM':
 
-			#fs=32
-			fs=16
-			
-			#x=dilated_layer(in_im,fs)
-			x=dilated_layer(in_im,fs)
-			x=dilated_layer(x,fs)
-			x=spatial_pyramid_pooling(x,fs*4,max_rate=8,
-				global_average_pooling=True)
-			
-			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
-					padding="same"),merge_mode='concat')(x)
-
-			out=dilated_layer(x,fs)
-			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
-										padding='same'))(out)
-			self.graph = Model(in_im, out)
-			print(self.graph.summary())
 		elif self.model_type=='BUnetAtrousConvLSTM':
 
 			#fs=32
@@ -1292,56 +1047,6 @@ class NetModel(object):
 					padding="same"),merge_mode='concat')(out)
 			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
 										padding='same'))(out)
-			self.graph = Model(in_im, out)
-			print(self.graph.summary())
-		if self.model_type=='Unet3D':
-			fs=32
-			#fs=16
-
-			p1=dilated_layer_3D(in_im,fs,kernel_size=(7,3,3))
-			e1 = AveragePooling3D((1, 2, 2), strides=(1, 2, 2))(p1)
-			p2=dilated_layer_3D(e1,fs*2,kernel_size=(7,3,3))
-			e2 = AveragePooling3D((1, 2, 2), strides=(1, 2, 2))(p2)
-			p3=dilated_layer_3D(e2,fs*4,kernel_size=(7,3,3))
-			e3 = AveragePooling3D((1, 2, 2), strides=(1, 2, 2))(p3)
-
-			d3 = transpose_layer_3D(e3,fs*4)
-			d3 = keras.layers.concatenate([d3, p3], axis=4)
-			d3 = dilated_layer_3D(d3,fs*4,kernel_size=(7,3,3))
-			d2 = transpose_layer_3D(d3,fs*2)
-			d2 = keras.layers.concatenate([d2, p2], axis=4)
-			d2 = dilated_layer_3D(d2,fs*2,kernel_size=(7,3,3))
-			d1 = transpose_layer_3D(d2,fs)
-			d1 = keras.layers.concatenate([d1, p1], axis=4)
-			out = dilated_layer_3D(d1,fs,kernel_size=(7,3,3))
-			out = Conv3D(self.class_n, (1, 1, 1), activation=None,
-										padding='same')(out)
-			self.graph = Model(in_im, out)
-			print(self.graph.summary())
-
-		if self.model_type=='Unet3D_ATPP':
-			fs=16
-			max_rate=5
-			#fs=16
-
-			p1=temporal_pyramid_pooling(in_im,fs,max_rate)
-			e1 = AveragePooling3D((1, 2, 2), strides=(1, 2, 2))(p1)
-			p2=temporal_pyramid_pooling(e1,fs*2,max_rate)
-			e2 = AveragePooling3D((1, 2, 2), strides=(1, 2, 2))(p2)
-			p3=temporal_pyramid_pooling(e2,fs*4,max_rate)
-			e3 = AveragePooling3D((1, 2, 2), strides=(1, 2, 2))(p3)
-
-			d3 = transpose_layer_3D(e3,fs*4)
-			d3 = keras.layers.concatenate([d3, p3], axis=4)
-			d3 = temporal_pyramid_pooling(d3,fs*4,max_rate)
-			d2 = transpose_layer_3D(d3,fs*2)
-			d2 = keras.layers.concatenate([d2, p2], axis=4)
-			d3 = temporal_pyramid_pooling(d2,fs*2,max_rate)
-			d1 = transpose_layer_3D(d2,fs)
-			d1 = keras.layers.concatenate([d1, p1], axis=4)
-			out = temporal_pyramid_pooling(d1,fs,max_rate)
-			out = Conv3D(self.class_n, (1, 1, 1), activation=None,
-										padding='same')(out)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 
@@ -1640,6 +1345,15 @@ class NetModel(object):
 		with open('model_summary.txt','w') as fh:
 			self.graph.summary(line_length=125,print_fn=lambda x: fh.write(x+'\n'))
 		#self.graph.summary(print_fn=model_summary_print)
+
+
+	def build(self, modelArchitecture):
+
+		modelArchitecture.class_n = self.class_n
+		modelArchitecture.build()
+
+		self.graph = modelArchitecture.graph 
+
 	def loss_weights_estimate(self,data):
 		unique,count=np.unique(data.patches['train']['label'].argmax(axis=-1),return_counts=True)
 		unique=unique[1:] # No bcknd
@@ -2267,8 +1981,8 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 		_, h,w,channel_n = data.full_ims_test.shape
 
 		data.reloadLabel()
-#		mosaic = Mosaic(self.paramsTrain)
-		mosaic = MosaicHighRAM(self.paramsTrain)
+		mosaic = Mosaic(self.paramsTrain)
+#		mosaic = MosaicHighRAM(self.paramsTrain)
 #		mosaic = MosaicHighRAMPostProcessing(self.paramsTrain)
 
 		self.postProcessing = PostProcessingMosaic(self.paramsTrain, h, w)

@@ -92,9 +92,13 @@ class ParamsReconstruct():
 				#self.predictions_path=self.model_path+'prediction_BAtrousGAPConvLSTM_repeating3.npy'
 				#self.predictions_path=self.model_path+'prediction_BAtrousGAPConvLSTM_repeating4.npy'
 				
-			self.predictions_path = self.model_path+'model_best_' + self.paramsTrain.model_type_specific + '_' + \
+			self.predictions_path = self.model_path+'model_best_' + str(self.paramsTrain.model_type) + '_' + \
 				self.paramsTrain.seq_date + '_' + self.paramsTrain.dataset + '_' + \
 				self.paramsTrain.model_name + '.h5'
+#			self.predictions_path = self.model_path+'model_best_' + self.paramsTrain.model_type_specific + '_' + \
+#				self.paramsTrain.seq_date + '_' + self.paramsTrain.dataset + '_' + \
+#				self.paramsTrain.model_name + '.h5'
+
 			ic(self.predictions_path)
 
 			self.mask_path=self.data_path / 'TrainTestMask.tif'

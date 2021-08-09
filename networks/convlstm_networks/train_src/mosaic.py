@@ -269,17 +269,17 @@ class Mosaic():
 
 		label_rgb=cv2.cvtColor(label_rgb,cv2.COLOR_BGR2RGB)
 		prediction_rgb=cv2.cvtColor(prediction_rgb,cv2.COLOR_BGR2RGB)
-		save_folder=path / paramsTrain.dataset / paramsTrain.model_type / paramsTrain.seq_date
+		save_folder=path / paramsTrain.dataset / str(paramsTrain.model_type) / paramsTrain.seq_date
 		save_folder.mkdir(parents=True, exist_ok=True)
 		deb.prints(save_folder)
 
 		if self.pr.open_set_mode == True:
 			threshIdxName = "_TPR" + tpr_threshold_names[self.pr.threshold_idx]
-			prediction_savename = save_folder / ("prediction_t_" + paramsTrain.seq_date + "_" + paramsTrain.model_type +
+			prediction_savename = save_folder / ("prediction_t_" + paramsTrain.seq_date + "_" + str(paramsTrain.model_type) +
 				"_" + self.name_id+threshIdxName + "_overl" + str(self.pr.overlap) + "_" + self.pr.conditionType + ".png")
 
 		else:
-			prediction_savename = save_folder / ("prediction_t_" + paramsTrain.seq_date + "_" + paramsTrain.model_type +
+			prediction_savename = save_folder / ("prediction_t_" + paramsTrain.seq_date + "_" + str(paramsTrain.model_type) +
 				"_closedset_" + self.name_id + "_overl" + str(self.pr.overlap) + "_" + self.pr.conditionType + ".png")
 
 		ic(prediction_savename)
@@ -292,8 +292,8 @@ class Mosaic():
 		ret = cv2.imwrite(str(prediction_savename), prediction_rgb)
 
 		deb.prints(ret)
-		ic(save_folder / ("label_t_"+paramsTrain.seq_date+"_"+paramsTrain.model_type+"_"+self.name_id+".png"))
-		ret = cv2.imwrite(str(save_folder / ("label_t_"+paramsTrain.seq_date+"_"+paramsTrain.model_type+"_"+self.name_id+".png")),label_rgb)
+		ic(save_folder / ("label_t_"+paramsTrain.seq_date+"_"+str(paramsTrain.model_type)+"_"+self.name_id+".png"))
+		ret = cv2.imwrite(str(save_folder / ("label_t_"+paramsTrain.seq_date+"_"+str(paramsTrain.model_type)+"_"+self.name_id+".png")),label_rgb)
 		deb.prints(ret)
 		ret = cv2.imwrite(str(save_folder / "mask.png"),mask*200)
 		deb.prints(ret)

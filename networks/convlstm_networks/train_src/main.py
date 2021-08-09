@@ -66,78 +66,6 @@ np.random.seed(2021)
 tf.set_random_seed(2021)
 
 
-paramsTrain = ParamsTrain('parameters/')
-#paramsTrain.seq_mode = 'var_label'
-
-#paramsTrain.seq_mode = 'var_label'
-paramsTrain.seq_mode = 'fixed'
-
-
-if paramsTrain.seq_mode == 'var_label':
-	#paramsTrain.mim = MIMVarLabel()
-	paramsTrain.mim = MIMVarLabel_PaddedSeq()
-elif paramsTrain.seq_mode == 'var':
-	paramsTrain.mim = MIMVarSeqLabel()
-elif paramsTrain.seq_mode == 'fixed_label_len':
-	paramsTrain.mim = MIMVarLabel()
-	paramsTrain.mim =MIMFixedLabelAllLabels()
-else:
-	#paramsTrain.mim = MIMFixed()
-	paramsTrain.mim = MIMFixed_PaddedSeq()
-
-deb.prints(paramsTrain.seq_mode)
-deb.prints(paramsTrain.mim)
-
-dataset = paramsTrain.dataset
-
-#paramsTrain.known_classes = [0, 1, 10, 12] # soybean, maize, cerrado, soil
-
-
-
-#paramsTrain = Params(parameters_path)
-
-
-#========= overwrite for direct execution of this py file
-direct_execution=False
-if direct_execution==True:
-	paramsTrain.stop_epoch=-1
-
-	#dataset='cv'
-	dataset='cv'
-
-	#sensor_source='Optical'
-	#sensor_source='OpticalWithClouds'
-	sensor_source='SAR'
-
-	if dataset=='cv':
-		paramsTrain.class_n=12
-		paramsTrain.path="../../../dataset/dataset/cv_data/"
-		if sensor_source=='SAR':
-			paramsTrain.t_len=14
-			
-	elif dataset=='lm':
-		paramsTrain.path="../../../dataset/dataset/lm_data/"
-		
-		paramsTrain.class_n=15
-		if sensor_source=='SAR':
-			paramsTrain.channel_n=2
-			paramsTrain.t_len=13
-		elif sensor_source=='Optical':
-			paramsTrain.channel_n=3
-			paramsTrain.t_len=11
-		elif sensor_source=='OpticalWithClouds':
-			paramsTrain.channel_n=3
-			paramsTrain.t_len=13
-
-	paramsTrain.model_type='BUnet4ConvLSTM'
-	#paramsTrain.model_type='ConvLSTM_seq2seq'
-	#paramsTrain.model_type='ConvLSTM_seq2seq_bi'
-	#paramsTrain.model_type='DenseNetTimeDistributed_128x2'
-	#paramsTrain.model_type='BAtrousGAPConvLSTM'
-	#paramsTrain.model_type='Unet3D'
-	#paramsTrain.model_type='BUnet6ConvLSTM'
-	#paramsTrain.model_type='BUnet4ConvLSTM_SkipLSTM'
-
 
 def model_summary_print(s):
 	with open('model_summary.txt','w+') as f:
@@ -193,10 +121,7 @@ class TrainTest():
 #		pdb.set_trace()
 	def setModel(self):
 		if self.paramsTrain.sliceFromCoords == False:
-			#modelClass = NetModel
-	#		modelClass = ModelFit
 			modelClass = ModelLoadGenerator
-	#		modelClass = ModelLoadGeneratorDebug
 		else:
 			modelClass = ModelLoadGeneratorWithCoords
 
@@ -207,9 +132,10 @@ class TrainTest():
 		ic(self.data.class_n)
 		deb.prints(self.data.class_n)
 
-		self.model.build()
+		self.model.build(self.paramsTrain.model_type)
 
 		self.model.class_n+=1 # This is used in loss_weights_estimate, val_set_get, semantic_balance (To-do: Eliminate bcknd class)
+
 
 	def preprocess(self, model_name_id):
 		
@@ -303,6 +229,11 @@ class TrainTest():
 		self.model.evaluate(self.data, self.ds)
 
 if __name__ == '__main__':
+
+	paramsTrain = ParamsTrain('parameters/')
+
+	dataset = paramsTrain.dataset
+
 	paramsTrain.dataSource = SARSource()
 
 	trainTest = TrainTest(paramsTrain)
@@ -316,13 +247,13 @@ if __name__ == '__main__':
 	if paramsTrain.coordsExtract == True:
 		patchExtractor.extract()
 
-
-	model_name_id = 'model_best_' + paramsTrain.model_type + '_' + \
-			paramsTrain.seq_date + '_' + paramsTrain.dataset + '_' + \
-			paramsTrain.model_name + '.h5'
-
 	trainTest.setData()
 	trainTest.setModel()
+
+	assert isinstance(str(paramsTrain.model_type), str)
+	model_name_id = 'model_best_' + str(paramsTrain.model_type) + '_' + \
+			paramsTrain.seq_date + '_' + paramsTrain.dataset + '_' + \
+			paramsTrain.model_name + '.h5'
 
 	trainTest.preprocess(model_name_id) # move into if
 	if paramsTrain.train == True:
