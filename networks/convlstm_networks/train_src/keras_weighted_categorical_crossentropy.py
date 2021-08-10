@@ -3,7 +3,7 @@ A weighted version of categorical_crossentropy for keras (2.0.6). This lets you 
 @url: https://gist.github.com/wassname/ce364fddfc8a025bfab4348cf5de852d
 @author: wassname
 """
-from keras import backend as K
+from tensorflow.keras import backend as K
 import tensorflow as tf
 def weighted_categorical_crossentropy(weights):
     """
@@ -85,8 +85,7 @@ def categorical_focal_ignoring_last_label(alpha=0.25,gamma=2):
         #log_softmax = tf.nn.log_softmax(y_pred)
         #log_softmax = tf.log(y_pred)
         #log_softmax = K.log(y_pred)
-
-        y_true = K.one_hot(tf.to_int32(K.flatten(y_true)), K.int_shape(y_pred)[-1]+1)
+        y_true = K.one_hot(tf.cast(K.flatten(y_true), tf.int32), K.int_shape(y_pred)[-1]+1)
         unpacked = tf.unstack(y_true, axis=-1)
         y_true = tf.stack(unpacked[:-1], axis=-1)
         focal_term = alpha * K.pow(1. - y_pred_softmax, gamma)
@@ -152,8 +151,8 @@ def sparse_accuracy_ignoring_last_label(y_true, y_pred):
     return K.sum(tf.to_float(legal_labels & K.equal(K.argmax(y_true, axis=-1), K.argmax(y_pred, axis=-1)))) / K.sum(tf.to_float(legal_labels))
 
 import numpy as np
-from keras.activations import softmax
-from keras.objectives import categorical_crossentropy
+from tensorflow.keras.activations import softmax
+from tensorflow.keras.losses import categorical_crossentropy
 
 # # init tests
 # samples=3

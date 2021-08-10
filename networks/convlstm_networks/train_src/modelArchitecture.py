@@ -1,12 +1,12 @@
 
 from colorama import init
 init()
-from keras.layers import Input, Dense, Conv2D, MaxPool2D, Flatten, Dropout, Conv2DTranspose
-# from keras.callbacks import ModelCheckpoint , EarlyStopping
-from keras.optimizers import Adam,Adagrad 
-from keras.models import Model
-from keras import backend as K
-import keras
+from tensorflow.keras.layers import Input, Dense, Conv2D, MaxPool2D, Flatten, Dropout, Conv2DTranspose
+# from tensorflow.keras.callbacks import ModelCheckpoint , EarlyStopping
+from tensorflow.keras.optimizers import Adam,Adagrad 
+from tensorflow.keras.models import Model
+from tensorflow.keras import backend as K
+import tensorflow.keras as keras
 
 import numpy as np
 from sklearn.utils import shuffle
@@ -14,10 +14,10 @@ import cv2
 import argparse
 import tensorflow as tf
 
-from keras.models import *
-from keras.layers import *
-from keras.optimizers import *
-from keras import metrics
+from tensorflow.keras.models import *
+from tensorflow.keras.layers import *
+from tensorflow.keras.optimizers import *
+from tensorflow.keras import metrics
 import sys
 import glob
 
@@ -29,19 +29,18 @@ from densnet_timedistributed import DenseNetFCNTimeDistributed
 #from metrics import fmeasure,categorical_accuracy
 import deb
 from keras_weighted_categorical_crossentropy import weighted_categorical_crossentropy, sparse_accuracy_ignoring_last_label, weighted_categorical_crossentropy_ignoring_last_label, categorical_focal_ignoring_last_label, weighted_categorical_focal_ignoring_last_label
-from keras.models import load_model
-from keras.layers import ConvLSTM2D, UpSampling2D, multiply
-from keras.utils.vis_utils import plot_model
-from keras.regularizers import l1,l2
+from tensorflow.keras.models import load_model
+from tensorflow.keras.layers import ConvLSTM2D, UpSampling2D, multiply
+from tensorflow.keras.regularizers import l1,l2
 import time
 import pickle
 #from keras_self_attention import SeqSelfAttention
 import pdb
 import pathlib
 from pathlib import Path, PureWindowsPath
-from keras.layers import Conv3DTranspose, Conv3D
+from tensorflow.keras.layers import Conv3DTranspose, Conv3D
 
-from keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import EarlyStopping
 import tensorflow as tf
 from collections import Counter
 
@@ -50,8 +49,7 @@ sys.path.append('../../../dataset/dataset/patches_extract_script/')
 from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixedLabelAllLabels, MIMFixed_PaddedSeq
 
 from icecream import ic
-import natsort
-from keras import layers
+from tensorflow.keras import layers
 
 
 class ModelArchitecture():

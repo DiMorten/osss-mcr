@@ -2,21 +2,21 @@
 import numpy as np
 from time import time
 import numpy as np
-import keras.backend as K
-import keras
-from keras.layers import Dense, Input, Conv2D, MaxPooling2D, UpSampling2D, concatenate, Conv3D, Conv3DTranspose, AveragePooling3D
-from keras.layers import AveragePooling2D, Flatten, BatchNormalization, Dropout, TimeDistributed, ConvLSTM2D
-from keras.models import Model
-from keras.layers import ELU, Lambda
-from keras import layers
-from keras import regularizers
+import tensorflow.keras.backend as K
+import tensorflow.keras as keras
+from tensorflow.keras.layers import Dense, Input, Conv2D, MaxPooling2D, UpSampling2D, concatenate, Conv3D, Conv3DTranspose, AveragePooling3D
+from tensorflow.keras.layers import AveragePooling2D, Flatten, BatchNormalization, Dropout, TimeDistributed, ConvLSTM2D
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import ELU, Lambda
+from tensorflow.keras import layers
+from tensorflow.keras import regularizers
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, jaccard_score
 from sklearn.metrics import classification_report
-from keras.callbacks import Callback
+from tensorflow.keras.callbacks import Callback
 from sklearn.metrics import f1_score, make_scorer, confusion_matrix, accuracy_score, precision_score, recall_score, precision_recall_curve
 import pdb
-from keras.regularizers import l1,l2
-from keras.layers import Input, Dense, Conv2D, MaxPool2D, Flatten, Dropout, Conv2DTranspose, AveragePooling2D, Bidirectional, Activation
+from tensorflow.keras.regularizers import l1,l2
+from tensorflow.keras.layers import Input, Dense, Conv2D, MaxPool2D, Flatten, Dropout, Conv2DTranspose, AveragePooling2D, Bidirectional, Activation
 from icecream import ic
 from pathlib import Path
 import cv2

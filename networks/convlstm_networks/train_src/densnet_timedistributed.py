@@ -12,28 +12,26 @@ from __future__ import absolute_import
 
 import warnings
 
-from keras.models import Model
-from keras.layers.core import Dropout, Activation, Reshape
-from keras.layers.convolutional import Conv2D, Deconvolution2D, AtrousConvolution2D, UpSampling2D, Conv2DTranspose
-from keras.layers.pooling import AveragePooling2D
-from keras.layers import Input, concatenate
-from keras.layers.normalization import BatchNormalization
-from keras.regularizers import l2
-from keras.engine.topology import get_source_inputs
-#from keras.applications.imagenet_utils import _obtain_input_shape
-import keras.backend as K
-from keras.layers.convolutional_recurrent import ConvLSTM2D
-from keras.layers import TimeDistributed, Bidirectional
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Dropout, Activation, Reshape
+from tensorflow.keras.layers import Conv2D, UpSampling2D, Conv2DTranspose
+from tensorflow.keras.layers import AveragePooling2D
+from tensorflow.keras.layers import Input, concatenate
+from tensorflow.keras.layers import BatchNormalization
+from tensorflow.keras.regularizers import l2
+#from tensorflow.keras.applications.imagenet_utils import _obtain_input_shape
+import tensorflow.keras.backend as K
+from tensorflow.keras.layers import ConvLSTM2D
+from tensorflow.keras.layers import TimeDistributed, Bidirectional
 #from layers import SubPixelUpscaling
 
 K.set_image_data_format('channels_last')  # TF dimension ordering in this code
 
 
 
-from keras import backend as K
-from keras.engine import Layer
-from keras.utils.generic_utils import get_custom_objects
-#from keras.utils.conv_utils import normalize_data_format
+from tensorflow.keras import backend as K
+
+#from tensorflow.keras.utils.conv_utils import normalize_data_format
 
 import deb
 convlstm_filters=60
@@ -309,8 +307,8 @@ def __transition_up_block(ip, nb_filters, type='upsampling', output_shape=None, 
                           use_bias=False, kernel_initializer='he_uniform'))(x)
     elif type == 'atrous':
         # waiting on https://github.com/fchollet/keras/issues/4018
-        x = AtrousConvolution2D(nb_filters, (3, 3), activation="relu", kernel_regularizer=l2(weight_decay),
-                                use_bias=False, atrous_rate=(2, 2), kernel_initializer='he_uniform')(ip)
+        x = Conv2D(nb_filters, (3, 3), activation="relu", kernel_regularizer=l2(weight_decay),
+                                use_bias=False, dilation=(2, 2), kernel_initializer='he_uniform')(ip)
     else:
         #x = Conv2DTranspose(nb_filters, (3, 3), activation='relu', padding=padding_param,
         #                    strides=(2, 2), kernel_initializer='he_uniform')(ip)

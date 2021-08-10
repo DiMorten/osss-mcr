@@ -173,8 +173,8 @@ class ParamsTrain(Params):
 		self.model_t_len = 12
 		# usually editable params
 #        self.model_type = "UUnet4ConvLSTM"
-#		model_type = UUnetConvLSTM
-		model_type = UnetSelfAttention
+		model_type = UUnetConvLSTM
+#		model_type = UnetSelfAttention
 
 		self.model_type = model_type(self.model_t_len, self.patch_len, self.channel_n)
 

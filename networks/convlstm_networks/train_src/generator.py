@@ -6,23 +6,23 @@ import pdb
 from pathlib import Path
 import csv
 import threading
-import keras
-from keras.layers import Input, Dense, Conv2D, MaxPool2D, Flatten, Dropout, Conv2DTranspose, ConvLSTM2D, Activation, BatchNormalization, Bidirectional, TimeDistributed, AveragePooling2D, MaxPooling2D, Lambda, concatenate
-from keras.models import Model
-from keras.regularizers import l1,l2
-from keras.optimizers import Adam
-from keras.callbacks import EarlyStopping
+import tensorflow.keras as keras
+from tensorflow.keras.layers import Input, Dense, Conv2D, MaxPool2D, Flatten, Dropout, Conv2DTranspose, ConvLSTM2D, Activation, BatchNormalization, Bidirectional, TimeDistributed, AveragePooling2D, MaxPooling2D, Lambda, concatenate
+from tensorflow.keras.models import Model
+from tensorflow.keras.regularizers import l1,l2
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import EarlyStopping
 import tensorflow as tf
 
 
 import sys
-from keras import backend as K
-from keras import metrics
+from tensorflow.keras import backend as K
+from tensorflow.keras import metrics
 from sklearn.metrics import classification_report, confusion_matrix, f1_score
 import joblib
 
 import tensorflow
-from keras.applications.vgg16 import VGG16
+from tensorflow.keras.applications.vgg16 import VGG16
 from icecream import ic
 import matplotlib.pyplot as plt
 import pdb

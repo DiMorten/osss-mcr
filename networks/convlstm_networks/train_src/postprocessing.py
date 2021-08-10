@@ -1,5 +1,5 @@
-from keras.layers import Input, Dense, Conv2D, MaxPool2D, Flatten, Dropout, Conv2DTranspose, UpSampling2D
-from keras.models import Model
+from tensorflow.keras.layers import Input, Dense, Conv2D, MaxPool2D, Flatten, Dropout, Conv2DTranspose, UpSampling2D
+from tensorflow.keras.models import Model
 import deb
 import numpy as np
 
