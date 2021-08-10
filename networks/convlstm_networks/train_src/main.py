@@ -62,8 +62,8 @@ from patch_extractor import PatchExtractor
 ic.configureOutput(includeContext=True)
 np.random.seed(2021)
 tf.random.set_seed(2021)
-
-
+tf.compat.v1.disable_eager_execution()
+tf.compat.v1.experimental.output_all_intermediates(True)
 
 def model_summary_print(s):
 	with open('model_summary.txt','w+') as f:

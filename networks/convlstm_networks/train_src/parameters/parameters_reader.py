@@ -186,6 +186,8 @@ class ParamsTrain(Params):
 		self.loco_class = 8 # legacy. delete
 
 		self.path = Path("../../../dataset/dataset/") / (self.dataset + "_data")
+		self.path = Path(
+			'D:/Jorg/phd/convlstm_crop/classification_n_to_1/FCN_ConvLSTM_Crop_Recognition_Generalized/dataset/dataset') / (self.dataset + "_data")
 
 		print(os.listdir(folder_path))
 		super().__init__(json_path)        
