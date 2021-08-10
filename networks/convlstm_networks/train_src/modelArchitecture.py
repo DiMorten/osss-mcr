@@ -370,11 +370,8 @@ class BAtrousGAPConvLSTM(ModelArchitecture):
 		print(self.graph.summary())
 class ModelArchitectureNto1(ModelArchitecture):
 
-	def slice_tensor(self, x,output_shape):
-		deb.prints(output_shape)
+	def slice_tensor(self, x):
 		deb.prints(K.int_shape(x))
-#				res1 = Lambda(lambda x: x[:,:,:,-1], output_shape=output_shape)(x)
-#				res2 = Lambda(lambda x: x[:,:,:,-1], output_shape=output_shape[1:])(x)
 		res2 = Lambda(lambda x: x[:,-1])(x)
 
 #				deb.prints(K.int_shape(res1))
@@ -403,21 +400,21 @@ class ModelArchitectureNto1(ModelArchitecture):
 
 	def unetDecoderNto1(self, x, p1, p2, p3, fs):
 		d3 = self.transpose_layer(x,fs*4)
-		p3 = self.slice_tensor(p3, output_shape = K.int_shape(d3))
+		p3 = self.slice_tensor(p3)
 		deb.prints(K.int_shape(p3))
 		deb.prints(K.int_shape(d3))
 		
 		d3 = keras.layers.concatenate([d3, p3], axis=-1)
 		d3=self.dilated_layer_Nto1(d3,fs*4)
 		d2 = self.transpose_layer(d3,fs*2)
-		p2 = self.slice_tensor(p2, output_shape = K.int_shape(d2))
+		p2 = self.slice_tensor(p2)
 		deb.prints(K.int_shape(p2))
 		deb.prints(K.int_shape(d2))
 
 		d2 = keras.layers.concatenate([d2, p2], axis=-1)
 		d2=self.dilated_layer_Nto1(d2,fs*2)
 		d1 = self.transpose_layer(d2,fs)
-		p1 = self.slice_tensor(p1, output_shape = K.int_shape(d1))
+		p1 = self.slice_tensor(p1)
 		deb.prints(K.int_shape(p1))
 		deb.prints(K.int_shape(d1))
 
@@ -455,23 +452,32 @@ class UnetSelfAttention(ModelArchitectureNto1):
 
 		e3, p1, p2, p3 = self.unetEncoderNto1(self.in_im, fs)
 
-		key_dim = 8
-		num_heads = 8
+#		key_dim = 64
+#		num_heads = 64
+#		key_dim = 4
+#		num_heads = 16
+#		key_dim = 24
+#		num_heads = 128
+		key_dim = 128
+		num_heads = 128
+
 		dropout = 0.
 
 		# shape (n_samples, t_len, h, w, channels)	
 		deb.prints(K.int_shape(e3))	
 		x = layers.MultiHeadAttention(
 				key_dim=key_dim, num_heads=num_heads, dropout=dropout, 
-				attention_axes=(2, 3)
-			)(x, x)
+				attention_axes=(1)
+			)(e3, e3)
 		deb.prints(K.int_shape(x))	
-		pdb.set_trace()
+#		pdb.set_trace()
 #		x = ConvLSTM2D(256,3,return_sequences=False,
 #				padding="same")(e3)
+		x = self.slice_tensor(x)
+##		x = self.slice_tensor(e3)
+		deb.prints(K.int_shape(x))	
 
-		out = self.unetDecoderNto1(x, p1, p2, p3)
-
+		out = self.unetDecoderNto1(x, p1, p2, p3, fs)
 		out = Conv2D(self.class_n, (1, 1), activation=None,
 									padding='same')(out)
 		self.graph = Model(self.in_im, out)
