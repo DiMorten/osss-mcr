@@ -31,8 +31,8 @@ class ParamsReconstruct():
 		else:
 			self.add_padding_flag = False
 
-#        self.overlap_mode = 'replace' # average, replace
-		self.overlap_mode = 'average' # average, replace
+		self.overlap_mode = 'replace' # average, replace
+#		self.overlap_mode = 'average' # average, replace
 #        self.overlap_mode = 'average_score' # average, replace
 
 		if self.croppedFlag == True:

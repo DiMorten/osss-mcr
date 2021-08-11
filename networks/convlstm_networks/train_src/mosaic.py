@@ -331,7 +331,10 @@ class MosaicHighRAM(Mosaic):
 			self.count_mask = 0
 
 			patches_in = self.loopToGetInputPatchesInBatch()
-			
+
+			ic(np.average(self.data.full_ims_test), np.min(self.data.full_ims_test), np.max(self.data.full_ims_test))
+			ic(np.average(patches_in), np.min(patches_in), np.max(patches_in))
+			ic(patches_in.shape)
 
 			ic(self.count_mask_batch)
 			ic(self.count_mask)
@@ -342,7 +345,8 @@ class MosaicHighRAM(Mosaic):
 			ic(self.pred_logits_patches.dtype)
 			ic(self.pred_logits_patches.shape)	
 
-
+			ic(np.unique(self.pred_logits_patches.argmax(axis=-1), return_counts = True))
+			##pdb.set_trace()
 	#		self.postProcessing = PostProcessing()
 	#		self.postProcessing.openSetActivate()
 
@@ -363,6 +367,7 @@ class MosaicHighRAM(Mosaic):
 			self.loopToPredict()
 
 			ic(np.unique(self.prediction_mosaic, return_counts=True))
+			##pdb.set_trace()
 			if self.pr.open_set_mode == False:
 				self.prediction_mosaic = self.prediction_logits_mosaic.argmax(axis=-1).astype(np.uint8)
 				self.prediction_mosaic[self.mask_pad != 2] = 255
@@ -442,8 +447,8 @@ class MosaicHighRAM(Mosaic):
 				else:
 					condition_masking = True	
 				condition = condition_masking and self.count_mask >= self.batch * self.patches_per_batch and self.count_mask < (self.batch + 1) * self.patches_per_batch
-
 				if condition:
+
 	##				t0=time.time()
 					#pred_logits = np.squeeze(model.predict(input_))
 					pred_logits = np.squeeze(self.pred_logits_patches[self.count_mask_batch])
@@ -455,7 +460,6 @@ class MosaicHighRAM(Mosaic):
 
 					x, y = pred_cl.shape
 					prediction_shape = pred_cl.shape
-
 
 					if self.pr.open_set_mode == True:
 						if self.debug>-1: # do in postProcessing
@@ -480,7 +484,7 @@ class MosaicHighRAM(Mosaic):
 
 					if self.pr.overlap_mode == 'replace':
 						self.prediction_mosaic[m-self.stride//2:m+self.stride//2,n-self.stride//2:n+self.stride//2] = pred_cl[self.overlap//2:x-self.overlap//2,self.overlap//2:y-self.overlap//2]
-						self.prediction_logits_rebuilt[m-self.stride//2:m+self.stride//2,n-self.stride//2:n+self.stride//2] = pred_logits[self.overlap//2:x-self.overlap//2,self.overlap//2:y-self.overlap//2]						
+						self.prediction_logits_mosaic[m-self.stride//2:m+self.stride//2,n-self.stride//2:n+self.stride//2] = pred_logits[self.overlap//2:x-self.overlap//2,self.overlap//2:y-self.overlap//2]						
 					self.count_mask_batch += 1
 				if condition_masking:				
 					self.count_mask += 1

@@ -1979,8 +1979,8 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 		_, h,w,channel_n = data.full_ims_test.shape
 
 		data.reloadLabel()
-		mosaic = Mosaic(self.paramsTrain)
-#		mosaic = MosaicHighRAM(self.paramsTrain)
+##		mosaic = Mosaic(self.paramsTrain)
+		mosaic = MosaicHighRAM(self.paramsTrain)
 #		mosaic = MosaicHighRAMPostProcessing(self.paramsTrain)
 
 		self.postProcessing = PostProcessingMosaic(self.paramsTrain, h, w)
