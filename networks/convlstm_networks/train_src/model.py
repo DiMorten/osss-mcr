@@ -1909,7 +1909,7 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 #		pdb.set_trace()
 
 #		pdb.set_trace()
-		history = self.graph.fit_generator(generator = training_generator,
+		history = self.graph.fit(training_generator,
 #			batch_size = self.batch['train']['size'], 
 			epochs = 70, 
 			validation_data=validation_generator,
