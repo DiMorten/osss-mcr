@@ -48,7 +48,7 @@ from collections import Counter
 from generator import DataGenerator, DataGeneratorWithCoords
 
 import matplotlib.pyplot as plt
-sys.path.append('../../../dataset/dataset/patches_extract_script/')
+# sys.path.append('../../../dataset/dataset/patches_extract_script/')
 from dataSource import DataSource, SARSource, OpticalSource, Dataset, LEM, LEM2, CampoVerde, OpticalSourceWithClouds, Humidity
 from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixedLabelAllLabels, MIMFixed_PaddedSeq
 from parameters.parameters_reader import ParamsTrain
@@ -126,13 +126,18 @@ class TrainTest():
 		self.model = modelClass(paramsTrain = self.paramsTrain, ds = self.ds, 
 						) # , self.data = self.data
 		self.model.class_n=self.data.class_n-1 # Model is designed without background class
+
+		self.modelSavePath = Path('../results/convlstm_results/model/lm/')
+		self.model.name = self.modelSavePath / self.model_name	
+		ic(self.model.name)	
+
 		ic(self.model.class_n)
 		ic(self.data.class_n)
 		deb.prints(self.data.class_n)
 
-		self.model.build(self.paramsTrain.model_type)
+		self.model.build(self.paramsTrain.model_type, self.data.class_n - 1) # no bcknd
 
-		self.model.class_n+=1 # This is used in loss_weights_estimate, val_set_get, semantic_balance (To-do: Eliminate bcknd class)
+		##self.model.class_n+=1 # This is used in NOTloss_weights_estimate, NOTval_set_get, MAYBEsemantic_balance (To-do: Eliminate bcknd class)
 
 
 	def preprocess(self, model_name_id):
@@ -146,11 +151,7 @@ class TrainTest():
 		ic(self.paramsTrain.class_n)
 
 		
-		#model = ModelLoadEachBatch(epochs=self.paramsTrain.epochs, patch_len=self.paramsTrain.patch_len,
-	##	modelClass = NetModel
-	##	modelClass = ModelFit
-	##	modelClass = ModelLoadGenerator
-		self.model.name = self.model_name		
+
 
 		print("=== SELECT VALIDATION SET FROM TRAIN SET")
 			
@@ -185,7 +186,7 @@ class TrainTest():
 
 			self.data.semantic_balance(self.paramsTrain.samples_per_class,label_type = label_type) #More for known classes few. Compare with 500 later
 						
-		self.model.class_n-=1
+		##self.model.class_n-=1
 
 		# Label background from 0 to last. 
 		deb.prints(self.data.patches['train']['coords'].shape)
@@ -226,6 +227,12 @@ class TrainTest():
 		self.data.loadMask()
 		self.model.evaluate(self.data, self.ds)
 
+	'''
+	def fitOpenSet(self):
+#		self.openSetFit = OpenSetFit
+		self.openSetFit = OpenPCApFit()
+		self.openSetFit.fit()
+	'''
 if __name__ == '__main__':
 
 	paramsTrain = ParamsTrain('parameters/')
@@ -246,7 +253,6 @@ if __name__ == '__main__':
 		patchExtractor.extract()
 
 	trainTest.setData()
-	trainTest.setModel()
 
 	assert isinstance(str(paramsTrain.model_type), str)
 	model_name_id = 'model_best_' + str(paramsTrain.model_type) + '_' + \
@@ -254,11 +260,15 @@ if __name__ == '__main__':
 			paramsTrain.model_name + '.h5'
 
 	trainTest.preprocess(model_name_id) # move into if
+
+	trainTest.setModel()
+
 	if paramsTrain.train == True:
 		trainTest.train()
 	else:
 		trainTest.modelLoad(model_name_id)
 
+	# trainTest.fitOpenSet() 
 	trainTest.evaluate()
 
 

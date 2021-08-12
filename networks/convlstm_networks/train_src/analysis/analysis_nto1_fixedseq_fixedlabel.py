@@ -466,7 +466,7 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 
 				datasetClass = DatasetWithCoords
 				ic(paramsTrain.path)
-				paramsTrain.path = '../' + paramsTrain.path
+				paramsTrain.path = '../' / paramsTrain.path
 				ic(paramsTrain.path)
 
 				data = datasetClass(paramsTrain = paramsTrain, ds = ds,

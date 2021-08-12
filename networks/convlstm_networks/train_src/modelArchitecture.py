@@ -444,6 +444,8 @@ class UUnetConvLSTM(ModelArchitectureNto1):
 		print(self.graph.summary())
 		
 class UnetSelfAttention(ModelArchitectureNto1):
+	def __repr__(self):
+		return "UnetSelfAttention"	
 	def build(self):
 		super().build()		
 		concat_axis = 3

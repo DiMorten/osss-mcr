@@ -8,8 +8,10 @@ class ParamsReconstruct():
 		self.paramsTrain = paramsTrain
 
 		self.mosaic_flag = True
-		self.prediction_mask = False
 
+		self.open_set_mode = True
+
+		self.prediction_mask = False
 		self.conditionType = 'test'
 #		self.conditionType = 'all'
 
@@ -20,7 +22,6 @@ class ParamsReconstruct():
 
 		self.croppedFlag = False
 
-		self.open_set_mode = False
 
 
 		self.threshold_idx = 4

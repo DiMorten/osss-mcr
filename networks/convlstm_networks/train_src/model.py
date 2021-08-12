@@ -1345,9 +1345,14 @@ class NetModel(object):
 		#self.graph.summary(print_fn=model_summary_print)
 
 
-	def build(self, modelArchitecture):
-
-		modelArchitecture.class_n = self.class_n
+	def build(self, modelArchitecture, class_n):
+#		ic(self.class_n, len(self.paramsTrain.known_classes))
+#		if self.paramsTrain.openSetMethod == None:
+#			modelArchitecture.class_n = self.class_n
+#		else:	
+#			modelArchitecture.class_n = self.data.classes
+#		ic(modelArchitecture.class_n)
+		modelArchitecture.class_n = class_n
 		modelArchitecture.build()
 
 		self.graph = modelArchitecture.graph 
@@ -1980,8 +1985,10 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 
 		data.reloadLabel()
 ##		mosaic = Mosaic(self.paramsTrain)
-		mosaic = MosaicHighRAM(self.paramsTrain)
-#		mosaic = MosaicHighRAMPostProcessing(self.paramsTrain)
+		if self.paramsTrain.openSetMethod == None:
+			mosaic = MosaicHighRAM(self.paramsTrain)
+		else:
+			mosaic = MosaicHighRAMPostProcessing(self.paramsTrain)
 
 		self.postProcessing = PostProcessingMosaic(self.paramsTrain, h, w)
 
@@ -1994,7 +2001,9 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 	def load_decoder_features(self, in_, prediction_dtype = np.float16, debug  = 1):
 	#print(model.summary())
 
-		layer_names = ['conv_lst_m2d_1', 'activation_6', 'activation_8', 'activation_10']
+#		layer_names = ['conv_lst_m2d_1', 'activation_6', 'activation_8', 'activation_10']
+		layer_names = ['conv_lst_m2d', 'activation_5', 'activation_7', 'activation_9']
+
 		upsample_ratios = [8, 4, 2, 1]
 
 		out1 = UpSampling2D(size=(upsample_ratios[0], upsample_ratios[0]))(self.graph.get_layer(layer_names[0]).output)

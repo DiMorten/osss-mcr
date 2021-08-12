@@ -10,7 +10,7 @@ class PostProcessingMosaic():
         self.h = h
         self.w = w
     def openSetActivate(self, openSetMethod, known_classes):
-        self.openSetMosaic = OpenSetMosaic(openSetMethod, known_classes, self.h, self.w)
+        self.openSetMosaic = OpenSetMosaic(openSetMethod, known_classes, self.h, self.w, self.paramsTrain)
     def load_intermediate_features(self, model, in_, pred_logits_patches, debug = 1):
         return self.openSetMosaic.load_intermediate_features(model, in_, pred_logits_patches)
     def predictPatch(self, pred_cl, test_pred_proba):
@@ -22,7 +22,8 @@ class PostProcessingMosaic():
 
 class OpenSetMosaic():
 
-    def __init__(self, openSetMethod, known_classes, h, w):
+    def __init__(self, openSetMethod, known_classes, h, w, paramsTrain):
+        self.paramsTrain = paramsTrain
         self.scores_mosaic=np.zeros((h,w)).astype(np.float16)
         self.openSetMethod = openSetMethod
 
@@ -38,12 +39,16 @@ class OpenSetMosaic():
         threshold = -90
         self.openModel.setThreshold(threshold)
 
+        self.loadFittedModel()
+    def loadFittedModel(self):
         try:
-            self.openModel.setModelSaveNameID(paramsTrain.seq_date, paramsTrain.dataset)
+            self.openModel.setModelSaveNameID(self.paramsTrain.seq_date, self.paramsTrain.dataset)
             self.openModel.loadFittedModel(path = 'analysis/', nameID = self.openModel.nameID)
+            return 0
 
         except:
             print("Exception: No fitted model method")
+            return 1 # error
     def applyThreshold(self, prediction_mosaic, debug = 0):
         return self.openModel.applyThreshold(prediction_mosaic, self.scores_mosaic, debug = debug)
 

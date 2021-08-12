@@ -53,7 +53,7 @@ class ParamsTrain(Params):
 
 		self.getFullIms = False
 		self.coordsExtract = False
-		self.train = True
+		self.train = False
 #        self.model_load = True
 
 		self.train_overlap_percentage = 0
@@ -69,14 +69,20 @@ class ParamsTrain(Params):
 		self.test_overlap_percentage = 0
 
 
-		self.openSetMethod = None
-#        self.openSetMethod = 'OpenPCS' # leave this appart?
+#		self.openSetMethod = None
+		self.openSetMethod = 'OpenPCS' # leave this appart?
 
 		# ============== SCRIPT MODE: CLOSED SET, OPEN SET... ================= #
 
-		self.openMode = 'SaveNonaugmentedTrainPatches'
-#        self.openMode = 'OpenSet'
-		self.openMode = 'NoMode'
+		if self.openSetMethod == None:
+			self.openMode = 'NoMode'
+		elif self.openSetMethod == 'OpenPCS':
+			if self.train == False:
+				self.openMode = 'SaveNonaugmentedTrainPatches'
+			else:
+				self.openMode = 'OpenSet'
+
+		
 		
 		if self.openMode == 'OpenSet':
 			json_path = folder_path+'parameters_openset.json'

@@ -23,10 +23,10 @@ import pickle
 from icecream import ic
 import os
 
-sys.path.append('../../../../dataset/dataset/patches_extract_script/')
+sys.path.append('../')
 from dataSource import DataSource, SARSource, OpticalSource, Dataset, LEM, LEM2, CampoVerde, OpticalSourceWithClouds, Humidity
 
-sys.path.append('../')
+#sys.path.append('../')
 from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixed_PaddedSeq
 import deb
 from parameters.parameters_reader import ParamsTrain, ParamsAnalysis
@@ -300,6 +300,8 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 		print(model.summary())
 
 		layer_names = ['conv_lst_m2d_1', 'activation_6', 'activation_8', 'activation_10']
+#		layer_names = ['conv_lst_m2d', 'activation_5', 'activation_7', 'activation_9']
+
 		upsample_ratios = [8, 4, 2, 1]
 
 		out1 = UpSampling2D(size=(upsample_ratios[0], upsample_ratios[0]))(model.get_layer(layer_names[0]).output)
@@ -475,7 +477,7 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSetCoords(PredictionsLoade
 			'full_ims/label_with_unknown/full_label_test_with_unknown_' + 
 			str(self.data.paramsTrain.seq_date) + '.npy')
 		'''
-		batch['label_with_unknown'] = np.load(self.data.path['v'] +
+		batch['label_with_unknown'] = np.load(self.data.path['v'] /
 			'full_ims/full_label_test.npy')[-1]
 		'''
 		ic(batch['label_with_unknown'].shape)
