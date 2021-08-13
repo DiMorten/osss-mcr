@@ -1,9 +1,9 @@
-from keras.layers import Input, Dense, Conv2D, MaxPool2D, Flatten, Dropout, Conv2DTranspose, UpSampling2D
-# from keras.callbacks import ModelCheckpoint , EarlyStopping
-from keras.optimizers import Adam,Adagrad 
-from keras.models import Model
-from keras import backend as K
-import keras
+from tensorflow.keras.layers import Input, Dense, Conv2D, MaxPool2D, Flatten, Dropout, Conv2DTranspose, UpSampling2D
+# from tensorflow.keras.callbacks import ModelCheckpoint , EarlyStopping
+from tensorflow.keras.optimizers import Adam,Adagrad 
+from tensorflow.keras.models import Model
+from tensorflow.keras import backend as K
+import tensorflow.keras as keras
 
 import numpy as np
 from sklearn.utils import shuffle
@@ -12,10 +12,10 @@ import cv2
 import argparse
 import tensorflow as tf
 
-from keras.models import *
-from keras.layers import *
-from keras.optimizers import *
-from keras import metrics
+from tensorflow.keras.models import *
+from tensorflow.keras.layers import *
+from tensorflow.keras.optimizers import *
+from tensorflow.keras import metrics
 import sys
 import glob
 import pdb
@@ -30,6 +30,9 @@ from dataSource import DataSource, SARSource, OpticalSource, Dataset, LEM, LEM2,
 from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixed_PaddedSeq
 import deb
 from parameters.parameters_reader import ParamsTrain, ParamsAnalysis
+
+tf.compat.v1.disable_eager_execution()
+tf.compat.v1.experimental.output_all_intermediates(True)
 
 #paramsTrain = ParamsTrain('../parameters/')
 #paramsAnalysis = ParamsAnalysis('parameters_analysis/')
@@ -299,8 +302,8 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 	def load_decoder_features(self, model, input_, prediction_dtype = np.float16):
 		print(model.summary())
 
-		layer_names = ['conv_lst_m2d_1', 'activation_6', 'activation_8', 'activation_10']
-#		layer_names = ['conv_lst_m2d', 'activation_5', 'activation_7', 'activation_9']
+#		layer_names = ['conv_lst_m2d_1', 'activation_6', 'activation_8', 'activation_10']
+		layer_names = ['conv_lst_m2d', 'activation_5', 'activation_7', 'activation_9']
 
 		upsample_ratios = [8, 4, 2, 1]
 

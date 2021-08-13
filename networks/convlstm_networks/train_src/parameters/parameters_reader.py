@@ -103,7 +103,7 @@ class ParamsTrain(Params):
 #        self.seq_date = 'sep'
 		self.seq_date = 'mar'
 		
-		self.model_name = 'nomode'
+		self.model_name = 'dummy'
 		self.learning_rate = 0.0001
 		self.id = "checking_deleted_files_ok"
 		
@@ -213,8 +213,21 @@ class ParamsTrain(Params):
 		deb.prints(self.seq_mode)
 		deb.prints(self.mim)
 
+		self.modelNameSpecify = True
 
-#        pdb.set_trace()
+		if self.modelNameSpecify == True:
+			assert isinstance(str(self.model_type), str)
+			self.model_name_id = 'model_best_' + str(self.model_type) + '_' + \
+					self.seq_date + '_' + self.dataset + '_' + \
+					self.model_name + '.h5'
+			self.model_path = '../results/convlstm_results/model/lm/'
+#			self.model_name_id = self.model_path + 'model_lm_mar_nomask_good.h5'
+			self.model_name_id = self.model_path + 'model_best_UUnetConvLSTM_mar_lm_nomode.h5'
+
+			
+		else:
+			self.model_name_id = 'model_best_fit2.h5'
+
 class ParamsAnalysis(Params):
 	def __init__(self, folder_path):
 

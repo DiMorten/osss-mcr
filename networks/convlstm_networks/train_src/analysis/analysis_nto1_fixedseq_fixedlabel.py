@@ -1373,7 +1373,8 @@ elif dataset=='lm':
 #			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_lm_testlm_2kkc.h5']]	
 #			experiment_groups=[['model_best_UUnet4ConvLSTM_fixed_label_fixed_mar_lm_testlm_allkkc.h5']]
 #			experiment_groups=[['model_best_UUnet4ConvLSTM_len6_mar.h5']]	
-			experiment_groups=[['model_lm_mar_nomask_good.h5']]	
+#			experiment_groups=[['model_lm_mar_nomask_good.h5']]	
+			experiment_groups=[['model_best_UUnetConvLSTM_mar_lm_nomode.h5']]	
 
 
 

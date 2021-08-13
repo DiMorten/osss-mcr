@@ -210,15 +210,7 @@ class TrainTest():
 
 	def modelLoad(self, model_name_id):
 
-		self.model_name = 'model_best_fit2.h5'
-		self.model_name = 'model_lm_mar_nomask_good.h5'
-		self.model_name = 'model_lm_jun_maize_nomask_good.h5'
-		self.model_name = 'model_lm_jun_maize_nomask_good.h5'
-		self.model_name = 'model_best_UUnet4ConvLSTM_jun.h5'
-		self.model_name = 'model_cv_may_3classes_nomask.h5'
-		self.model_name = 'model_best_fit2.h5'
-#		self.model_name = 'model_lm_mar_nomask_good.h5'
-#			self.model_name = 'model_best_UUnet4ConvLSTM_jun_cv_criteria_0_92.h5'
+		self.model_name = model_name_id
 		self.model.graph=load_model(self.model_name, compile=False)		
 
 #		self.model.evaluate(self.data)
@@ -254,19 +246,15 @@ if __name__ == '__main__':
 
 	trainTest.setData()
 
-	assert isinstance(str(paramsTrain.model_type), str)
-	model_name_id = 'model_best_' + str(paramsTrain.model_type) + '_' + \
-			paramsTrain.seq_date + '_' + paramsTrain.dataset + '_' + \
-			paramsTrain.model_name + '.h5'
 
-	trainTest.preprocess(model_name_id) # move into if
+	trainTest.preprocess(paramsTrain.model_name_id) # move into if
 
 	trainTest.setModel()
 
 	if paramsTrain.train == True:
 		trainTest.train()
 	else:
-		trainTest.modelLoad(model_name_id)
+		trainTest.modelLoad(paramsTrain.model_name_id)
 
 	# trainTest.fitOpenSet() 
 	trainTest.evaluate()

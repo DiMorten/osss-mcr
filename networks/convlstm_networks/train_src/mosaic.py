@@ -50,7 +50,7 @@ class Mosaic():
 		deb.prints(paramsTrain.model_type)
 #		deb.prints(direct_execution)
 
-		self.debug = 0
+		self.debug = -2
 
 
 	def loopOverImage(self, paramsTrain):
@@ -274,6 +274,7 @@ class Mosaic():
 		deb.prints(save_folder)
 
 		if self.pr.open_set_mode == True:
+			tpr_threshold_names = ['0_1', '0_3', '0_5', '0_7', '0_9']
 			threshIdxName = "_TPR" + tpr_threshold_names[self.pr.threshold_idx]
 			prediction_savename = save_folder / ("prediction_t_" + paramsTrain.seq_date + "_" + str(paramsTrain.model_type) +
 				"_" + self.name_id+threshIdxName + "_overl" + str(self.pr.overlap) + "_" + self.pr.conditionType + ".png")
@@ -378,11 +379,11 @@ class MosaicHighRAM(Mosaic):
 				ic(self.overlap)
 				ic(step_row)
 				self.prediction_mosaic=self.prediction_mosaic[self.overlap//2:-step_row,self.overlap//2:-step_col]
-				self.postProcessing.openSet.scores_mosaic=self.postProcessing.openSet.scores_mosaic[self.overlap//2:-step_row,self.overlap//2:-step_col]
+				self.postProcessing.openSet.scores_mosaic=self.postProcessing.openSetMosaic.scores_mosaic[self.overlap//2:-step_row,self.overlap//2:-step_col]
 
 			np.save('prediction_rebuilt_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.pr.overlap)+'.npy',self.prediction_mosaic)
 			if self.pr.open_set_mode == True:
-				np.save('scores_rebuilt_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.pr.overlap)+'.npy',self.postProcessing.openSet.scores_mosaic)
+				np.save('scores_rebuilt_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.pr.overlap)+'.npy',self.postProcessing.openSetMosaic.scores_mosaic)
 
 
 	def loopToGetInputPatchesInBatch(self):
@@ -478,8 +479,7 @@ class MosaicHighRAM(Mosaic):
 						if self.debug>0:
 							ic(pred_cl.shape)
 
-						self.postProcessing.predictPatch(pred_cl, self.test_pred_proba,
-									debug = self.debug)
+						self.postProcessing.predictPatch(pred_cl, self.test_pred_proba, m, n, self.stride, self.overlap, debug = self.debug)
 						
 
 					if self.pr.overlap_mode == 'replace':

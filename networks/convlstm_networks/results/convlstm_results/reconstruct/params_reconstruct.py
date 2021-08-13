@@ -14,12 +14,12 @@ class ParamsReconstruct():
 
         self.croppedFlag = False
 
-        self.open_set_mode = False
+        self.open_set_mode = True
 
-        self.mosaic_flag = False
+        self.mosaic_flag = True
 
         self.threshold_idx = 4
-        self.overlap = 0.5
+        self.overlap = 0
 
         if self.overlap > 0:
             self.add_padding_flag = True
@@ -89,9 +89,10 @@ class ParamsReconstruct():
                 #self.predictions_path=self.model_path+'prediction_BAtrousGAPConvLSTM_repeating3.npy'
                 #self.predictions_path=self.model_path+'prediction_BAtrousGAPConvLSTM_repeating4.npy'
                 
-            self.predictions_path = self.model_path+'model_best_' + self.paramsTrain.model_type_specific + '_' + \
+            self.predictions_path = self.model_path+'model_best_' + str(self.paramsTrain.model_type) + '_' + \
                 self.paramsTrain.seq_date + '_' + self.paramsTrain.dataset + '_' + \
                 self.paramsTrain.model_name + '.h5'
+            self.predictions_path = self.model_path+ 'model_best_UUnetConvLSTM_mar_lm_nomode.h5'
             ic(self.predictions_path)
 
             self.mask_path=self.data_path / 'TrainTestMask.tif'

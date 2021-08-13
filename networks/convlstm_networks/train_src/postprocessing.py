@@ -13,8 +13,8 @@ class PostProcessingMosaic():
         self.openSetMosaic = OpenSetMosaic(openSetMethod, known_classes, self.h, self.w, self.paramsTrain)
     def load_intermediate_features(self, model, in_, pred_logits_patches, debug = 1):
         return self.openSetMosaic.load_intermediate_features(model, in_, pred_logits_patches)
-    def predictPatch(self, pred_cl, test_pred_proba):
-        self.openSetMosaic.predictPatch(pred_cl, test_pred_proba)
+    def predictPatch(self, pred_cl, test_pred_proba, row, col, stride, overlap, debug = 0):
+        self.openSetMosaic.predictPatch(pred_cl, test_pred_proba, row,col,stride, overlap, debug = debug)
     
     def applyThreshold(self, prediction_mosaic, debug = 0):
         return self.openSetMosaic.applyThreshold(prediction_mosaic, debug = debug)
@@ -36,7 +36,7 @@ class OpenSetMosaic():
         elif self.openSetMethod == 'SoftmaxThresholding':
             self.openModel = SoftmaxThresholding()
         
-        threshold = -90
+        threshold = -184.4
         self.openModel.setThreshold(threshold)
 
         self.loadFittedModel()
@@ -53,12 +53,12 @@ class OpenSetMosaic():
         return self.openModel.applyThreshold(prediction_mosaic, self.scores_mosaic, debug = debug)
 
         
-    def predictPatch(self, pred_cl, test_pred_proba):
+    def predictPatch(self, pred_cl, test_pred_proba, row, col, stride, overlap, debug = 0):
         self.openModel.predictScores(pred_cl.flatten() - 1, test_pred_proba,
 									debug = debug)
         x, y = pred_cl.shape
-        self.openModel.scores = np.reshape(openModel.scores, (x, y))
-        self.scores_mosaic[m-stride//2:m+stride//2,n-stride//2:n+stride//2] = self.openModel.scores[overlap//2:x-overlap//2,overlap//2:y-overlap//2]        
+        self.openModel.scores = np.reshape(self.openModel.scores, (x, y))
+        self.scores_mosaic[row-stride//2:row+stride//2,col-stride//2:col+stride//2] = self.openModel.scores[overlap//2:x-overlap//2,overlap//2:y-overlap//2]        
 
     def load_intermediate_features(self, model, in_, pred_logits_patches, debug = 1):
         if self.openSetMethod =='OpenPCS' or self.openSetMethod == 'OpenPCS++':

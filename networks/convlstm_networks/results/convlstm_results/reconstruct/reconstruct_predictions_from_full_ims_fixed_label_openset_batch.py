@@ -28,7 +28,7 @@ from analysis.open_set import SoftmaxThresholding, OpenPCS
 from params_reconstruct import ParamsReconstruct
 from params_batchprocessing import ParamsBatchProcessing
 
-ic.configureOutput(includeContext=False, prefix='[@debug] ')
+ic.configureOutput(includeContext=True, prefix='[@debug] ')
 
 
 paramsTrain = ParamsTrain('../../../train_src/parameters/')
@@ -43,7 +43,6 @@ dataset=paramsTrain.dataset
 
 deb.prints(dataset)
 deb.prints(paramsTrain.model_type)
-deb.prints(direct_execution)
 
 def patch_file_id_order_from_folder(folder_path):
 	paths=glob.glob(folder_path+'*.npy')
