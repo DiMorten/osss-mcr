@@ -72,9 +72,11 @@ class Metrics():
 
 		#============= TEST UNIQUE PRINTING==================#
 		unique,count=np.unique(label,return_counts=True)
-		print("Metric label unique+1,count",unique+1,count)
+		ic(np.unique(label,return_counts=True))
+#		print("Metric label unique+1,count",unique+1,count)
 		unique,count=np.unique(prediction,return_counts=True)
-		print("Metric prediction unique+1,count",unique+1,count)
+		ic(np.unique(prediction,return_counts=True))
+#		print("Metric prediction unique+1,count",unique+1,count)
 		
 		#========================METRICS GET================================================#
 

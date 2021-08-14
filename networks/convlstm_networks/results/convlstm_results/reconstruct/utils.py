@@ -15,14 +15,12 @@ import shutil
 import numpy as np
 import sys
 import errno
-from osgeo import gdal
 import glob
 import multiprocessing
 import subprocess, signal
 import gc
 from sklearn import preprocessing as pp
 import joblib
-import pandas as pd
 from itertools import groupby
 from collections import Counter
 from sklearn.metrics import accuracy_score, cohen_kappa_score,precision_recall_fscore_support
@@ -50,14 +48,6 @@ colormap_list = np.array([[40/255.0, 255/255.0, 40/255.0],
           [0/255.0, 0/255.0, 0/255.0]])
 
  
-
-def load_image(patch):
-    # Read Image
-    print (patch)
-    gdal_header = gdal.Open(patch)
-    # get array
-    img = gdal_header.ReadAsArray()
-    return img
 
 
 def add_padding(img, psize, overl):

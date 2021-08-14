@@ -129,7 +129,7 @@ elif pr.prediction_type=='model':
 #patch_len=labels.shape[2]
 
 # Load mask
-mask=cv2.imread(pr.mask_path,-1)
+mask=cv2.imread(str(pr.mask_path),-1)
 mask[mask==1]=0 # training as background
 print("Mask shape",mask.shape)
 #print((sequence_len,)+mask.shape)

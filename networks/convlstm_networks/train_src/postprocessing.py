@@ -27,16 +27,21 @@ class OpenSetMosaic():
         self.scores_mosaic=np.zeros((h,w)).astype(np.float16)
         self.openSetMethod = openSetMethod
 
+        threshold = -2000
+
         if self.openSetMethod == 'OpenPCS' or self.openSetMethod == 'OpenPCS++':
             self.openModel = OpenPCS(known_classes = known_classes,
         #			n_components = 16)
                 n_components = 90)
             makeCovMatrixIdentity = True if self.openSetMethod == 'OpenPCS++' else False
             self.openModel.makeCovMatrixIdentitySet(makeCovMatrixIdentity)
+            if self.openSetMethod == 'OpenPCS++':
+                threshold = -184.4
+
         elif self.openSetMethod == 'SoftmaxThresholding':
             self.openModel = SoftmaxThresholding()
         
-        threshold = -184.4
+
         self.openModel.setThreshold(threshold)
 
         self.loadFittedModel()

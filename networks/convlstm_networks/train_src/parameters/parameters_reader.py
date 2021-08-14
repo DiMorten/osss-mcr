@@ -70,13 +70,16 @@ class ParamsTrain(Params):
 
 
 #		self.openSetMethod = None
-		self.openSetMethod = 'OpenPCS' # leave this appart?
+#		self.openSetMethod = 'OpenPCS' # leave this appart?
+		self.openSetMethod = 'OpenPCS++' # leave this appart?
 
+	
+		self.select_main_classes = True
 		# ============== SCRIPT MODE: CLOSED SET, OPEN SET... ================= #
 
 		if self.openSetMethod == None:
 			self.openMode = 'NoMode'
-		elif self.openSetMethod == 'OpenPCS':
+		elif self.openSetMethod == 'OpenPCS' or self.openSetMethod == 'OpenPCS++':
 			if self.train == False:
 				self.openMode = 'SaveNonaugmentedTrainPatches'
 			else:
@@ -197,6 +200,10 @@ class ParamsTrain(Params):
 
 		print(os.listdir(folder_path))
 		super().__init__(json_path)        
+
+
+		if self.openMode == 'NoMode' and self.select_main_classes == True:
+			self.select_kept_classes_flag = True
 
 		if self.seq_mode == 'var_label':
 			#self.mim = MIMVarLabel()

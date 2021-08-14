@@ -474,7 +474,8 @@ class MosaicHighRAM(Mosaic):
 						# translate the preddictions.
 
 						pred_cl = self.data.newLabel2labelTranslate(pred_cl, 
-								'new_labels2labels_'+self.paramsTrain.dataset+'_'+self.data.dataset_date+'_S1.pkl')
+								'new_labels2labels_'+self.paramsTrain.dataset+'_'+self.data.dataset_date+'_S1.pkl',
+								debug = self.debug)
 
 						if self.debug>0:
 							ic(pred_cl.shape)

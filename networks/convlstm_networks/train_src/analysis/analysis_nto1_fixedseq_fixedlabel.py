@@ -643,6 +643,7 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 					threshold_range = (-500, 200)
 					best_threshold = -17.7	
 					best_threshold = -184.4 # mar pca identity 90	
+#					best_threshold = -2000 # mar pca identity 90	
 
 				elif paramsTrain.seq_date == 'jan':
 					thresholds = [-210]
@@ -847,6 +848,10 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 			predictions_t = openSetPredict(predictions_t,
 				predictions_train, 
 				openModel)
+		
+		ic(np.unique(label_test_t, return_counts = True))
+		ic(np.unique(predictions_t, return_counts = True))
+		
 
 		metrics = metrics_get(label_test_t, predictions_t,
 			only_basics=True, debug=debug, detailed_t = t)	

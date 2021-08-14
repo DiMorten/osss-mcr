@@ -12,8 +12,8 @@ class ParamsReconstruct():
 		self.open_set_mode = True
 
 		self.prediction_mask = False
-		self.conditionType = 'test'
-#		self.conditionType = 'all'
+#		self.conditionType = 'test'
+		self.conditionType = 'all'
 
 		self.metrics_flag = False
 
