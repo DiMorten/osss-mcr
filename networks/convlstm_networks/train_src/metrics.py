@@ -2,6 +2,9 @@ from tensorflow.keras import backend as K
 import deb
 from sklearn.metrics import confusion_matrix,f1_score,accuracy_score,classification_report
 from icecream import ic
+import sklearn
+import matplotlib.pyplot as plt
+from icecream import ic
 
 class Metrics():
 
@@ -118,7 +121,7 @@ class Metrics():
 		label=label[label<class_n] #logic
 		return prediction, label
 
-	def plotROCCurve(self, y_test, y_pred, modelId, nameId, unknown_clss_id = 39):
+	def plotROCCurve(self, y_test, y_pred, modelId, nameId, unknown_class_id = 39):
 		print("y_test.shape", y_test.shape)
 		print("y_pred.shape", y_pred.shape)
 		print("y_test.dtype", y_test.dtype)
@@ -126,17 +129,17 @@ class Metrics():
 		deb.prints(np.unique(y_test))   
 		deb.prints(np.unique(y_pred))
 		y_test = y_test.copy()
-		y_test[y_test!=unknown_clss_id] = 0
-		y_test[y_test==unknown_clss_id] = 1
+		y_test[y_test!=unknown_class_id] = 0
+		y_test[y_test==unknown_class_id] = 1
 		deb.prints(np.unique(y_test))   
 		deb.prints(np.unique(y_pred))
 
 		# =========================== Get metric value
 
 
-		fpr, tpr, thresholds = metrics.roc_curve(y_test, y_pred, pos_label=0)
+		fpr, tpr, thresholds = sklearn.metrics.roc_curve(y_test, y_pred, pos_label=0)
 #        roc_auc = metrics.auc(tpr, fpr)
-		roc_auc = metrics.auc(fpr, tpr)
+		roc_auc = sklearn.metrics.auc(fpr, tpr)
 
 		deb.prints(roc_auc)
 		deb.prints(thresholds)

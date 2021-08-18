@@ -432,9 +432,11 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 
 		deb.prints(metrics_test)
 
-		mosaic.getFlatLabel()
+#		label_flat = mosaic.getFlatLabel()
+#		scores_flat = mosaic.getFlatScores()
 		if self.paramsTrain.openSetMethod != None:
-			metrics.plotROCCurve(mosaic.getFlatLabel(), mosaic.getPostProcessingScores())
+			metrics.plotROCCurve(mosaic.getFlatLabel(), mosaic.getFlatScores(), 
+				modelId = mosaic.name_id, nameId = mosaic.name_id, unknown_class_id = 20)
 
 	def load_decoder_features(self, in_, prediction_dtype = np.float16, debug  = 1):
 	#print(model.summary())

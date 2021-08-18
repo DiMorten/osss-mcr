@@ -205,17 +205,6 @@ class Mosaic():
 		self.prediction_mosaic = self.data.newLabel2labelTranslate(self.prediction_mosaic, 
 					'new_labels2labels_'+paramsTrain.dataset+'_'+self.data.dataset_date+'_S1.pkl')
 
-	def getFlatLabel(self):
-		label_flat = self.label_mosaic.flatten()
-		scores_flat = self.postProcessing.openSetMosaic.scores_mosaic.flatten()
-		mask_flat = self.mask_pad.flatten()
-		label_flat = label_flat[mask_flat == 2]
-		scores_flat = scores_flat[mask_flat == 2]
-
-
-		ic(label_flat.shape, mask_flat, scores_flat)
-		pdb.set_trace()
-	
 	def getPostProcessingScores(self):
 		pass
 
@@ -530,6 +519,25 @@ class MosaicHighRAMPostProcessing(MosaicHighRAM):
 			self.postProcessing = postProcessing
 			self.postProcessing.openSetActivate(paramsTrain.openSetMethod, known_classes)
 		super().create(paramsTrain, model, data, ds)
+
+	def getFlatLabel(self):
+		label_flat = self.label_mosaic.flatten()
+		mask_flat = self.mask_pad.flatten()
+		label_flat = label_flat[mask_flat == 2]
+
+
+		ic(label_flat.shape, mask_flat)
+#		pdb.set_trace()
+		return label_flat
+	
+	def getFlatScores(self):
+		scores_flat = self.postProcessing.openSetMosaic.scores_mosaic.flatten()
+		mask_flat = self.mask_pad.flatten()
+		scores_flat = scores_flat[mask_flat == 2]
+
+		ic(scores_flat.shape, mask_flat)
+
+		return scores_flat
 
 	def postProcess(self, paramsTrain):
 		self.prediction_mosaic = self.postProcessing.applyThreshold(self.prediction_mosaic, 
