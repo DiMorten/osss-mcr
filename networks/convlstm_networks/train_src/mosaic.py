@@ -103,7 +103,7 @@ class Mosaic():
 		self.prediction_mosaic = np.load(self.pr.spatial_results_path / 
 			('prediction_mosaic_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.pr.overlap)+'.npy'))
 		if self.pr.open_set_mode == True:
-			self.scores_mosaic = np.load(self.pr.spatial_results_path / 
+			self.postProcessing.openSetMosaic.scores_mosaic = np.load(self.pr.spatial_results_path / 
 				('scores_mosaic_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.pr.overlap)+'.npy'))
 
 	def defineMosaicVars(self, h, w, class_n):
@@ -204,6 +204,21 @@ class Mosaic():
 	def postProcess(self, paramsTrain):
 		self.prediction_mosaic = self.data.newLabel2labelTranslate(self.prediction_mosaic, 
 					'new_labels2labels_'+paramsTrain.dataset+'_'+self.data.dataset_date+'_S1.pkl')
+
+	def getFlatLabel(self):
+		label_flat = self.label_mosaic.flatten()
+		scores_flat = self.postProcessing.openSetMosaic.scores_mosaic.flatten()
+		mask_flat = self.mask_pad.flatten()
+		label_flat = label_flat[mask_flat == 2]
+		scores_flat = scores_flat[mask_flat == 2]
+
+
+		ic(label_flat.shape, mask_flat, scores_flat)
+		pdb.set_trace()
+	
+	def getPostProcessingScores(self):
+		pass
+
 	def save_prediction_label_mosaic_Nto1(self, mask, 
 			custom_colormap, path, paramsTrain, small_classes_ignore=True):
 	#	for t_step in range(t_len):
@@ -381,9 +396,9 @@ class MosaicHighRAM(Mosaic):
 				self.prediction_mosaic=self.prediction_mosaic[self.overlap//2:-step_row,self.overlap//2:-step_col]
 				self.postProcessing.openSet.scores_mosaic=self.postProcessing.openSetMosaic.scores_mosaic[self.overlap//2:-step_row,self.overlap//2:-step_col]
 
-			np.save('prediction_rebuilt_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.pr.overlap)+'.npy',self.prediction_mosaic)
+			np.save('results/spatial_results/prediction_mosaic_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.pr.overlap)+'.npy',self.prediction_mosaic)
 			if self.pr.open_set_mode == True:
-				np.save('scores_rebuilt_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.pr.overlap)+'.npy',self.postProcessing.openSetMosaic.scores_mosaic)
+				np.save('results/spatial_results/scores_mosaic_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.pr.overlap)+'.npy',self.postProcessing.openSetMosaic.scores_mosaic)
 
 
 	def loopToGetInputPatchesInBatch(self):

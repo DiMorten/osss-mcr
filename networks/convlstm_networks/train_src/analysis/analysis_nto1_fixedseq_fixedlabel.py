@@ -800,6 +800,7 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 			#==== metrics on scores
 			metrics = Metrics()
 			if paramsAnalysis.plotROCCurve == True:
+				ic(label_test_t.shape)
 				metrics.plotROCCurve(label_test_t, openModel.scores, 
 					modelId=openModel.name, nameId=openModel.saveNameId)
 

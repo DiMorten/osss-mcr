@@ -7,7 +7,7 @@ class ParamsReconstruct():
 		self.spatial_results_path = Path('results/spatial_results')
 		self.paramsTrain = paramsTrain
 
-		self.mosaic_flag = True
+		self.mosaic_flag = False
 
 		self.open_set_mode = True
 

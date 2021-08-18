@@ -121,261 +121,6 @@ class Dataset(object):
 		self.padded_dates = []
 
 
-	def create_load(self):
-
-		self.patches_list={'train':{},'test':{}}
-		#self.patches_list['train']['ims']=glob.glob(self.path['train']['in']+'*.npy')
-		#self.patches_list['train']['label']=glob.glob(self.path['train']['label']+'*.npy')
-
-		#self.patches_list['test']['ims']=glob.glob(self.path['test']['in']+'*.npy')
-		#self.patches_list['test']['label']=glob.glob(self.path['test']['label']+'*.npy')
-		self.patches['test']['label'],self.patches_list['test']['label']=self.folder_load(self.path['test']['label'])
-		
-		self.patches['train']['in'],self.patches_list['train']['ims']=self.folder_load(self.path['train']['in'])
-		self.patches['train']['label'],self.patches_list['train']['label']=self.folder_load(self.path['train']['label'])
-		self.patches['test']['in'],self.patches_list['test']['ims']=self.folder_load(self.path['test']['in'])
-		deb.prints(self.patches['train']['in'].shape)
-		deb.prints(self.patches['test']['in'].shape)
-		deb.prints(self.patches['train']['label'].shape)
-		# for lem2
-		#if self.ds.name =='l2':
-		#	self.patches['train']['label'] = self.patches['test']['label'].copy()
-		#	self.patches['train']['in'] = self.patches['test']['in'].copy() 
-		'''
-		if self.ds.name == 'lm':
-			self.patches['train']['in'] = np.concatenate((self.patches['train']['in'],
-							self.patches['test']['in']), axis=0)
-			self.patches['train']['label'] = np.concatenate((self.patches['train']['label'],
-							self.patches['test']['label']), axis=0)
-
-			self.patches['test']['in'] = np.expand_dims(
-							np.zeros(self.patches['test']['in'].shape[1:]),
-							axis = 0)
-			self.patches['test']['label'] = np.expand_dims(
-							np.zeros(self.patches['test']['label'].shape[1:]),
-							axis = 0)
-		'''
-		self.dataset=None
-		unique,count=np.unique(self.patches['train']['label'],return_counts=True)
-		deb.prints(np.unique(self.patches['train']['label'],return_counts=True))
-		deb.prints(np.unique(self.patches['test']['label'],return_counts=True))
-		#pdb.set_trace()
-		deb.prints(count)
-
-		self.dataset='seq1'
-
-
-		# ========================================= pick label for N to 1
-		deb.prints(self.paramsTrain.seq_mode)
-		print('*'*20, 'Selecting date label')
-		if self.paramsTrain.seq_mode == 'fixed':
-			self.paramsTrain.seq_label = -1
-			self.patches['train']['label'] = self.patches['train']['label'][:,self.paramsTrain.seq_label]
-			self.patches['test']['label'] = self.patches['test']['label'][:,self.paramsTrain.seq_label]
-			self.labeled_dates = 1
-		elif self.paramsTrain.seq_mode == 'fixed_label_len':
-			self.paramsTrain.seq_label = -5
-			self.patches['train']['label'] = self.patches['train']['label'][:,self.paramsTrain.seq_label]
-			self.patches['test']['label'] = self.patches['test']['label'][:,self.paramsTrain.seq_label]
-			self.labeled_dates = 1
-		elif self.paramsTrain.seq_mode == 'var' or self.paramsTrain.seq_mode == 'var_label':
-
-			self.labeled_dates = self.paramsTrain.seq_len
-
-			self.patches['train']['label'] = self.patches['train']['label'][:, -self.labeled_dates:]
-			self.patches['test']['label'] = self.patches['test']['label'][:, -self.labeled_dates:]
-		ic(np.unique(self.patches['train']['label'],return_counts=True))
-		deb.prints(np.unique(self.patches['test']['label'],return_counts=True))
-			
-		self.class_n=unique.shape[0] #10 plus background
-		if self.paramsTrain.open_set==True:
-
-			print('*'*20, 'Open set - ignoring class')
-		
-			# making label with loco class copy
-			self.patches['test']['label_with_unknown'] = self.patches['test']['label'].copy()
-			self.patches['train']['label_with_unknown'] = self.patches['train']['label'].copy()
-
-			deb.prints(np.unique(self.patches['train']['label'],return_counts=True))
-			deb.prints(self.paramsTrain.loco_class)
-
-			#select_kept_classes_flag = True
-			if self.paramsTrain.select_kept_classes_flag==False:	
-				self.unknown_classes = self.paramsTrain.unknown_classes
-
-				#self.patches['train']['label'][self.patches['train']['label']==int(self.paramsTrain.loco_class) + 1] = 0
-				#self.patches['test']['label'][self.patches['test']['label']==int(self.paramsTrain.loco_class) + 1] = 0
-			#	self.patches['train']['label'] = openSetConfig.deleteLocoClass(self.patches['train']['label'], self.paramsTrain.loco_class)
-			#	self.patches['test']['label'] = openSetConfig.deleteLocoClass(self.patches['test']['label'], self.paramsTrain.loco_class)
-			else:
-				all_classes = np.unique(self.patches['train']['label']) # with background
-				all_classes = all_classes[1:] - 1 # no bcknd
-				deb.prints(all_classes)
-				deb.prints(self.paramsTrain.known_classes)
-				self.unknown_classes = np.setdiff1d(all_classes, self.paramsTrain.known_classes)
-				deb.prints(self.unknown_classes)
-			for clss in self.unknown_classes:
-				self.patches['train']['label'][self.patches['train']['label']==int(clss) + 1] = 0
-				self.patches['test']['label'][self.patches['test']['label']==int(clss) + 1] = 0
-		elif self.paramsTrain.group_bcknd_classes == True:
-			print('*'*20, 'Open set - grouping bcknd class')
-			all_classes = np.unique(self.patches['train']['label']) # with background
-			all_classes = all_classes[1:] - 1 # no bcknd
-			deb.prints(all_classes)
-			deb.prints(self.paramsTrain.known_classes)
-			self.unknown_classes = np.setdiff1d(all_classes, self.paramsTrain.known_classes)
-			deb.prints(self.unknown_classes)
-			for clss in self.unknown_classes:
-				self.patches['train']['label'][self.patches['train']['label']==int(clss) + 1] = 20
-				self.patches['test']['label'][self.patches['test']['label']==int(clss) + 1] = 20			
-
-			
-			ic(np.unique(self.patches['train']['label'],return_counts=True))
-
-			#pdb.set_trace()
-
-			print('*'*20, 'End open set - ignoring class')
-
-		# ======================================= fix labels before one hot
-		print("===== preprocessing labels")
-		self.classes = np.unique(self.patches['train']['label'])
-		deb.prints(np.unique(self.patches['train']['label'], return_counts=True))
-		
-
-##            labels_val[labels_val==255] = self.paramsTrain.classes
-		tmp_tr = self.patches['train']['label'].copy()
-		tmp_tst = self.patches['test']['label'].copy()
-		
-##            tmp_val = labels_val.copy()
-
-		deb.prints(self.patches['train']['label'].shape)
-		deb.prints(np.unique(self.patches['train']['label'],return_counts=True))  
-		deb.prints(np.unique(self.patches['test']['label'], return_counts=True))
-
-		# ===== test extra classes in fixed mode
-		if self.paramsTrain.seq_mode == 'fixed':
-			unique_train = np.unique(self.patches['train']['label'])
-			unique_test = np.unique(self.patches['test']['label'])
-			test_additional_classes=[]
-			for value in unique_test:
-				if value not in unique_train:
-#					self.patches['test']['label'][self.patches['test']['label'] == value] = 30 + value + 1 # if class is 3, it becomes 33 after subtracting 1
-					self.patches['test']['label'][self.patches['test']['label'] == value] = 30 + 1 # if class is 3, it becomes 33 after subtracting 1
-					test_additional_classes.append(value)
-			deb.prints(test_additional_classes)
-		
-		deb.prints(np.unique(self.patches['test']['label'], return_counts=True))
-
-		self.labels2new_labels = dict((c, i) for i, c in enumerate(self.classes))
-		self.new_labels2labels = dict((i, c) for i, c in enumerate(self.classes))
-		ic(self.labels2new_labels, self.new_labels2labels)
-		for j in range(len(self.classes)):
-			self.patches['train']['label'][tmp_tr == self.classes[j]] = self.labels2new_labels[self.classes[j]]
-			self.patches['test']['label'][tmp_tst == self.classes[j]] = self.labels2new_labels[self.classes[j]]
-
-		# save dicts
-		dict_filename = "new_labels2labels_"+self.ds.name+"_"+self.ds.im_list[-1]+".pkl" 
-		deb.prints(dict_filename)
-		f = open(dict_filename, "wb")
-		pickle.dump(self.new_labels2labels, f)
-		f.close()
-		deb.prints(self.new_labels2labels)
-
-		##pdb.set_trace()
-
-		self.patches['train']['label'] = self.patches['train']['label']-1
-		self.patches['test']['label'] = self.patches['test']['label']-1
-
-		deb.prints(np.unique(self.patches['train']['label'], return_counts=True))
-		
-##            labels_val = labels_val-1
-		class_n_no_bkcnd = len(self.classes)-1
-		self.patches['train']['label'][self.patches['train']['label']==255] = class_n_no_bkcnd
-		self.patches['test']['label'][self.patches['test']['label']==255] = class_n_no_bkcnd
-
-#		self.classes = 
-		deb.prints(np.unique(self.patches['train']['label']))
-		deb.prints(np.unique(self.patches['train']['label'], return_counts=True))
-		#pdb.set_trace()
-
-##                labels_val[tmp_val == classes[j]] = self.labels2new_labels[classes[j]]
-		deb.prints(self.patches['train']['label'].shape)
-		deb.prints(np.unique(self.patches['train']['label'],return_counts=True))    
-
-		deb.prints(self.patches['test']['label'].shape)
-		deb.prints(np.unique(self.patches['test']['label'],return_counts=True))    
-		self.class_n=class_n_no_bkcnd+1 # counting bccknd
-
-		if self.paramsTrain.seq_mode == 'fixed' and len(test_additional_classes)>0:
-			save_test_patches = True
-		else:
-			save_test_patches = False
-
-		deb.prints(save_test_patches)
-		if save_test_patches==True:
-			path="../../../dataset/dataset/l2_data/"
-			# path_patches = path + 'patches_bckndfixed/'
-			# path = path_patches+'test/'
-
-			patchesStorage = PatchesStorageAllSamples(path, self.paramsTrain.seq_mode, self.paramsTrain.seq_date)
-		
-			print("===== STORING THE LOADED PATCHES AS ALL SAMPLES IN A SINGLE FILE ======")
-			
-			patchesStorage.storeSplit(self.patches['test'], split='test_bckndfixed')
-			deb.prints(np.unique(self.patches['test']['label'],return_counts=True))
-			if self.paramsTrain.save_patches_only==True:
-				sys.exit("Test bckndfixed patches were saved")
-
-		# ======================================= end fix labels
-
-
-
-		print("Switching to one hot")
-		self.patches['train']['label']=self.batch_label_to_one_hot(self.patches['train']['label'])
-		self.patches['test']['label']=self.batch_label_to_one_hot(self.patches['test']['label'])
-		deb.prints(self.patches['train']['label'].shape)
-		#pdb.set_trace()
-		self.patches['train']['in']=self.patches['train']['in'].astype(np.float16)
-		self.patches['test']['in']=self.patches['test']['in'].astype(np.float16)
-
-		self.patches['train']['label']=self.patches['train']['label'].astype(np.int8)
-		self.patches['test']['label']=self.patches['test']['label'].astype(np.int8)
-		
-		deb.prints(len(self.patches_list['test']['label']))
-		deb.prints(len(self.patches_list['test']['ims']))
-		deb.prints(self.patches['train']['in'].shape)
-		deb.prints(self.patches['train']['in'].dtype)
-		
-		deb.prints(self.patches['train']['label'].shape)
-		deb.prints(self.patches['test']['label'].shape)
-		unique,count = np.unique(self.patches['test']['label'],return_counts=True)
-		print_pixel_count = False
-		if print_pixel_count == True:
-			for t_step in range(self.patches['test']['label'].shape[1]):
-				deb.prints(t_step)
-				deb.prints(np.unique(self.patches['train']['label'].argmax(axis=-1)[:,t_step],return_counts=True))
-			print("Test label unique: ",unique,count)
-
-			for t_step in range(self.patches['test']['label'].shape[1]):
-				deb.prints(t_step)
-				deb.prints(np.unique(self.patches['test']['label'].argmax(axis=-1)[:,t_step],return_counts=True))
-			
-		self.patches['train']['n']=self.patches['train']['label'].shape[0]
-		self.patches['train']['idx']=range(self.patches['train']['n'])
-		np.save('labels_beginning.npy',self.patches['test']['label'])
-
-		deb.prints(self.patches['train']['label'].shape)
-
-
-		unique,count=np.unique(self.patches['train']['label'].argmax(axis=-1),return_counts=True)
-		deb.prints(unique)
-		deb.prints(count)
-
-		unique,count=np.unique(self.patches['test']['label'].argmax(axis=-1),return_counts=True)
-		deb.prints(unique)
-		deb.prints(count)
-
-
 	def batch_label_to_one_hot(self,im):
 		im_one_hot=np.zeros(im.shape+(self.class_n,))
 		print(im_one_hot.shape)
@@ -423,260 +168,7 @@ class Dataset(object):
 		return input_	
 
 
-#=============== PATCHES STORE ==========================#
-
-	def patchesStore(self, patches, split='train_bckndfixed'):
-		pathlib.Path(self.path[split]).mkdir(parents=True, exist_ok=True) 
-
-		
-		np.save(self.path[split]/'patches_in.npy', patches['in']) #to-do: add polymorphism for other types of input 
-		
-		#pathlib.Path(self.path[split]['label']).mkdir(parents=True, exist_ok=True) 
-		np.save(self.path[split]/'patches_label.npy', patches['label']) #to-do: add polymorphism for other types of input 
-
-	def patchesLoad(self, split='train'):
-		out={}
-		out['in']=np.load(self.path[split]/'patches_in.npy',mmap_mode='r')
-		out['label']=np.load(self.path[split]/'patches_label.npy')
-		#pdb.set_trace()
-		return out
-
-	def randomly_pick_samples_from_set(self,patches, out_n):
-		patches_n=patches['in'].shape[0]
-		selected_idxs=np.random.choice(patches_n, size=out_n)
-		patches['in']=patches['in'][selected_idxs]
-		patches['label']=patches['label'][selected_idxs]
-
-		return patches
-
 #=============== METRICS CALCULATION ====================#
-
-
-	def val_set_get(self,mode='random',validation_split=0.2):
-		clss_train_unique,clss_train_count=np.unique(self.patches['train']['label'].argmax(axis=-1),return_counts=True)
-		deb.prints(clss_train_count)
-		self.patches['val']={'n':int(self.patches['train']['n']*validation_split)}
-		ic(self.patches['train']['n'], self.patches['val']['n'])
-		#===== CHOOSE VAL IDX
-		#mode='stratified'
-		if mode=='random':
-			self.patches['val']['idx']=np.random.choice(self.patches['train']['idx'],self.patches['val']['n'],replace=False)
-			
-
-			self.patches['val']['in']=self.patches['train']['in'][self.patches['val']['idx']]
-			self.patches['val']['label']=self.patches['train']['label'][self.patches['val']['idx']]
-		
-		elif mode=='stratified':
-			# self.patches['train']['in'] are the input sequences of images of shape (val_sample_n,t_len,h,w,channel_n)
-			# self.patches['train']['label'] is the ground truth of shape (sample_n,t_len,h,w,class_n)
-			# self.patches['val']['in'] are the input sequences of images of shape (val_sample_n,t_len,h,w,channel_n)
-			# self.patches['val']['label'] is the ground truth of shape (sample_n,t_len,h,w,class_n)
-
-			while True:
-				self.patches['val']['idx']=np.random.choice(self.patches['train']['idx'],self.patches['val']['n'],replace=False)
-				self.patches['val']['in']=self.patches['train']['in'][self.patches['val']['idx']]
-				self.patches['val']['label']=self.patches['train']['label'][self.patches['val']['idx']]
-		
-				clss_val_unique,clss_val_count=np.unique(self.patches['val']['label'].argmax(axis=-1),return_counts=True)
-
-				# If validation set doesn't contain ALL classes from train set, repeat random choice
-				if not np.array_equal(clss_train_unique,clss_val_unique):
-					deb.prints(clss_train_unique)
-					deb.prints(clss_val_unique)
-					pass
-				else:
-					percentages=clss_val_count/clss_train_count
-					deb.prints(percentages)
-
-					# Percentage for each class is equal to: (validation sample number)/(train sample number)*100
-					# If percentage from any class is larger than 20% repeat random choice
-					if np.any(percentages>0.3):
-					
-						pass
-					else:
-						# Else keep the validation set
-						break
-		elif mode=='random_v2':
-			while True:
-
-				self.patches['val']['idx']=np.random.choice(self.patches['train']['idx'],self.patches['val']['n'],replace=False)				
-
-				self.patches['val']['in']=self.patches['train']['in'][self.patches['val']['idx']]
-				self.patches['val']['label']=self.patches['train']['label'][self.patches['val']['idx']]
-				clss_val_unique,clss_val_count=np.unique(self.patches['val']['label'].argmax(axis=3),return_counts=True)
-						
-				deb.prints(clss_train_unique)
-				deb.prints(clss_val_unique)
-
-				deb.prints(clss_train_count)
-				deb.prints(clss_val_count)
-
-				clss_train_count_in_val=clss_train_count[np.isin(clss_train_unique,clss_val_unique)]
-				percentages=clss_val_count/clss_train_count_in_val
-				deb.prints(percentages)
-				#if np.any(percentages<0.1) or np.any(percentages>0.3):
-				if np.any(percentages>0.26):
-					pass
-				else:
-					break				
-
-		deb.prints(self.patches['val']['idx'].shape)
-
-		
-		deb.prints(self.patches['val']['in'].shape)
-		#deb.prints(data.patches['val']['label'].shape)
-		
-		self.patches['train']['in']=np.delete(self.patches['train']['in'],self.patches['val']['idx'],axis=0)
-		self.patches['train']['label']=np.delete(self.patches['train']['label'],self.patches['val']['idx'],axis=0)
-		#deb.prints(data.patches['train']['in'].shape)
-		#deb.prints(data.patches['train']['label'].shape)
-		'''
-		if type(self) is DatasetWithCoords:
-			if mode=='random':
-				self.patches['val']['coords'] =  self.patches['train']['coords'][self.patches['val']['idx']]
-			
-			self.patches['train']['coords']=np.delete(self.patches['train']['coords'],self.patches['val']['idx'],axis=0)
-
-			ic(self.patches['train']['coords'].shape)
-			ic(self.patches['val']['coords'].shape)
-		'''
-	def semantic_balance(self,samples_per_class=500,label_type='Nto1'): # samples mean sequence of patches. Keep
-		print("data.semantic_balance")
-		# Count test
-		patch_count=np.zeros(self.class_n)
-		if label_type == 'NtoN':
-			patch_count_axis = (1,2,3)
-			rotation_axis = (2,3)
-		elif label_type == 'Nto1':	
-			patch_count_axis = (1,2)
-			rotation_axis = (1,2)
-		for clss in range(self.class_n):
-			patch_count[clss]=np.count_nonzero(np.isin(self.patches['test']['label'].argmax(axis=-1),clss).sum(axis=patch_count_axis))
-		deb.prints(patch_count.shape)
-		print("Test",patch_count)
-		
-		# Count train
-		patch_count=np.zeros(self.class_n)
-
-		for clss in range(self.class_n):
-			patch_count[clss]=np.count_nonzero(np.isin(self.patches['train']['label'].argmax(axis=-1),clss).sum(axis=patch_count_axis))
-		deb.prints(patch_count.shape)
-		print("Train",patch_count)
-		
-		# Start balancing
-		balance={}
-		balance["out_n"]=(self.class_n-1)*samples_per_class
-		balance["out_in"]=np.zeros((balance["out_n"],) + self.patches["train"]["in"].shape[1::])
-
-		balance["out_labels"]=np.zeros((balance["out_n"],) + self.patches["train"]["label"].shape[1::])
-
-		label_int=self.patches['train']['label'].argmax(axis=-1)
-		labels_flat=np.reshape(label_int,(label_int.shape[0],np.prod(label_int.shape[1:])))
-		k=0
-
-#		for clss in range(1,self.class_n):
-		for clss in range(0,self.class_n-1):
-
-			ic(patch_count[clss])
-			if patch_count[clss]==0:
-				continue
-			print(labels_flat.shape)
-			print(clss)
-			#print((np.count_nonzero(np.isin(labels_flat,clss))>0).shape)
-			idxs=np.any(labels_flat==clss,axis=1)
-			print(idxs.shape,idxs.dtype)
-			#labels_flat[np.count_nonzero(np.isin(labels_flat,clss))>0]
-
-			balance["in"]=self.patches['train']['in'][idxs]
-			balance["label"]=self.patches['train']['label'][idxs]
-
-
-			deb.prints(clss)
-			if balance["label"].shape[0]>samples_per_class:
-				replace=False
-				index_squeezed=range(balance["label"].shape[0])
-				index_squeezed = np.random.choice(index_squeezed, samples_per_class, replace=replace)
-				#print(idxs.shape,index_squeezed.shape)
-				balance["out_labels"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["label"][index_squeezed]
-				balance["out_in"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["in"][index_squeezed]
-			else:
-
-				augmented_manipulations=False
-				if augmented_manipulations==True:
-					augmented_data = balance["in"]
-					augmented_labels = balance["label"]
-
-					cont_transf = 0
-					for i in range(int(samples_per_class/balance["label"].shape[0] - 1)):                
-						augmented_data_temp = balance["in"]
-						augmented_label_temp = balance["label"]
-						
-						if cont_transf == 0:
-							augmented_data_temp = np.rot90(augmented_data_temp,1,(2,3))
-							augmented_label_temp = np.rot90(augmented_label_temp,1,rotation_axis)
-						
-						elif cont_transf == 1:
-							augmented_data_temp = np.rot90(augmented_data_temp,2,(2,3))
-							augmented_label_temp = np.rot90(augmented_label_temp,2,rotation_axis)
-
-						elif cont_transf == 2:
-							augmented_data_temp = np.flip(augmented_data_temp,2)
-							augmented_label_temp = np.flip(augmented_label_temp,rotation_axis[0])
-							
-						elif cont_transf == 3:
-							augmented_data_temp = np.flip(augmented_data_temp,3)
-							augmented_label_temp = np.flip(augmented_label_temp,rotation_axis[1])
-						
-						elif cont_transf == 4:
-							augmented_data_temp = np.rot90(augmented_data_temp,3,(2,3))
-							augmented_label_temp = np.rot90(augmented_label_temp,3,rotation_axis)
-							
-						elif cont_transf == 5:
-							augmented_data_temp = augmented_data_temp
-							augmented_label_temp = augmented_label_temp
-							
-						cont_transf+=1
-						if cont_transf==6:
-							cont_transf = 0
-						print(augmented_data.shape,augmented_data_temp.shape)				
-						augmented_data = np.vstack((augmented_data,augmented_data_temp))
-						augmented_labels = np.vstack((augmented_labels,augmented_label_temp))
-						
-		#            augmented_labels_temp = np.tile(clss_labels,samples_per_class/num_samples )
-					#print(augmented_data.shape)
-					#print(augmented_labels.shape)
-					index = range(augmented_data.shape[0])
-					index = np.random.choice(index, samples_per_class, replace=True)
-					balance["out_labels"][k*samples_per_class:k*samples_per_class + samples_per_class] = augmented_labels[index]
-					balance["out_in"][k*samples_per_class:k*samples_per_class + samples_per_class] = augmented_data[index]
-				else:
-					#pdb.set_trace()
-					replace=True
-					index = range(balance["label"].shape[0])
-					index = np.random.choice(index, samples_per_class, replace=replace)
-					balance["out_labels"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["label"][index]
-					balance["out_in"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["in"][index]
-
-			k+=1
-		
-		idx = np.random.permutation(balance["out_labels"].shape[0])
-		self.patches['train']['in'] = balance["out_in"][idx]
-		self.patches['train']['label'] = balance["out_labels"][idx]
-		
-		print("Balanced train unique (Patches):")
-		deb.prints(self.patches['train']['label'].shape)
-		deb.prints(np.unique(self.patches['train']['label'].argmax(axis=-1),return_counts=True))
-		# Replicate
-		#balance={}
-		#for clss in range(1,self.class_n):
-		#	balance["data"]=data["train"]["in"][]
-			
-
-		#train_flat=np.reshape(self.patches['train']['label'],(self.patches['train']['label'].shape[0],np.prod(self.patches['train']['label'].shape[1:])))
-		#deb.prints(train_flat.shape)
-
-		#unique,counts=np.unique(train_flat,axis=1,return_counts=True)
-		#print(unique,counts)
 	def reloadLabel(self, train=False):
 		self.full_label_test = np.load(self.path['v'] / 'full_ims' / 'full_label_test.npy').astype(np.uint8)
 		self.full_label_test = self.full_label_test[-1]
@@ -1080,47 +572,47 @@ class DatasetWithCoords(Dataset):
 		if paramsTrain.dataset == 'lm':
 			if paramsTrain.seq_date=='jan':
 				self.dataset_date = lm_labeled_dates[7]
-				l2_date = l2_labeled_dates[3]
+				
 
 			elif paramsTrain.seq_date=='feb':
 				self.dataset_date = lm_labeled_dates[8]
-				l2_date = l2_labeled_dates[4]
+				
 
 			elif paramsTrain.seq_date=='mar':
 				self.dataset_date = lm_labeled_dates[9]
-				l2_date = l2_labeled_dates[5]
+				
 
 			elif paramsTrain.seq_date=='apr':
 				self.dataset_date = lm_labeled_dates[10]
-				l2_date = l2_labeled_dates[6]
+				
 
 			elif paramsTrain.seq_date=='may':
 				self.dataset_date = lm_labeled_dates[11]
-				l2_date = l2_labeled_dates[7]
+				
 
 			elif paramsTrain.seq_date=='jun':
 				self.dataset_date = lm_labeled_dates[0]
-				l2_date = l2_labeled_dates[8]
+				
 
 			elif paramsTrain.seq_date=='jul':
 				self.dataset_date = lm_labeled_dates[1]
-				l2_date = l2_labeled_dates[9]
+				
 
 			elif paramsTrain.seq_date=='aug':
 				self.dataset_date = lm_labeled_dates[2]
-				l2_date = l2_labeled_dates[10]
+				
 
 			elif paramsTrain.seq_date=='sep':
 				self.dataset_date = lm_labeled_dates[3]
-				l2_date = l2_labeled_dates[11]
+				
 
 			elif paramsTrain.seq_date=='oct':
 				self.dataset_date = lm_labeled_dates[4]
-				l2_date = l2_labeled_dates[0]
+				
 
 			elif paramsTrain.seq_date=='nov':
 				self.dataset_date = lm_labeled_dates[5]
-				l2_date = l2_labeled_dates[1]
+				
 
 			if paramsTrain.seq_date=='dec':
 			#dec

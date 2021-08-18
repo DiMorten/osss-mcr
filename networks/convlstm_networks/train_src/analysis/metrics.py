@@ -8,7 +8,7 @@ import numpy as np
 from icecream import ic
 import pdb
 class Metrics():
-    def plotROCCurve(self, y_test, y_pred, modelId, nameId):
+    def plotROCCurve(self, y_test, y_pred, modelId, nameId, unknown_clss_id = 39):
         print("y_test.shape", y_test.shape)
         print("y_pred.shape", y_pred.shape)
         print("y_test.dtype", y_test.dtype)
@@ -16,8 +16,8 @@ class Metrics():
         deb.prints(np.unique(y_test))   
         deb.prints(np.unique(y_pred))
         y_test = y_test.copy()
-        y_test[y_test!=39] = 0
-        y_test[y_test==39] = 1
+        y_test[y_test!=unknown_clss_id] = 0
+        y_test[y_test==unknown_clss_id] = 1
         deb.prints(np.unique(y_test))   
         deb.prints(np.unique(y_pred))
 
