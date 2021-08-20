@@ -351,7 +351,9 @@ class DatasetWithCoords(Dataset):
 
 		# save dicts
 		if saveDicts == True:
-			dict_filename = "results/label_translations/new_labels2labels_"+self.ds.name+"_"+self.ds.im_list[-1]+".pkl" 
+			folder = "results/label_translations/"
+			pathlib.Path(folder).mkdir(parents=True, exist_ok=True)
+			dict_filename = folder + "new_labels2labels_"+self.ds.name+"_"+self.ds.im_list[-1]+".pkl" 
 			deb.prints(dict_filename)
 			f = open(dict_filename, "wb")
 			pickle.dump(self.new_labels2labels, f)

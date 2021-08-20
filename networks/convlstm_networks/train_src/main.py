@@ -243,7 +243,8 @@ if __name__ == '__main__':
 
 	if paramsTrain.coordsExtract == True:
 		patchExtractor.extract()
-
+	del patchExtractor
+	
 	trainTest.setData()
 
 

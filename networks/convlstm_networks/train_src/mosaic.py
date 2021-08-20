@@ -355,16 +355,16 @@ class MosaicHighRAM(Mosaic):
 	#		self.postProcessing = PostProcessing()
 	#		self.postProcessing.openSetActivate()
 
-	#		test_pred_proba_patches = self.postProcessing.predict(self.model, patches_in)
+	#		pred_proba_patches = self.postProcessing.predict(self.model, patches_in)
 
 			#self.postProcessing.load_decoder_features(self.model, patches_in, )
 			if self.pr.open_set_mode == True:
-				self.test_pred_proba_patches = self.postProcessing.load_intermediate_features(
+				self.pred_proba_patches = self.postProcessing.load_intermediate_features(
 					self.model, patches_in, self.pred_logits_patches, debug = 0)	
 			
-				self.test_pred_proba_patches = self.test_pred_proba_patches.astype(self.pr.prediction_dtype)
+				self.pred_proba_patches = self.pred_proba_patches.astype(self.pr.prediction_dtype)
 
-				ic(self.test_pred_proba_patches.dtype, self.test_pred_proba_patches.shape)
+				ic(self.pred_proba_patches.dtype, self.pred_proba_patches.shape)
 			ic(self.count_mask)
 			self.count_mask = 0
 			self.count_mask_batch = 0
@@ -460,7 +460,7 @@ class MosaicHighRAM(Mosaic):
 					pred_cl = pred_logits.argmax(axis=-1)
 
 					if self.pr.open_set_mode == True: # do in postProcessing
-						self.test_pred_proba = np.squeeze(self.test_pred_proba_patches[self.count_mask_batch])
+						self.test_pred_proba = np.squeeze(self.pred_proba_patches[self.count_mask_batch])
 
 
 					x, y = pred_cl.shape
