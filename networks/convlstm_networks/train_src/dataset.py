@@ -120,6 +120,8 @@ class Dataset(object):
 		#should be in another object
 		self.padded_dates = []
 
+		self.save_dicts = True
+
 
 	def batch_label_to_one_hot(self,im):
 		im_one_hot=np.zeros(im.shape+(self.class_n,))
@@ -195,7 +197,7 @@ class DatasetWithCoords(Dataset):
 		self.full_label_test = np.load(self.path['v'] / 'full_ims' / 'full_label_test.npy').astype(np.uint8)
 
 
-		self.labelPreprocess()
+		self.labelPreprocess(saveDicts = self.save_dicts)
 
 		self.patches['train']['n'] = self.patches['train']['coords'].shape[0]
 		self.patches['train']['idx']=range(self.patches['train']['n'])
@@ -349,7 +351,7 @@ class DatasetWithCoords(Dataset):
 
 		# save dicts
 		if saveDicts == True:
-			dict_filename = "new_labels2labels_"+self.ds.name+"_"+self.ds.im_list[-1]+".pkl" 
+			dict_filename = "results/label_translations/new_labels2labels_"+self.ds.name+"_"+self.ds.im_list[-1]+".pkl" 
 			deb.prints(dict_filename)
 			f = open(dict_filename, "wb")
 			pickle.dump(self.new_labels2labels, f)

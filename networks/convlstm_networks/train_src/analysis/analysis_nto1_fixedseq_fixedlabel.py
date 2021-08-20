@@ -471,7 +471,7 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 
 				data = datasetClass(paramsTrain = paramsTrain, ds = ds,
 					dotys_sin_cos = dotys_sin_cos)
-					
+				data.save_dicts = False
 				data.create_load()
 				paramsTrain.unknown_classes = data.unknown_classes
 				ic(os.path.dirname(os.path.abspath(__file__)))
@@ -746,7 +746,7 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 			openModel.appendToSaveNameId('_'+paramsTrain.dataset)
 			openModel.setModelSaveNameID(paramsTrain.seq_date, paramsTrain.dataset)
 			if paramsAnalysis.loadOpenResults == False:
-
+				ic(label_train.shape, predictions_train.shape, train_pred_proba.shape)
 				openModel.fit(label_train, predictions_train, train_pred_proba)
 				'''
 				deb.prints(predictions_train.shape)

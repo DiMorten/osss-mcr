@@ -41,9 +41,9 @@ class OpenSetMethod(): # abstract
     def setThreshold(self, threshold):
         self.threshold = threshold
     def storeScores(self):
-        np.save('scores_'+self.name+'_'+self.saveNameId+'.npy',self.scores)
+        np.save('results/open_set/scores/scores_'+self.name+'_'+self.saveNameId+'.npy',self.scores)
     def loadScores(self):
-        self.scores = np.load('scores_'+self.name+'_'+self.saveNameId+'.npy')
+        self.scores = np.load('results/open_set/scores/scores_'+self.name+'_'+self.saveNameId+'.npy')
     def appendToSaveNameId(self, saveNameId):
         self.saveNameId = self.saveNameId + saveNameId
 

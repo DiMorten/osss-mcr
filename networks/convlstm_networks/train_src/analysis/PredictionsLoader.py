@@ -278,7 +278,7 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabel(PredictionsLoaderModelNto1):
 		deb.prints(translate_mode)
 
 		if translate_mode==True:
-			translate_label_path = '../'
+			translate_label_path = '../results/label_translations/'
 			test_predictions = self.newLabel2labelTranslate(test_predictions, 
 					#translate_label_path + 'new_labels2labels_lm_20171209_S1.pkl',
 					translate_label_path + 'new_labels2labels_'+model_dataset+'_'+train_ds.im_list[-1]+'.pkl',

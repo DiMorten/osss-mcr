@@ -48,7 +48,7 @@ class Metrics():
         deb.prints(thresholds_by_tpr)
 #        pdb.set_trace()
         # ========================== Plot
-        np.savez("roc_curve_"+modelId+"_"+nameId+".npz", fpr=fpr, tpr=tpr)
+        np.savez("roc_curve/roc_curve_"+modelId+"_"+nameId+".npz", fpr=fpr, tpr=tpr)
         plt.figure(1)
         plt.plot([0, 1], [0, 1], 'k--')
 #        plt.plot(tpr, fpr, label = 'AUC = %0.2f' % roc_auc)
