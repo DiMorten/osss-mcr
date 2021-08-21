@@ -53,7 +53,7 @@ class ParamsTrain(Params):
 
 		self.getFullIms = False
 		self.coordsExtract = False
-		self.train = False
+		self.train = True
 #        self.model_load = True
 
 		self.train_overlap_percentage = 0
@@ -71,7 +71,7 @@ class ParamsTrain(Params):
 
 #		self.openSetMethod = None
 #		self.openSetMethod = 'OpenPCS' # leave this appart?
-		self.openSetMethod = 'OpenPCS++' # leave this appart?
+		self.openSetMethod = None # leave this appart?
 
 	
 		self.select_main_classes = True

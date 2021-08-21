@@ -156,9 +156,12 @@ class TrainTest():
 		print("=== SELECT VALIDATION SET FROM TRAIN SET")
 			
 		#val_set = False # fix this
+		ic(self.paramsTrain.val_set)
 		if self.paramsTrain.val_set==True:
 			deb.prints(self.paramsTrain.val_set_mode)
 			self.data.val_set_get(self.paramsTrain.val_set_mode,0.15)
+			ic(self.data.patches['val']['coords'].shape)
+#			pdb.set_trace()
 		else:
 			self.data.patches['val']={}
 
