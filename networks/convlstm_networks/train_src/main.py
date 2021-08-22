@@ -218,9 +218,9 @@ class TrainTest():
 
 #		self.model.evaluate(self.data)
 
-	def evaluate(self):
+	def evaluate(self, paramsMosaic):
 		self.data.loadMask()
-		self.model.evaluate(self.data, self.ds)
+		self.model.evaluate(self.data, self.ds, paramsMosaic)
 
 	'''
 	def fitOpenSet(self):
@@ -261,7 +261,9 @@ if __name__ == '__main__':
 		trainTest.modelLoad(paramsTrain.model_name_id)
 
 	# trainTest.fitOpenSet() 
-	trainTest.evaluate()
+
+	paramsMosaic = ParamsReconstruct(paramsTrain)
+	trainTest.evaluate(paramsMosaic)
 
 
 

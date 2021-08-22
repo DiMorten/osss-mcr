@@ -398,7 +398,7 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 
 
 
-	def evaluate(self, data, ds):	
+	def evaluate(self, data, ds, paramsMosaic):	
 		params_test = {
 			'dim': (self.model_t_len,self.patch_len,self.patch_len),
 			'label_dim': (self.patch_len,self.patch_len),
@@ -417,11 +417,13 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 		_, h,w,channel_n = data.full_ims_test.shape
 
 		data.reloadLabel()
-##		mosaic = Mosaic(self.paramsTrain)
+
+		self.paramsMosaic = paramsMosaic
+
 		if self.paramsTrain.openSetMethod == None:
-			mosaic = MosaicHighRAM(self.paramsTrain)
+			mosaic = MosaicHighRAM(self.paramsTrain, self.paramsMosaic)
 		else:
-			mosaic = MosaicHighRAMPostProcessing(self.paramsTrain)
+			mosaic = MosaicHighRAMPostProcessing(self.paramsTrain, self.paramsMosaic)
 
 		self.postProcessing = PostProcessingMosaic(self.paramsTrain, h, w)
 

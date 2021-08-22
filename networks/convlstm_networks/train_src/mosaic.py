@@ -34,12 +34,12 @@ from model_input_mode import MIMVarLabel_PaddedSeq, MIMFixed_PaddedSeq
 
 
 class Mosaic():
-	def __init__(self, paramsTrain):
-		self.pr = ParamsReconstruct(paramsTrain)
+	def __init__(self, paramsTrain, paramsMosaic):
 
 		self.paramsTrain = paramsTrain
-		self.pr = ParamsReconstruct(paramsTrain)
-		self.pb = ParamsBatchProcessing(paramsTrain, self.pr)
+		self.paramsMosaic = paramsMosaic
+#		self.paramsMosaic = ParamsReconstruct(paramsTrain)
+		self.pb = ParamsBatchProcessing(paramsTrain, self.paramsMosaic)
 
 
 		ic(paramsTrain.seq_date)
@@ -61,7 +61,7 @@ class Mosaic():
 				patch_mask = self.mask_pad[m-paramsTrain.patch_len//2:m+paramsTrain.patch_len//2 + paramsTrain.patch_len%2,
 						n-paramsTrain.patch_len//2:n+paramsTrain.patch_len//2 + paramsTrain.patch_len%2]
 
-				if self.pr.conditionType == 'test':
+				if self.paramsMosaic.conditionType == 'test':
 					condition = np.any(patch_mask==2)
 				else:
 					condition = True	
@@ -83,28 +83,28 @@ class Mosaic():
 					self.prediction_mosaic[m-self.stride//2:m+self.stride//2,n-self.stride//2:n+self.stride//2] = pred[0,self.overlap//2:x-self.overlap//2,self.overlap//2:y-self.overlap//2]
 
 		
-		if self.pr.open_set_mode == False:
+		if self.paramsMosaic.open_set_mode == False:
 			self.prediction_mosaic = self.prediction_logits_mosaic.argmax(axis=-1).astype(np.uint8)
 
-		if self.pr.add_padding_flag==True:
+		if self.paramsMosaic.add_padding_flag==True:
 			self.prediction_mosaic=self.prediction_mosaic[self.overlap//2:-step_row,self.overlap//2:-step_col]
 			self.scores_mosaic=self.scores_mosaic[self.overlap//2:-step_row,self.overlap//2:-step_col]
 		ic(self.prediction_mosaic.shape, self.mask_pad.shape, self.data.full_label_test.shape)
 		ic(np.unique(self.data.full_label_test, return_counts=True))
 		ic(np.unique(self.prediction_mosaic, return_counts=True))
-		self.pr.spatial_results_path.mkdir(parents=True, exist_ok=True)
-		np.save(self.pr.spatial_results_path / 
-			('prediction_mosaic_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.pr.overlap)+'.npy'),self.prediction_mosaic)
-		if self.pr.open_set_mode == True:
-			np.save(self.pr.spatial_results_path / 
-				('scores_mosaic_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.pr.overlap)+'.npy'),self.scores_mosaic)
+		self.paramsMosaic.spatial_results_path.mkdir(parents=True, exist_ok=True)
+		np.save(self.paramsMosaic.spatial_results_path / 
+			('prediction_mosaic_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.paramsMosaic.overlap)+'.npy'),self.prediction_mosaic)
+		if self.paramsMosaic.open_set_mode == True:
+			np.save(self.paramsMosaic.spatial_results_path / 
+				('scores_mosaic_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.paramsMosaic.overlap)+'.npy'),self.scores_mosaic)
 
 	def loadMosaic(self):
-		self.prediction_mosaic = np.load(self.pr.spatial_results_path / 
-			('prediction_mosaic_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.pr.overlap)+'.npy'))
-		if self.pr.open_set_mode == True:
-			self.postProcessing.openSetMosaic.scores_mosaic = np.load(self.pr.spatial_results_path / 
-				('scores_mosaic_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.pr.overlap)+'.npy'))
+		self.prediction_mosaic = np.load(self.paramsMosaic.spatial_results_path / 
+			('prediction_mosaic_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.paramsMosaic.overlap)+'.npy'))
+		if self.paramsMosaic.open_set_mode == True:
+			self.postProcessing.openSetMosaic.scores_mosaic = np.load(self.paramsMosaic.spatial_results_path / 
+				('scores_mosaic_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.paramsMosaic.overlap)+'.npy'))
 
 	def defineMosaicVars(self, h, w, class_n):
 		self.prediction_mosaic=np.ones((h,w)).astype(np.uint8)*255
@@ -119,10 +119,10 @@ class Mosaic():
 		self.mim = MIMFixed_PaddedSeq()
 		self.ds.setDotyFlag(False)
 
-		if self.pr.add_padding_flag==True:
+		if self.paramsMosaic.add_padding_flag==True:
 			self.data.full_ims_test, self.stride, step_row, step_col, self.overlap = seq_add_padding(
-				self.data.full_ims_test, paramsTrain.patch_len, self.pr.overlap)
-			self.mask_pad, _, _, _, _ = add_padding(self.data.mask,paramsTrain.patch_len,self.pr.overlap)
+				self.data.full_ims_test, paramsTrain.patch_len, self.paramsMosaic.overlap)
+			self.mask_pad, _, _, _, _ = add_padding(self.data.mask,paramsTrain.patch_len,self.paramsMosaic.overlap)
 		else:
 			self.mask_pad=self.data.mask.copy()
 			self.stride=paramsTrain.patch_len
@@ -142,7 +142,7 @@ class Mosaic():
 		self.data.setDateList(paramsTrain)
 		self.name_id = 'closed_set'
 
-		if self.pr.mosaic_flag == True:
+		if self.paramsMosaic.mosaic_flag == True:
 			self.loopOverImage(paramsTrain)
 		else:
 			self.loadMosaic()
@@ -197,7 +197,7 @@ class Mosaic():
 
 		ic(self.data.mask.shape, self.mask_pad.shape, self.label_mosaic.shape, self.prediction_mosaic.shape)
 		self.save_prediction_label_mosaic_Nto1(self.data.mask, 
-				self.pr.custom_colormap, self.pr.spatial_results_path, paramsTrain, 
+				self.paramsMosaic.custom_colormap, self.paramsMosaic.spatial_results_path, paramsTrain, 
 				small_classes_ignore=True)
 
 
@@ -216,7 +216,7 @@ class Mosaic():
 
 		self.label_mosaic[mask!=2]=255
 		
-		if self.pr.prediction_mask == True:
+		if self.paramsMosaic.prediction_mask == True:
 			self.prediction_mosaic[mask!=2]=255	
 		deb.prints(np.unique(self.label_mosaic,return_counts=True))
 		deb.prints(np.unique(self.prediction_mosaic,return_counts=True))
@@ -277,15 +277,15 @@ class Mosaic():
 		save_folder.mkdir(parents=True, exist_ok=True)
 		deb.prints(save_folder)
 
-		if self.pr.open_set_mode == True:
+		if self.paramsMosaic.open_set_mode == True:
 			tpr_threshold_names = ['0_1', '0_3', '0_5', '0_7', '0_9']
-			threshIdxName = "_TPR" + tpr_threshold_names[self.pr.threshold_idx]
+			threshIdxName = "_TPR" + tpr_threshold_names[self.paramsMosaic.threshold_idx]
 			prediction_savename = save_folder / ("prediction_t_" + paramsTrain.seq_date + "_" + str(paramsTrain.model_type) +
-				"_" + self.name_id+threshIdxName + "_overl" + str(self.pr.overlap) + "_" + self.pr.conditionType + ".png")
+				"_" + self.name_id+threshIdxName + "_overl" + str(self.paramsMosaic.overlap) + "_" + self.paramsMosaic.conditionType + ".png")
 
 		else:
 			prediction_savename = save_folder / ("prediction_t_" + paramsTrain.seq_date + "_" + str(paramsTrain.model_type) +
-				"_closedset_" + self.name_id + "_overl" + str(self.pr.overlap) + "_" + self.pr.conditionType + ".png")
+				"_closedset_" + self.name_id + "_overl" + str(self.paramsMosaic.overlap) + "_" + self.paramsMosaic.conditionType + ".png")
 
 		ic(prediction_savename)
 		print("saving...")
@@ -346,7 +346,7 @@ class MosaicHighRAM(Mosaic):
 			#pdb.set_trace()
 
 
-			self.pred_logits_patches = self.model.graph.predict(patches_in).astype(self.pr.prediction_dtype)
+			self.pred_logits_patches = self.model.graph.predict(patches_in).astype(self.paramsMosaic.prediction_dtype)
 			ic(self.pred_logits_patches.dtype)
 			ic(self.pred_logits_patches.shape)	
 
@@ -358,11 +358,11 @@ class MosaicHighRAM(Mosaic):
 	#		pred_proba_patches = self.postProcessing.predict(self.model, patches_in)
 
 			#self.postProcessing.load_decoder_features(self.model, patches_in, )
-			if self.pr.open_set_mode == True:
+			if self.paramsMosaic.open_set_mode == True:
 				self.pred_proba_patches = self.postProcessing.load_intermediate_features(
 					self.model, patches_in, self.pred_logits_patches, debug = 0)	
 			
-				self.pred_proba_patches = self.pred_proba_patches.astype(self.pr.prediction_dtype)
+				self.pred_proba_patches = self.pred_proba_patches.astype(self.paramsMosaic.prediction_dtype)
 
 				ic(self.pred_proba_patches.dtype, self.pred_proba_patches.shape)
 			ic(self.count_mask)
@@ -373,21 +373,21 @@ class MosaicHighRAM(Mosaic):
 
 			ic(np.unique(self.prediction_mosaic, return_counts=True))
 			##pdb.set_trace()
-			if self.pr.open_set_mode == False:
+			if self.paramsMosaic.open_set_mode == False:
 				self.prediction_mosaic = self.prediction_logits_mosaic.argmax(axis=-1).astype(np.uint8)
 				self.prediction_mosaic[self.mask_pad != 2] = 255
 			ic(np.unique(self.prediction_mosaic, return_counts=True))
 
-			if self.pr.add_padding_flag==True:
+			if self.paramsMosaic.add_padding_flag==True:
 				ic(prediction_mosaic.shape)
 				ic(self.overlap)
 				ic(step_row)
 				self.prediction_mosaic=self.prediction_mosaic[self.overlap//2:-step_row,self.overlap//2:-step_col]
 				self.postProcessing.openSet.scores_mosaic=self.postProcessing.openSetMosaic.scores_mosaic[self.overlap//2:-step_row,self.overlap//2:-step_col]
 
-			np.save('results/spatial_results/prediction_mosaic_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.pr.overlap)+'.npy',self.prediction_mosaic)
-			if self.pr.open_set_mode == True:
-				np.save('results/spatial_results/scores_mosaic_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.pr.overlap)+'.npy',self.postProcessing.openSetMosaic.scores_mosaic)
+			np.save('results/spatial_results/prediction_mosaic_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.paramsMosaic.overlap)+'.npy',self.prediction_mosaic)
+			if self.paramsMosaic.open_set_mode == True:
+				np.save('results/spatial_results/scores_mosaic_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.paramsMosaic.overlap)+'.npy',self.postProcessing.openSetMosaic.scores_mosaic)
 
 
 	def loopToGetInputPatchesInBatch(self):
@@ -399,7 +399,7 @@ class MosaicHighRAM(Mosaic):
 				patch_mask = self.mask_pad[m-self.paramsTrain.patch_len//2:m+self.paramsTrain.patch_len//2 + self.paramsTrain.patch_len%2,
 							n-self.paramsTrain.patch_len//2:n+self.paramsTrain.patch_len//2 + self.paramsTrain.patch_len%2]
 
-				if self.pr.conditionType == 'test':
+				if self.paramsMosaic.conditionType == 'test':
 					condition_masking = np.any(patch_mask==2)
 				else:
 					condition_masking = True
@@ -432,7 +432,7 @@ class MosaicHighRAM(Mosaic):
 			for n in range(self.paramsTrain.patch_len//2,self.w-self.paramsTrain.patch_len//2,self.stride):
 				patch_mask = self.mask_pad[m-self.paramsTrain.patch_len//2:m+self.paramsTrain.patch_len//2 + self.paramsTrain.patch_len%2,
 							n-self.paramsTrain.patch_len//2:n+self.paramsTrain.patch_len//2 + self.paramsTrain.patch_len%2]
-				if self.pr.conditionType == 'test':
+				if self.paramsMosaic.conditionType == 'test':
 					condition = np.any(patch_mask==2)
 				else:
 					condition = True			
@@ -447,7 +447,7 @@ class MosaicHighRAM(Mosaic):
 				patch_mask = self.mask_pad[m-self.paramsTrain.patch_len//2:m+self.paramsTrain.patch_len//2 + self.paramsTrain.patch_len%2,
 						n-self.paramsTrain.patch_len//2:n+self.paramsTrain.patch_len//2 + self.paramsTrain.patch_len%2]
 
-				if self.pr.conditionType == 'test':
+				if self.paramsMosaic.conditionType == 'test':
 					condition_masking = np.any(patch_mask==2)
 				else:
 					condition_masking = True	
@@ -459,14 +459,14 @@ class MosaicHighRAM(Mosaic):
 					pred_logits = np.squeeze(self.pred_logits_patches[self.count_mask_batch])
 					pred_cl = pred_logits.argmax(axis=-1)
 
-					if self.pr.open_set_mode == True: # do in postProcessing
+					if self.paramsMosaic.open_set_mode == True: # do in postProcessing
 						self.test_pred_proba = np.squeeze(self.pred_proba_patches[self.count_mask_batch])
 
 
 					x, y = pred_cl.shape
 					prediction_shape = pred_cl.shape
 
-					if self.pr.open_set_mode == True:
+					if self.paramsMosaic.open_set_mode == True:
 						if self.debug>-1: # do in postProcessing
 							
 							print('*'*20, "Starting openModel predict")
@@ -487,7 +487,7 @@ class MosaicHighRAM(Mosaic):
 						self.postProcessing.predictPatch(pred_cl, self.test_pred_proba, m, n, self.stride, self.overlap, debug = self.debug)
 						
 
-					if self.pr.overlap_mode == 'replace':
+					if self.paramsMosaic.overlap_mode == 'replace':
 						self.prediction_mosaic[m-self.stride//2:m+self.stride//2,n-self.stride//2:n+self.stride//2] = pred_cl[self.overlap//2:x-self.overlap//2,self.overlap//2:y-self.overlap//2]
 						self.prediction_logits_mosaic[m-self.stride//2:m+self.stride//2,n-self.stride//2:n+self.stride//2] = pred_logits[self.overlap//2:x-self.overlap//2,self.overlap//2:y-self.overlap//2]						
 					self.count_mask_batch += 1
@@ -515,7 +515,7 @@ class MosaicHighRAM(Mosaic):
 class MosaicHighRAMPostProcessing(MosaicHighRAM):
 	def create(self, paramsTrain, model, data, ds, postProcessing):
 		known_classes = [x + 1 for x in paramsTrain.known_classes]
-		if self.pr.open_set_mode == True:
+		if self.paramsMosaic.open_set_mode == True:
 			self.postProcessing = postProcessing
 			self.postProcessing.openSetActivate(paramsTrain.openSetMethod, known_classes)
 		super().create(paramsTrain, model, data, ds)
