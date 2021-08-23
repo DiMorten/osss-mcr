@@ -52,6 +52,7 @@ import matplotlib.pyplot as plt
 from dataSource import DataSource, SARSource, OpticalSource, Dataset, LEM, LEM2, CampoVerde, OpticalSourceWithClouds, Humidity
 from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixedLabelAllLabels, MIMFixed_PaddedSeq
 from parameters.parameters_reader import ParamsTrain
+from parameters.params_reconstruct import ParamsReconstruct
 
 from icecream import ic
 from monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerator
@@ -61,9 +62,9 @@ from dataset import Dataset, DatasetWithCoords
 from patch_extractor import PatchExtractor
 ic.configureOutput(includeContext=True)
 np.random.seed(2021)
-tf.random.set_seed(2021)
-tf.compat.v1.disable_eager_execution()
-tf.compat.v1.experimental.output_all_intermediates(True)
+#tf.random.set_seed(2021)
+#tf.compat.v1.disable_eager_execution()
+#tf.compat.v1.experimental.output_all_intermediates(True)
 
 def model_summary_print(s):
 	with open('model_summary.txt','w+') as f:

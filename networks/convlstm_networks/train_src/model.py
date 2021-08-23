@@ -255,6 +255,8 @@ class ModelFit(NetModel):
 
 		ic(data.full_ims_train.shape)
 		#pdb.set_trace()
+
+		ic(self.name)
 		history = self.applyFitMethod(data)
 
 		def PlotHistory(_model, feature, path_file = None):
@@ -271,6 +273,7 @@ class ModelFit(NetModel):
 
 		self.graph.save('model_best_fit2.h5')	
 		self.graph.save(self.name)	
+		ic(self.name)
 			
 
 	def applyFitMethod(self, data):

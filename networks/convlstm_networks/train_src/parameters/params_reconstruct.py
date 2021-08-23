@@ -9,7 +9,7 @@ class ParamsReconstruct():
 
 		self.mosaic_flag = True
 
-		self.open_set_mode = True
+		self.open_set_mode = False
 
 		self.prediction_mask = False
 #		self.conditionType = 'test'

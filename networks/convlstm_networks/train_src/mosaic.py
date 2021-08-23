@@ -203,7 +203,7 @@ class Mosaic():
 
 	def postProcess(self, paramsTrain):
 		self.prediction_mosaic = self.data.newLabel2labelTranslate(self.prediction_mosaic, 
-					'new_labels2labels_'+paramsTrain.dataset+'_'+self.data.dataset_date+'_S1.pkl')
+					'results/label_translations/new_labels2labels_'+paramsTrain.dataset+'_'+self.data.dataset_date+'_S1.pkl')
 
 	def getPostProcessingScores(self):
 		pass
@@ -479,7 +479,7 @@ class MosaicHighRAM(Mosaic):
 						# translate the preddictions.
 
 						pred_cl = self.data.newLabel2labelTranslate(pred_cl, 
-								'new_labels2labels_'+self.paramsTrain.dataset+'_'+self.data.dataset_date+'_S1.pkl',
+								'results/label_translations/new_labels2labels_'+self.paramsTrain.dataset+'_'+self.data.dataset_date+'_S1.pkl',
 								debug = self.debug)
 
 						if self.debug>0:

@@ -53,7 +53,7 @@ class ParamsTrain(Params):
 
 		self.getFullIms = False
 		self.coordsExtract = False
-		self.train = True
+		self.train = False
 #        self.model_load = True
 
 		self.train_overlap_percentage = 0
