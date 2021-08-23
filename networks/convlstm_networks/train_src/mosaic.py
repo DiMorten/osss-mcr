@@ -384,6 +384,7 @@ class MosaicHighRAM(Mosaic):
 				ic(step_row)
 				self.prediction_mosaic=self.prediction_mosaic[self.overlap//2:-step_row,self.overlap//2:-step_col]
 				self.postProcessing.openSet.scores_mosaic=self.postProcessing.openSetMosaic.scores_mosaic[self.overlap//2:-step_row,self.overlap//2:-step_col]
+			pathlib.Path('results/spatial_results').mkdir(parents=True, exist_ok=True)
 
 			np.save('results/spatial_results/prediction_mosaic_'+self.data.dataset_date+'_'+self.name_id+'_overl'+str(self.paramsMosaic.overlap)+'.npy',self.prediction_mosaic)
 			if self.paramsMosaic.open_set_mode == True:
