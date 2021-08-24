@@ -119,6 +119,9 @@ class TrainTest():
 		self.data = datasetClass(paramsTrain = self.paramsTrain, ds = self.ds,
 			dotys_sin_cos = self.dotys_sin_cos)
 		ic(self.data.class_n)
+
+		self.data.create_load()
+
 #		pdb.set_trace()
 	def setModel(self):
 		if self.paramsTrain.sliceFromCoords == False:
@@ -149,7 +152,6 @@ class TrainTest():
 		self.model_name = model_name_id
 		ic(self.model_name)
 
-		self.data.create_load()
 		
 		self.paramsTrain.class_n = self.data.class_n
 		ic(self.paramsTrain.class_n)
