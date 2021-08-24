@@ -1381,6 +1381,8 @@ elif dataset=='lm':
 #			experiment_groups=[['model_best_UUnet4ConvLSTM_len6_mar.h5']]	
 #			experiment_groups=[['model_lm_mar_nomask_good.h5']]	
 			experiment_groups=[['model_best_UUnetConvLSTM_mar_lm_nomode.h5']]	
+			experiment_groups=[['model_best_UUnetConvLSTM_mar_lm_dummy.h5']]	
+
 
 
 
