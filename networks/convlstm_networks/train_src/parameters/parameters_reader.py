@@ -44,7 +44,7 @@ class Params():
 		return self.__dict__
 
 class ParamsTrain(Params):
-	def __init__(self, folder_path):
+	def __init__(self, folder_path, **kwargs):
 		# 4 known classes
 #        self.openMode = 'ClosedSetGroupClasses'
 #        self.openMode = 'OpenSet'
@@ -70,8 +70,11 @@ class ParamsTrain(Params):
 
 
 #		self.openSetMethod = None
-#		self.openSetMethod = 'OpenPCS' # leave this appart?
-		self.openSetMethod = None # leave this appart?
+		if 'openSetMethod' in kwargs.keys():
+			self.openSetMethod = kwargs['openSetMethod']
+		else:
+			self.openSetMethod = 'OpenPCS' # leave this appart?
+#			self.openSetMethod = None # leave this appart?
 
 	
 		self.select_main_classes = True
@@ -227,7 +230,7 @@ class ParamsTrain(Params):
 			assert isinstance(str(self.model_type), str)
 			self.model_name_id = self.model_path / ('model_best_' + str(self.model_type) + '_' + \
 					self.seq_date + '_' + self.dataset + '_' + \
-					self.model_name + '.h5')
+					self.model_name + '_' + str(self.openSetMethod) + '.h5')
 
 		else:
 			self.model_name_id = self.model_path / 'model_best_fit2.h5'
