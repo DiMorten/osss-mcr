@@ -73,8 +73,8 @@ class ParamsTrain(Params):
 		if 'openSetMethod' in kwargs.keys():
 			self.openSetMethod = kwargs['openSetMethod']
 		else:
-#			self.openSetMethod = 'OpenPCS++' 
-			self.openSetMethod = 'OpenPCS' # leave this appart?
+			self.openSetMethod = 'OpenPCS++' 
+#			self.openSetMethod = 'OpenPCS' # leave this appart?
 
 #			self.openSetMethod = None # leave this appart?
 
