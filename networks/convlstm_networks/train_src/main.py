@@ -62,9 +62,9 @@ from dataset import Dataset, DatasetWithCoords
 from patch_extractor import PatchExtractor
 ic.configureOutput(includeContext=True)
 np.random.seed(2021)
-#tf.random.set_seed(2021)
-#tf.compat.v1.disable_eager_execution()
-#tf.compat.v1.experimental.output_all_intermediates(True)
+tf.random.set_seed(2021)
+tf.compat.v1.disable_eager_execution()
+tf.compat.v1.experimental.output_all_intermediates(True)
 
 def model_summary_print(s):
 	with open('model_summary.txt','w+') as f:
@@ -128,8 +128,9 @@ class TrainTest():
 						) # , self.data = self.data
 		self.model.class_n=self.data.class_n-1 # Model is designed without background class
 
-		self.modelSavePath = Path('../results/convlstm_results/model/lm/')
-		self.model.name = self.modelSavePath / self.model_name	
+#		self.modelSavePath = Path('../results/convlstm_results/model/lm/')
+#		self.model.name = self.modelSavePath / self.model_name	
+		self.model.name = self.model_name
 		ic(self.model.name)	
 
 		ic(self.model.class_n)
