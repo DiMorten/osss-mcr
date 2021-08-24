@@ -53,7 +53,7 @@ class ParamsTrain(Params):
 
 		self.getFullIms = False
 		self.coordsExtract = False
-		self.train = True
+		self.train = False
 #        self.model_load = True
 
 		self.train_overlap_percentage = 0
@@ -223,8 +223,9 @@ class ParamsTrain(Params):
 		deb.prints(self.seq_mode)
 		deb.prints(self.mim)
 
-		self.modelNameSpecify = True
 		self.model_path = Path('../results/convlstm_results/model/lm/')
+
+		self.modelNameSpecify = True
 
 		if self.modelNameSpecify == True:
 			assert isinstance(str(self.model_type), str)
