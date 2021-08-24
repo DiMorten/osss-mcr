@@ -586,12 +586,12 @@ class OpenSetMethodGaussian(OpenSetMethod):
         deb.prints(cwd)
         #pdb.set_trace()
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        ic(path + "models_"+nameID+".pckl")
-        ic(path + "covariance_matrix_list_"+nameID+".pckl")
+        ic(path + "models/models_"+nameID+".pckl")
+        ic(path + "covariance_matrix/covariance_matrix_list_"+nameID+".pckl")
 
 #        pdb.set_trace()
-        self.model_list = self.listLoadFromPickle(path + "models_"+nameID+".pckl")
-        self.covariance_matrix_list = self.listLoadFromPickle(path + "covariance_matrix_list_"+nameID+".pckl")
+        self.model_list = self.listLoadFromPickle(path + "models/models_"+nameID+".pckl")
+        self.covariance_matrix_list = self.listLoadFromPickle(path + "covariance_matrix/covariance_matrix_list_"+nameID+".pckl")
         self.fittedFlag = True
 
         

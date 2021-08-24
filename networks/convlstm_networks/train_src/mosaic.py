@@ -519,6 +519,8 @@ class MosaicHighRAMPostProcessing(MosaicHighRAM):
 		if self.paramsMosaic.open_set_mode == True:
 			self.postProcessing = postProcessing
 			self.postProcessing.openSetActivate(paramsTrain.openSetMethod, known_classes)
+			#pdb.set_trace()
+
 		super().create(paramsTrain, model, data, ds)
 
 	def getFlatLabel(self):

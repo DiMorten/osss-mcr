@@ -74,6 +74,8 @@ class ParamsTrain(Params):
 			self.openSetMethod = kwargs['openSetMethod']
 		else:
 			self.openSetMethod = 'OpenPCS' # leave this appart?
+			self.openSetMethod = 'OpenPCS++' # leave this appart?
+
 #			self.openSetMethod = None # leave this appart?
 
 	
@@ -229,12 +231,15 @@ class ParamsTrain(Params):
 
 		if self.modelNameSpecify == True:
 			assert isinstance(str(self.model_type), str)
+#			self.model_name_id = self.model_path / ('model_best_' + str(self.model_type) + '_' + \
+#					self.seq_date + '_' + self.dataset + '_' + \
+#					self.model_name + '_' + str(self.openSetMethod) + '.h5')
 			self.model_name_id = self.model_path / ('model_best_' + str(self.model_type) + '_' + \
 					self.seq_date + '_' + self.dataset + '_' + \
-					self.model_name + '_' + str(self.openSetMethod) + '.h5')
+					self.model_name + '.h5')
 
 		else:
-			self.model_name_id = self.model_path / 'model_best_fit2.h5'
+#			self.model_name_id = self.model_path / 'model_best_fit2.h5'
 #			self.model_name_id = self.model_path / 'model_lm_mar_nomask_good.h5'
 ##			self.model_name_id = self.model_path / 'model_best_UUnetConvLSTM_mar_lm_nomode.h5'
 

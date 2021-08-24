@@ -521,8 +521,8 @@ class OpenSetMethodGaussian(OpenSetMethod):
             print("*"*30, "List was saved in pickle")
 
         #self.setModelSaveNameID()
-        save_list_in_pickle(self.model_list, "models_"+self.nameID+".pckl")
-        save_list_in_pickle(self.covariance_matrix_list, "covariance_matrix_list_"+self.nameID+".pckl")
+        save_list_in_pickle(self.model_list, "models/models_"+self.nameID+".pckl")
+        save_list_in_pickle(self.covariance_matrix_list, "covariance_matrix/covariance_matrix_list_"+self.nameID+".pckl")
             
         #predictions_test[pred_proba_max < self.threshold] = self.loco_class + 1
 
@@ -586,12 +586,12 @@ class OpenSetMethodGaussian(OpenSetMethod):
         deb.prints(cwd)
         #pdb.set_trace()
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        ic(path + "models_"+nameID+".pckl")
-        ic(path + "covariance_matrix_list_"+nameID+".pckl")
+        ic(path + "models/models_"+nameID+".pckl")
+        ic(path + "covariance_matrix/covariance_matrix_list_"+nameID+".pckl")
 
 #        pdb.set_trace()
-        self.model_list = self.listLoadFromPickle(path + "models_"+nameID+".pckl")
-        self.covariance_matrix_list = self.listLoadFromPickle(path + "covariance_matrix_list_"+nameID+".pckl")
+        self.model_list = self.listLoadFromPickle(path + "models/models_"+nameID+".pckl")
+        self.covariance_matrix_list = self.listLoadFromPickle(path + "covariance_matrix/covariance_matrix_list_"+nameID+".pckl")
         self.fittedFlag = True
 
         

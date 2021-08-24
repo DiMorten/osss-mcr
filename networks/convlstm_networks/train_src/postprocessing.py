@@ -2,7 +2,8 @@ from tensorflow.keras.layers import Input, Dense, Conv2D, MaxPool2D, Flatten, Dr
 from tensorflow.keras.models import Model
 import deb
 import numpy as np
-
+import sys
+from icecream import ic
 from open_set import OpenPCS, SoftmaxThresholding
 class PostProcessingMosaic():
     def __init__(self, paramsTrain, h, w):
@@ -52,7 +53,9 @@ class OpenSetMosaic():
             return 0
 
         except:
-            print("Exception: No fitted model method")
+            print("Exception: No fitted model method.")
+            ic(self.openModel.nameID)
+            sys.exit()
             return 1 # error
     def applyThreshold(self, prediction_mosaic, debug = 0):
         return self.openModel.applyThreshold(prediction_mosaic, self.scores_mosaic, debug = debug)
