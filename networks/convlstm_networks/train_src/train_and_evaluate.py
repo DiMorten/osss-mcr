@@ -126,13 +126,17 @@ class TrainTest():
 		self.data.loadMask()
 
 #		pdb.set_trace()
-	def setModel(self):
+	def setModel(self, model_name_id):
+
+		self.model_name = model_name_id
 
 		self.model = ModelLoadGeneratorWithCoords(paramsTrain = self.paramsTrain, ds = self.ds, 
 						) 
 		self.model.class_n=self.data.class_n-1 # Model is designed without background class
 
-		self.model.name = self.model_name
+		self.model.name = model_name_id
+		ic(self.model.name)
+
 		ic(self.model.name)	
 
 		ic(self.model.class_n)
@@ -142,10 +146,8 @@ class TrainTest():
 		self.model.build(self.paramsTrain.model_type, self.data.class_n - 1) # no bcknd
 
 
-	def preprocess(self, model_name_id):
+	def preprocess(self):
 		
-		self.model_name = model_name_id
-		ic(self.model_name)
 
 		
 		self.paramsTrain.class_n = self.data.class_n
@@ -212,12 +214,6 @@ class TrainTest():
 
 		self.model.train(self.data)
 
-	def modelLoad(self, model_name_id):
-
-		self.model_name = model_name_id
-		self.model.graph=load_model(self.model_name, compile=False)		
-
-#		self.model.evaluate(self.data)
 
 
 	def setPostProcessing(self):
@@ -294,14 +290,14 @@ class TrainTest():
 		
 		self.setData() 
 
-		self.preprocess(self.paramsTrain.model_name_id) # validation set, and data augmentation
+		self.preprocess() # validation set, and data augmentation
 
-		self.setModel()
+		self.setModel(self.paramsTrain.model_name_id)
 
 		if self.paramsTrain.train == True:
 			self.train()
 		else:
-			self.modelLoad(self.paramsTrain.model_name_id)
+			self.model.graph = load_model(self.paramsTrain.model_name_id, compile=False)
 
 		paramsMosaic = ParamsReconstruct(self.paramsTrain)
 
