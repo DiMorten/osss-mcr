@@ -29,7 +29,7 @@ from dataset import Dataset, DatasetWithCoords
 deb.prints(deb.__file__)
 from open_set import SoftmaxThresholding, OpenPCS, OpenGMMS
 import argparse
-from parameters.parameters_reader import ParamsTrain, ParamsAnalysis
+from parameters.params_train import ParamsTrain, ParamsAnalysis
 import time
 from metrics import Metrics
 from scipy import optimize

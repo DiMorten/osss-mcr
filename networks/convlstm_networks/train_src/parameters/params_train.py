@@ -92,16 +92,12 @@ class ParamsTrain(Params):
 			json_path = folder_path+'no_mode.json'
 
 		# DATASET AND DATA
-		self.dataset = 'lm'
-		#self.seq_date = 'jun'
-#        self.seq_date = 'mar'
-#        self.seq_date = 'dec'
+		self.dataset = 'lm'  if ('dataset' not in kwargs.keys()) else kwargs['dataset'] # LM: jun, mar, dec. CV: jun, sep
 
-#        self.seq_date = 'jun'
-#        self.seq_date = 'sep'
-		self.seq_date = 'mar'
+		self.seq_date = 'mar'  if ('seq_date' not in kwargs.keys()) else kwargs['seq_date']
 		
 		self.model_name = 'dummy'
+
 		self.learning_rate = 0.0001
 		self.id = "checking_deleted_files_ok"
 		

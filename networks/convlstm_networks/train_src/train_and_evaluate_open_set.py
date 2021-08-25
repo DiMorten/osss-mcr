@@ -1,7 +1,7 @@
 from dataSource import DataSource, SARSource, OpticalSource, Dataset, LEM, LEM2, CampoVerde, OpticalSourceWithClouds, Humidity
 from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixedLabelAllLabels, MIMFixed_PaddedSeq
-from parameters.parameters_reader import ParamsTrain
-from parameters.params_reconstruct import ParamsReconstruct
+from parameters.params_train import ParamsTrain
+from parameters.params_mosaic import ParamsReconstruct
 from icecream import ic
 from monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerator
 from model import ModelLoadGeneratorWithCoords
@@ -18,7 +18,9 @@ if __name__ == '__main__':
 		'train': False,
 		'openSetMethod': 'OpenPCS++',
 		'openSetLoadModel': False,
-		'selectMainClasses': True
+		'selectMainClasses': True,
+		'dataset': 'lm',
+		'seq_date': 'mar'		
 	}
 
 	paramsTrain = ParamsTrain('parameters/', **paramsTrainCustom)

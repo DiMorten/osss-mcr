@@ -29,7 +29,7 @@ from dataSource import DataSource, SARSource, OpticalSource, Dataset, LEM, LEM2,
 #sys.path.append('../')
 from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixed_PaddedSeq
 import deb
-from parameters.parameters_reader import ParamsTrain, ParamsAnalysis
+from parameters.params_train import ParamsTrain, ParamsAnalysis
 
 tf.compat.v1.disable_eager_execution()
 tf.compat.v1.experimental.output_all_intermediates(True)

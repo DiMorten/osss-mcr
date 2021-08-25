@@ -53,8 +53,8 @@ import matplotlib.pyplot as plt
 # sys.path.append('../../../dataset/dataset/patches_extract_script/')
 from dataSource import DataSource, SARSource, OpticalSource, Dataset, LEM, LEM2, CampoVerde, OpticalSourceWithClouds, Humidity
 from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixedLabelAllLabels, MIMFixed_PaddedSeq
-from parameters.parameters_reader import ParamsTrain
-from parameters.params_reconstruct import ParamsReconstruct
+from parameters.params_train import ParamsTrain
+from parameters.params_mosaic import ParamsReconstruct
 
 from icecream import ic
 from monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerator
@@ -238,6 +238,7 @@ class TrainTest():
 
 		if self.paramsTrain.openSetMethod == None:
 			self.mosaic = MosaicHighRAM(self.paramsTrain, paramsMosaic)
+			self.postProcessing = None
 		else:
 			self.mosaic = MosaicHighRAMPostProcessing(self.paramsTrain, paramsMosaic)
 
@@ -323,7 +324,9 @@ if __name__ == '__main__':
 		'train': True,
 		'openSetMethod': None, # Options: None, OpenPCS, OpenPCS++
 #		'openSetLoadModel': True,
-		'selectMainClasses': True
+		'selectMainClasses': True,
+		'dataset': 'lm', # lm: L Eduardo Magalhaes.
+		'seq_date': 'mar'
 	}
 
 	paramsTrain = ParamsTrain('parameters/', **paramsTrainCustom)

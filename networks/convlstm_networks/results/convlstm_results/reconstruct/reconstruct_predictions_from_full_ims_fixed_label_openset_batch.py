@@ -23,9 +23,9 @@ import time
 #print(sys.path)
 from PredictionsLoader import PredictionsLoaderNPY, PredictionsLoaderModel, PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet
 from icecream import ic 
-from parameters.parameters_reader import ParamsTrain, ParamsAnalysis
+from parameters.params_train import ParamsTrain, ParamsAnalysis
 from analysis.open_set import SoftmaxThresholding, OpenPCS
-from params_reconstruct import ParamsReconstruct
+from params_mosaic import ParamsReconstruct
 from params_batchprocessing import ParamsBatchProcessing
 
 ic.configureOutput(includeContext=True, prefix='[@debug] ')

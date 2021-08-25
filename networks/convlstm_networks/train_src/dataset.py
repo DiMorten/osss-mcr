@@ -49,7 +49,7 @@ import matplotlib.pyplot as plt
 sys.path.append('../../../dataset/dataset/patches_extract_script/')
 from dataSource import DataSource, SARSource, OpticalSource, Dataset, LEM, LEM2, CampoVerde, OpticalSourceWithClouds, Humidity
 from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixedLabelAllLabels, MIMFixed_PaddedSeq
-from parameters.parameters_reader import ParamsTrain
+from parameters.params_train import ParamsTrain
 
 from icecream import ic
 from monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerator
@@ -251,15 +251,15 @@ class DatasetWithCoords(Dataset):
 		unique_sorted = sorted(zip(count_percentage, unique), reverse=True)
 		unique_sorted = np.asarray(unique_sorted)
 		ic(unique_sorted)
-		if self.paramsTrain.openMode != 'NoMode':
-			cum_percentage = 0.
+		if self.paramsTrain.selectMainClasses == True:
+			cumulative_percentage = 0.
 			self.paramsTrain.known_classes = []
 			ic(unique.shape[0])
 			ic(self.paramsTrain.known_classes_percentage)
 			for idx in range(unique.shape[0]):
-				cum_percentage += unique_sorted[idx, 0]
-				ic(idx, unique_sorted[idx], cum_percentage)
-				if cum_percentage<self.paramsTrain.known_classes_percentage:
+				cumulative_percentage += unique_sorted[idx, 0]
+				ic(idx, unique_sorted[idx], cumulative_percentage)
+				if cumulative_percentage<self.paramsTrain.known_classes_percentage:
 					self.paramsTrain.known_classes.append(int(unique_sorted[idx, 1]))
 				else:
 					break
@@ -284,7 +284,7 @@ class DatasetWithCoords(Dataset):
 		ic(np.unique(self.full_label_train, return_counts=True))
 		ic(np.unique(self.full_label_test, return_counts=True))
 
-		if self.paramsTrain.openMode == 'NoMode':
+		if self.paramsTrain.selectMainClasses == False and self.paramsTrain.group_bcknd_classes == False:
 			self.paramsTrain.known_classes = np.unique(self.full_label_train)[1:] - 1
 			ic(self.paramsTrain.known_classes)
 #		pdb.set_trace()
@@ -302,7 +302,8 @@ class DatasetWithCoords(Dataset):
 			str(self.paramsTrain.seq_date) + '.npy', 
 			self.full_label_test)
 		'''
-		if self.paramsTrain.open_set==True:
+		ic(self.paramsTrain.selectMainClasses)
+		if self.paramsTrain.selectMainClasses==True:
 
 			self.knownClassesGet()
 			ic(self.paramsTrain.known_classes)

@@ -23,7 +23,7 @@ import time
 #print(sys.path)
 from PredictionsLoader import PredictionsLoaderNPY, PredictionsLoaderModel, PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet
 from icecream import ic 
-from parameters.parameters_reader import ParamsTrain, ParamsAnalysis
+from parameters.params_train import ParamsTrain, ParamsAnalysis
 from analysis.open_set import SoftmaxThresholding, OpenPCS
 
 

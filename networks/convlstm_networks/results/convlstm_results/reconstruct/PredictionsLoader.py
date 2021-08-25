@@ -60,7 +60,7 @@ from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_
 import deb
 
 #sys.path.append('../../../train_src/analysis/')
-from parameters.parameters_reader import ParamsTrain, ParamsAnalysis
+from parameters.params_train import ParamsTrain, ParamsAnalysis
 
 #paramsTrain = ParamsTrain('../parameters/')
 #paramsAnalysis = ParamsAnalysis('parameters_analysis/')
