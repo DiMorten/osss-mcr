@@ -51,9 +51,11 @@ class ParamsTrain(Params):
 
 		# ============= PATCH EXTRACTION ============== #
 
-		self.getFullIms = False
-		self.coordsExtract = False
-		self.train = False
+		self.getFullIms = False if ('getFullIms' not in kwargs.keys()) else kwargs['getFullIms']
+		self.coordsExtract = False if ('coordsExtract' not in kwargs.keys()) else kwargs['coordsExtract']
+		self.train = False if ('train' not in kwargs.keys()) else kwargs['train']
+		self.openSetLoadModel = False if ('openSetLoadModel' not in kwargs.keys()) else kwargs['openSetLoadModel']
+
 #        self.model_load = True
 
 		self.train_overlap_percentage = 0
@@ -74,13 +76,13 @@ class ParamsTrain(Params):
 			self.openSetMethod = kwargs['openSetMethod']
 		else:
 			self.openSetMethod = 'OpenPCS++' 
+		
 #			self.openSetMethod = 'OpenPCS' # leave this appart?
 
 #			self.openSetMethod = None # leave this appart?
 
 	
 		self.select_main_classes = True
-		self.openSetLoadModel = True
 		# ============== SCRIPT MODE: CLOSED SET, OPEN SET... ================= #
 
 		if self.openSetMethod == None:

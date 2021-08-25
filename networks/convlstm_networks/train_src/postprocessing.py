@@ -13,7 +13,7 @@ class PostProcessingMosaic():
 	def openSetActivate(self, openSetMethod, known_classes):
 		self.openSetMosaic = OpenSetMosaic(openSetMethod, known_classes, self.h, self.w, self.paramsTrain)
 
-	def load_intermediate_features(self, model, in_, pred_logits_patches, debug = 1):
+	def load_intermediate_features(self, model, in_, pred_logits_patches, debug = 1): # duplicate with main.py:fitPostProcessing() 265
 		return self.openSetMosaic.load_intermediate_features(model, in_, pred_logits_patches)
 	def predictPatch(self, pred_cl, test_pred_proba, row, col, stride, overlap, debug = 0):
 		self.openSetMosaic.predictPatch(pred_cl, test_pred_proba, row,col,stride, overlap, debug = debug)

@@ -12,9 +12,15 @@ from train_and_evaluate import TrainTest
 
 if __name__ == '__main__':
 
-	openSetMethod = 'OpenPCS++'
+	paramsTrainCustom = {
+		'getFullIms': False, # only True if first time
+		'coordsExtract': False, # only True if first time
+		'train': False,
+		'openSetMethod': 'OpenPCS++',
+		'openSetLoadModel': True
+	}
 
-	paramsTrain = ParamsTrain('parameters/', openSetMethod = openSetMethod)
+	paramsTrain = ParamsTrain('parameters/', **paramsTrainCustom)
 	
 	dataset = paramsTrain.dataset
 
@@ -30,7 +36,7 @@ if __name__ == '__main__':
 	
 	trainTest.modelLoad(paramsTrain.model_name_id)
 
-	if openSetMethod != None:
+	if paramsTrain.openSetMethod != None:
 		trainTest.setPostProcessing()
 		trainTest.fitPostProcessing()
 

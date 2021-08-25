@@ -274,16 +274,17 @@ class TrainTest():
 			self.postProcessing.openSetMosaic.loadFittedModel()
 		else:
 			self.data.patches_in = self.data.getSequencePatchesFromCoords(
-				self.data.full_ims_train, self.data['train']['coords']) # test coords is called self.coords, make custom init in this class. self.full_ims is also set independent
+				self.data.full_ims_train, self.data.patches['train']['coords']) # test coords is called self.coords, make custom init in this class. self.full_ims is also set independent
 			self.data.patches_label = self.data.getPatchesFromCoords(
-				self.data.full_label_train, self.data['train']['coords'])
+				self.data.full_label_train, self.data.patches['train']['coords'])
 #        self.coords = self.data.patches['train']['coords'] # not needed. use train coords directly
-			self.data.predictions=(self.model.predict(patches_in)).astype(prediction_dtype) 
+			prediction_dtype = np.float16
+			self.data.predictions=(self.model.graph.predict(self.data.patches_in)).astype(prediction_dtype) 
 
-			if paramsTrain.openSetMethod =='OpenPCS' or paramsTrain.openSetMethod =='OpenPCS++':
-				self.data.intermediate_features = self.model.load_decoder_features(model, input_)
+			if self.paramsTrain.openSetMethod =='OpenPCS' or self.paramsTrain.openSetMethod =='OpenPCS++':
+				self.data.intermediate_features = self.model.load_decoder_features(self.data.patches_in)
 			else:
-				self.data.intermediate_features = predictions.copy() # to-do: avoid copy
+				self.data.intermediate_features = self.data.predictions.copy() # to-do: avoid copy
 			ic(self.data.patches_in.shape, self.data.patches_label.shape)
 			ic(self.data.predictions.shape)
 			ic(self.data.intermediate_features.shape)
@@ -292,7 +293,16 @@ class TrainTest():
 				
 if __name__ == '__main__':
 
-	paramsTrain = ParamsTrain('parameters/')
+
+	paramsTrainCustom = {
+		'getFullIms': True,
+		'coordsExtract': True,
+		'train': True,
+		'openSetMethod': 'OpenPCS++',
+		'openSetLoadModel': True
+	}
+
+	paramsTrain = ParamsTrain('parameters/', **paramsTrainCustom)
 
 	dataset = paramsTrain.dataset
 
