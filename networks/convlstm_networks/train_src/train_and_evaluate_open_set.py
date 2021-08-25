@@ -16,9 +16,9 @@ if __name__ == '__main__':
 		'getFullIms': False, # only True if first time
 		'coordsExtract': False, # only True if first time
 		'train': False,
-		'openSetMethod': None,
-#		'openSetLoadModel': True,
-		'selectMainClasses': True		
+		'openSetMethod': 'OpenPCS++',
+		'openSetLoadModel': False,
+		'selectMainClasses': True
 	}
 
 	paramsTrain = ParamsTrain('parameters/', **paramsTrainCustom)
@@ -28,7 +28,6 @@ if __name__ == '__main__':
 	trainTest = TrainTest(paramsTrain)
 
 	trainTest.main()
-
 
 
 

@@ -12,33 +12,23 @@ from train_and_evaluate import TrainTest
 
 if __name__ == '__main__':
 
-	openSetMethod = 'OpenPCS++'
+	paramsTrainCustom = {
+		'getFullIms': False, # only True if first time
+		'coordsExtract': False, # only True if first time
+		'train': False,
+		'openSetMethod': 'OpenPCS++',
+		'openSetLoadModel': True,
+		'selectMainClasses': True		
+	}
 
-	paramsTrain = ParamsTrain('parameters/', openSetMethod = openSetMethod)
-	
-	dataset = paramsTrain.dataset
+	paramsTrain = ParamsTrain('parameters/', **paramsTrainCustom)
 
 	paramsTrain.dataSource = SARSource()
 
 	trainTest = TrainTest(paramsTrain)
-	
-	trainTest.setData()
 
-	trainTest.preprocess(paramsTrain.model_name_id) # move into if
+	trainTest.main()
 
-	trainTest.setModel()
-	
-	trainTest.modelLoad(paramsTrain.model_name_id)
-
-	if openSetMethod != None:
-		trainTest.setPostProcessing()
-		trainTest.fitPostProcessing()
-
-
-	paramsMosaic = ParamsReconstruct(paramsTrain)
-
-	trainTest.mosaicCreate(paramsMosaic)
-	trainTest.evaluate()
 
 
 

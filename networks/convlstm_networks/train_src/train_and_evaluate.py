@@ -68,7 +68,7 @@ from postprocessing import PostProcessingMosaic
 
 from metrics import Metrics, MetricsTranslated
 
-ic.configureOutput(includeContext=True)
+ic.configureOutput(includeContext=False)
 np.random.seed(2021)
 #tf.random.set_seed(2021)
 #tf.compat.v1.disable_eager_execution()
@@ -118,11 +118,7 @@ class TrainTest():
 		self.dotys_sin_cos = dotys_sin_cos
 
 	def setData(self):
-		if self.paramsTrain.sliceFromCoords == False:
-			datasetClass = Dataset
-		else:
-			datasetClass = DatasetWithCoords
-		self.data = datasetClass(paramsTrain = self.paramsTrain, ds = self.ds,
+		self.data = DatasetWithCoords(paramsTrain = self.paramsTrain, ds = self.ds,
 			dotys_sin_cos = self.dotys_sin_cos)
 		ic(self.data.class_n)
 
@@ -131,17 +127,11 @@ class TrainTest():
 
 #		pdb.set_trace()
 	def setModel(self):
-		if self.paramsTrain.sliceFromCoords == False:
-			modelClass = ModelLoadGenerator
-		else:
-			modelClass = ModelLoadGeneratorWithCoords
 
-		self.model = modelClass(paramsTrain = self.paramsTrain, ds = self.ds, 
-						) # , self.data = self.data
+		self.model = ModelLoadGeneratorWithCoords(paramsTrain = self.paramsTrain, ds = self.ds, 
+						) 
 		self.model.class_n=self.data.class_n-1 # Model is designed without background class
 
-#		self.modelSavePath = Path('../results/convlstm_results/model/lm/')
-#		self.model.name = self.modelSavePath / self.model_name	
 		self.model.name = self.model_name
 		ic(self.model.name)	
 
@@ -150,8 +140,6 @@ class TrainTest():
 		deb.prints(self.data.class_n)
 
 		self.model.build(self.paramsTrain.model_type, self.data.class_n - 1) # no bcknd
-
-		##self.model.class_n+=1 # This is used in NOTloss_weights_estimate, NOTval_set_get, MAYBEsemantic_balance (To-do: Eliminate bcknd class)
 
 
 	def preprocess(self, model_name_id):
@@ -290,7 +278,42 @@ class TrainTest():
 			ic(self.data.intermediate_features.shape)
 			pdb.set_trace()
 			self.postProcessing.fit(self.data, self.model)	
-				
+
+	def main(self):				
+
+		patchExtractor = PatchExtractor(self.paramsTrain, self.ds)	
+		if self.paramsTrain.getFullIms == True:
+			patchExtractor.getFullIms()	
+		else:
+			patchExtractor.fullImsLoad()
+
+		if self.paramsTrain.coordsExtract == True:
+			patchExtractor.extract()
+		del patchExtractor
+		
+		self.setData() 
+
+		self.preprocess(self.paramsTrain.model_name_id) # validation set, and data augmentation
+
+		self.setModel()
+
+		if self.paramsTrain.train == True:
+			self.train()
+		else:
+			self.modelLoad(self.paramsTrain.model_name_id)
+
+		paramsMosaic = ParamsReconstruct(self.paramsTrain)
+
+		if self.paramsTrain.openSetMethod != None:
+			self.setPostProcessing()
+			self.fitPostProcessing()
+
+		self.mosaicCreate(paramsMosaic)
+		self.evaluate()
+
+
+
+
 if __name__ == '__main__':
 
 
@@ -298,48 +321,15 @@ if __name__ == '__main__':
 		'getFullIms': True,
 		'coordsExtract': True,
 		'train': True,
-		'openSetMethod': 'OpenPCS++',
-		'openSetLoadModel': True
+		'openSetMethod': None, # Options: None, OpenPCS, OpenPCS++
+#		'openSetLoadModel': True,
+		'selectMainClasses': True
 	}
 
 	paramsTrain = ParamsTrain('parameters/', **paramsTrainCustom)
-
-	dataset = paramsTrain.dataset
 
 	paramsTrain.dataSource = SARSource()
 
 	trainTest = TrainTest(paramsTrain)
 
-	patchExtractor = PatchExtractor(paramsTrain, trainTest.ds)	
-	if paramsTrain.getFullIms == True:
-		patchExtractor.getFullIms()	
-	else:
-		patchExtractor.fullImsLoad()
-
-	if paramsTrain.coordsExtract == True:
-		patchExtractor.extract()
-	del patchExtractor
-	
-	trainTest.setData()
-
-
-	trainTest.preprocess(paramsTrain.model_name_id) # move into if
-
-	trainTest.setModel()
-
-	if paramsTrain.train == True:
-		trainTest.train()
-	else:
-		trainTest.modelLoad(paramsTrain.model_name_id)
-
-	# trainTest.fitOpenSet() 
-
-	#trainTest.fitPostProcessing()
-
-	paramsMosaic = ParamsReconstruct(paramsTrain)
-
-	trainTest.mosaicCreate(paramsMosaic)
-	trainTest.evaluate()
-
-
-
+	trainTest.main()

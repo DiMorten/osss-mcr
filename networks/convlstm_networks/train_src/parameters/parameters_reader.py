@@ -45,9 +45,6 @@ class Params():
 
 class ParamsTrain(Params):
 	def __init__(self, folder_path, **kwargs):
-		# 4 known classes
-#        self.openMode = 'ClosedSetGroupClasses'
-#        self.openMode = 'OpenSet'
 
 		# ============= PATCH EXTRACTION ============== #
 
@@ -64,25 +61,15 @@ class ParamsTrain(Params):
 			self.trainGeneratorRandom = True
 		else:
 			self.trainGeneratorRandom = False
-#        self.patch_len = 128
-#        self.patch_len = 64
+
 		self.patch_len = 32
 
 		self.test_overlap_percentage = 0
 
+		# options: None, OpenPCS, OpenPCS++
+		self.openSetMethod = 'OpenPCS++' if ('openSetMethod' not in kwargs.keys()) else kwargs['openSetMethod']	
+		self.selectMainClasses = True if ('selectMainClasses' not in kwargs.keys()) else kwargs['selectMainClasses']
 
-#		self.openSetMethod = None
-		if 'openSetMethod' in kwargs.keys():
-			self.openSetMethod = kwargs['openSetMethod']
-		else:
-			self.openSetMethod = 'OpenPCS++' 
-		
-#			self.openSetMethod = 'OpenPCS' # leave this appart?
-
-#			self.openSetMethod = None # leave this appart?
-
-	
-		self.select_main_classes = True
 		# ============== SCRIPT MODE: CLOSED SET, OPEN SET... ================= #
 
 		if self.openSetMethod == None:
@@ -189,10 +176,8 @@ class ParamsTrain(Params):
 		self.t_len = 12 # variable? depends on dataset?
 		self.model_t_len = 12
 		# usually editable params
-#        self.model_type = "UUnet4ConvLSTM"
-		model_type = UUnetConvLSTM
-#		model_type = UnetSelfAttention
 
+		model_type = UUnetConvLSTM # Options: UUnetConvLSTM, UnetSelfAttention
 		self.model_type = model_type(self.model_t_len, self.patch_len, self.channel_n)
 
 
@@ -210,7 +195,7 @@ class ParamsTrain(Params):
 		super().__init__(json_path)        
 
 
-		if self.openMode == 'NoMode' and self.select_main_classes == True:
+		if self.openMode == 'NoMode' and self.selectMainClasses == True:
 			self.select_kept_classes_flag = True
 
 		if self.seq_mode == 'var_label':
@@ -242,7 +227,7 @@ class ParamsTrain(Params):
 					self.model_name + '.h5')
 
 		else:
-			self.model_name_id = self.model_path / 'model_best_fit2.h5'
+			self.model_name_id = self.model_path / 'model_best_fit.h5'
 			self.model_name_id = self.model_path / 'model_best_UUnetConvLSTM_mar_lm_dummy.h5'
 
 			

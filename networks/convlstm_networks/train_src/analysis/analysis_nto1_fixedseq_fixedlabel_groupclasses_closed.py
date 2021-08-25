@@ -453,7 +453,7 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 
 
 		deb.prints(predictionsLoaderTest)
-#		model_path = 'D:/jorg/phd/FCN_ConvLSTM_Crop_Recognition_Open_Set/networks/convlstm_networks/train_src/model_best_fit2.h5'
+#		model_path = 'D:/jorg/phd/FCN_ConvLSTM_Crop_Recognition_Open_Set/networks/convlstm_networks/train_src/model_best_fit.h5'
 		deb.prints(model_path)
 		deb.prints(args.seq_date)
 		#pdb.set_trace()

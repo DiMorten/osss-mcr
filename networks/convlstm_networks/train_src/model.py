@@ -152,12 +152,6 @@ class NetModel(object):
 
 
 	def build(self, modelArchitecture, class_n):
-#		ic(self.class_n, len(self.paramsTrain.known_classes))
-#		if self.paramsTrain.openSetMethod == None:
-#			modelArchitecture.class_n = self.class_n
-#		else:	
-#			modelArchitecture.class_n = self.data.classes
-#		ic(modelArchitecture.class_n)
 		modelArchitecture.class_n = class_n
 		modelArchitecture.build()
 
@@ -271,7 +265,7 @@ class ModelFit(NetModel):
 				plt.savefig(path_file)
 		PlotHistory(history, 'loss', path_file='loss_fig.png')
 
-		self.graph.save('model_best_fit2.h5')	
+		self.graph.save('model_best_fit.h5')	
 		ic(self.name)
 		self.graph.save(self.name)	
 			
