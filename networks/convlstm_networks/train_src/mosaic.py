@@ -515,10 +515,7 @@ class MosaicHighRAM(Mosaic):
 
 class MosaicHighRAMPostProcessing(MosaicHighRAM):
 	def create(self, paramsTrain, model, data, ds, postProcessing):
-		known_classes = [x + 1 for x in paramsTrain.known_classes]
-		if self.paramsMosaic.open_set_mode == True:
-			self.postProcessing = postProcessing
-			self.postProcessing.openSetActivate(paramsTrain.openSetMethod, known_classes)
+		self.postProcessing = postProcessing
 			#pdb.set_trace()
 
 		super().create(paramsTrain, model, data, ds)

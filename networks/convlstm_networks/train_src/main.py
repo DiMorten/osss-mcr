@@ -62,6 +62,12 @@ from model import ModelLoadGeneratorWithCoords
 from dataset import Dataset, DatasetWithCoords
 
 from patch_extractor import PatchExtractor
+
+from mosaic import seq_add_padding, add_padding, Mosaic, MosaicHighRAM, MosaicHighRAMPostProcessing
+from postprocessing import PostProcessingMosaic
+
+from metrics import Metrics, MetricsTranslated
+
 ic.configureOutput(includeContext=True)
 np.random.seed(2021)
 #tf.random.set_seed(2021)
@@ -78,12 +84,12 @@ def txt_append(filename, append_text):
 		myfile.write(append_text)
 
 def sizeof_fmt(num, suffix='B'):
-    ''' by Fred Cirera,  https://stackoverflow.com/a/1094933/1870254, modified'''
-    for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
-        if abs(num) < 1024.0:
-            return "%3.1f %s%s" % (num, unit, suffix)
-        num /= 1024.0
-    return "%.1f %s%s" % (num, 'Yi', suffix)
+	''' by Fred Cirera,  https://stackoverflow.com/a/1094933/1870254, modified'''
+	for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
+		if abs(num) < 1024.0:
+			return "%3.1f %s%s" % (num, unit, suffix)
+		num /= 1024.0
+	return "%.1f %s%s" % (num, 'Yi', suffix)
 # ========== NetModel object implements model graph definition, train/testing, early stopping ================ #
 
 flag = {"data_create": 2, "label_one_hot": True}
@@ -121,6 +127,7 @@ class TrainTest():
 		ic(self.data.class_n)
 
 		self.data.create_load()
+		self.data.loadMask()
 
 #		pdb.set_trace()
 	def setModel(self):
@@ -224,16 +231,65 @@ class TrainTest():
 
 #		self.model.evaluate(self.data)
 
-	def evaluate(self, paramsMosaic):
-		self.data.loadMask()
-		self.model.evaluate(self.data, self.ds, paramsMosaic)
 
-	'''
-	def fitOpenSet(self):
-#		self.openSetFit = OpenSetFit
-		self.openSetFit = OpenPCApFit()
-		self.openSetFit.fit()
-	'''
+	def setPostProcessing(self):
+		_, h,w,channel_n = self.data.full_ims_test.shape
+		self.postProcessing = PostProcessingMosaic(self.paramsTrain, h, w)
+
+		known_classes = [x + 1 for x in self.paramsTrain.known_classes]
+		self.postProcessing.openSetActivate(self.paramsTrain.openSetMethod, known_classes)
+
+
+	def mosaicCreate(self, paramsMosaic):
+
+		self.data.full_ims_test = self.data.addPaddingToInput(
+			self.model.model_t_len, self.data.full_ims_test)
+
+
+		self.data.reloadLabel()
+
+		if self.paramsTrain.openSetMethod == None:
+			self.mosaic = MosaicHighRAM(self.paramsTrain, paramsMosaic)
+		else:
+			self.mosaic = MosaicHighRAMPostProcessing(self.paramsTrain, paramsMosaic)
+
+
+		self.mosaic.create(self.paramsTrain, self.model, self.data, self.ds, self.postProcessing)
+
+	def evaluate(self):
+
+		metrics = MetricsTranslated(self.paramsTrain)
+		metrics_test = metrics.get(self.mosaic.prediction_mosaic, self.mosaic.label_mosaic)
+
+		deb.prints(metrics_test)
+
+		if self.paramsTrain.openSetMethod != None:
+			metrics.plotROCCurve(self.mosaic.getFlatLabel(), self.mosaic.getFlatScores(), 
+				modelId = self.mosaic.name_id, nameId = self.mosaic.name_id, unknown_class_id = 20)
+
+
+	
+	def fitPostProcessing(self):
+		if self.paramsTrain.openSetLoadModel == True:
+			self.postProcessing.openSetMosaic.loadFittedModel()
+		else:
+			self.data.patches_in = self.data.getSequencePatchesFromCoords(
+				self.data.full_ims_train, self.data['train']['coords']) # test coords is called self.coords, make custom init in this class. self.full_ims is also set independent
+			self.data.patches_label = self.data.getPatchesFromCoords(
+				self.data.full_label_train, self.data['train']['coords'])
+#        self.coords = self.data.patches['train']['coords'] # not needed. use train coords directly
+			self.data.predictions=(self.model.predict(patches_in)).astype(prediction_dtype) 
+
+			if paramsTrain.openSetMethod =='OpenPCS' or paramsTrain.openSetMethod =='OpenPCS++':
+				self.data.intermediate_features = self.model.load_decoder_features(model, input_)
+			else:
+				self.data.intermediate_features = predictions.copy() # to-do: avoid copy
+			ic(self.data.patches_in.shape, self.data.patches_label.shape)
+			ic(self.data.predictions.shape)
+			ic(self.data.intermediate_features.shape)
+			pdb.set_trace()
+			self.postProcessing.fit(self.data, self.model)	
+				
 if __name__ == '__main__':
 
 	paramsTrain = ParamsTrain('parameters/')
@@ -268,8 +324,12 @@ if __name__ == '__main__':
 
 	# trainTest.fitOpenSet() 
 
+	#trainTest.fitPostProcessing()
+
 	paramsMosaic = ParamsReconstruct(paramsTrain)
-	trainTest.evaluate(paramsMosaic)
+
+	trainTest.mosaicCreate(paramsMosaic)
+	trainTest.evaluate()
 
 
 

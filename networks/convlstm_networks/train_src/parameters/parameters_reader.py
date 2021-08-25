@@ -80,6 +80,7 @@ class ParamsTrain(Params):
 
 	
 		self.select_main_classes = True
+		self.openSetLoadModel = True
 		# ============== SCRIPT MODE: CLOSED SET, OPEN SET... ================= #
 
 		if self.openSetMethod == None:

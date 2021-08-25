@@ -27,14 +27,18 @@ if __name__ == '__main__':
 	trainTest.preprocess(paramsTrain.model_name_id) # move into if
 
 	trainTest.setModel()
-
+	
 	trainTest.modelLoad(paramsTrain.model_name_id)
 
 	if openSetMethod != None:
-		trainTest.fitOpenSet() 
+		trainTest.setPostProcessing()
+		trainTest.fitPostProcessing()
+
 
 	paramsMosaic = ParamsReconstruct(paramsTrain)
-	trainTest.evaluate(paramsMosaic)
+
+	trainTest.mosaicCreate(paramsMosaic)
+	trainTest.evaluate()
 
 
 
