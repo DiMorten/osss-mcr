@@ -209,7 +209,8 @@ class ParamsTrain(Params):
 		deb.prints(self.seq_mode)
 		deb.prints(self.mim)
 
-		self.model_path = Path('../results/convlstm_results/model/lm/')
+#		self.model_path = Path('../results/convlstm_results/model/lm/')
+		self.model_path = Path('results/model/' + self.dataset + '/')
 
 		self.modelNameSpecify = False
 
