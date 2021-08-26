@@ -51,7 +51,7 @@ from generator import DataGenerator, DataGeneratorWithCoords
 
 import matplotlib.pyplot as plt
 # sys.path.append('../../../dataset/dataset/patches_extract_script/')
-from dataSource import DataSource, SARSource, OpticalSource, Dataset, LEM, LEM2, CampoVerde, OpticalSourceWithClouds, Humidity
+from dataSource import DataSource, SARSource, Dataset, LEM, LEM2, CampoVerde
 from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixedLabelAllLabels, MIMFixed_PaddedSeq
 from parameters.params_train import ParamsTrain
 from parameters.params_mosaic import ParamsReconstruct
@@ -70,9 +70,9 @@ from metrics import Metrics, MetricsTranslated
 
 ic.configureOutput(includeContext=False)
 np.random.seed(2021)
-#tf.random.set_seed(2021)
-#tf.compat.v1.disable_eager_execution()
-#tf.compat.v1.experimental.output_all_intermediates(True)
+tf.random.set_seed(2021)
+tf.compat.v1.disable_eager_execution()
+tf.compat.v1.experimental.output_all_intermediates(True)
 
 def model_summary_print(s):
 	with open('model_summary.txt','w+') as f:

@@ -53,7 +53,7 @@ import pdb
 import pickle
 
 sys.path.append('../../../../../dataset/dataset/patches_extract_script/')
-from dataSource import DataSource, SARSource, OpticalSource, Dataset, LEM, LEM2, CampoVerde, OpticalSourceWithClouds, Humidity
+from dataSource import DataSource, SARSource, Dataset, LEM, LEM2, CampoVerde
 
 sys.path.append('../../../train_src/')
 from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixed_PaddedSeq

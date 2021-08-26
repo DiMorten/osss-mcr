@@ -24,7 +24,7 @@ from icecream import ic
 import os
 
 sys.path.append('../')
-from dataSource import DataSource, SARSource, OpticalSource, Dataset, LEM, LEM2, CampoVerde, OpticalSourceWithClouds, Humidity
+from dataSource import DataSource, SARSource, Dataset, LEM, LEM2, CampoVerde
 
 #sys.path.append('../')
 from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixed_PaddedSeq

@@ -1,4 +1,4 @@
-from dataSource import DataSource, SARSource, OpticalSource, Dataset, LEM, LEM2, CampoVerde, OpticalSourceWithClouds, Humidity
+from dataSource import DataSource, SARSource, Dataset, LEM, LEM2, CampoVerde
 from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixedLabelAllLabels, MIMFixed_PaddedSeq
 from parameters.params_train import ParamsTrain
 from parameters.params_mosaic import ParamsReconstruct

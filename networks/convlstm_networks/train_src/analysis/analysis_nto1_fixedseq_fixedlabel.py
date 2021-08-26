@@ -35,7 +35,7 @@ from metrics import Metrics
 from scipy import optimize
 from icecream import ic
 
-from dataSource import DataSource, SARSource, OpticalSource, Dataset, LEM, LEM2, CampoVerde, OpticalSourceWithClouds, Humidity
+from dataSource import DataSource, SARSource, Dataset, LEM, LEM2, CampoVerde
 
 ic.configureOutput(includeContext=True)
 

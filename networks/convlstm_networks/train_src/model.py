@@ -49,7 +49,7 @@ from generator import DataGenerator, DataGeneratorWithCoords, DataGeneratorWithC
 
 import matplotlib.pyplot as plt
 sys.path.append('../../../dataset/dataset/patches_extract_script/')
-from dataSource import DataSource, SARSource, OpticalSource, Dataset, LEM, LEM2, CampoVerde, OpticalSourceWithClouds, Humidity
+from dataSource import DataSource, SARSource, Dataset, LEM, LEM2, CampoVerde
 from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixedLabelAllLabels, MIMFixed_PaddedSeq
 from parameters.params_train import ParamsTrain
 
