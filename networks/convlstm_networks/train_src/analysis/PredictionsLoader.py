@@ -421,7 +421,7 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 
 		self.label_with_unknown = batch['label_with_unknown'].copy() 
 
-		pdb.set_trace()		
+##		pdb.set_trace()		
 		ic(batch['in'].shape)
 		ic(batch['label'].shape)
 		return batch
