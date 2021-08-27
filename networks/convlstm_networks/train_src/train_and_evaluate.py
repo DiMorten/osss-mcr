@@ -68,7 +68,7 @@ from postprocessing import PostProcessingMosaic
 
 from metrics import Metrics, MetricsTranslated
 
-ic.configureOutput(includeContext=False)
+ic.configureOutput(includeContext=True)
 np.random.seed(2021)
 tf.random.set_seed(2021)
 tf.compat.v1.disable_eager_execution()
@@ -263,20 +263,18 @@ class TrainTest():
 			ic(self.data.full_label_train.shape)
 
 			ic(np.unique(self.data.full_label_train, return_counts=True))
-			self.data.reloadLabel(train=True)
 
+			label_with_unknown_train = self.data.getTrainLabelWithUnknown()
 
-#			self.data.getTrainLabelWithUnknown()
 			ic(self.data.full_label_train.shape)
 			ic(np.unique(self.data.full_label_train, return_counts=True))
 
 			self.data.patches_in = self.data.getSequencePatchesFromCoords(
 				self.data.full_ims_train, self.data.patches['train']['coords']).astype(prediction_dtype) # test coords is called self.coords, make custom init in this class. self.full_ims is also set independent
 			self.data.patches_label = self.data.getPatchesFromCoords(
-				self.data.full_label_train, self.data.patches['train']['coords'])
+				label_with_unknown_train, self.data.patches['train']['coords'])
 #       	self.coords = self.data.patches['train']['coords'] # not needed. use train coords directly
 			
-			self.data.getTrainLabelWithUnknown()
 
 			self.data.predictions=(self.model.graph.predict(self.data.patches_in)).argmax(axis=-1).astype(np.uint8) 
 

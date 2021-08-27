@@ -71,7 +71,7 @@ class OpenSetMosaic():
 	def loadFittedModel(self):
 		try:
 			self.openModel.setModelSaveNameID(self.paramsTrain.seq_date, self.paramsTrain.dataset)
-			self.openModel.loadFittedModel(path = 'analysis/', nameID = self.openModel.nameID)
+			self.openModel.loadFittedModel(path = 'results/open_set/', nameID = self.openModel.nameID)
 			return 0
 
 		except:

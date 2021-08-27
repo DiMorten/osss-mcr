@@ -179,15 +179,17 @@ class Dataset(object):
 			self.full_label_train = self.full_label_train[-1]
 
 
-	def addUnknownToLabel(self, label):
-		ic(np.unique(self.patches_label, return_counts=True))
-		label_with_unknown = self.patches_label.copy()		
+	def getTrainLabelWithUnknown(self):
+		label = np.load(self.path['v'] / 'full_ims' / 'full_label_train.npy').astype(np.uint8)[-1]
+		ic(np.unique(label, return_counts=True))
+		label_with_unknown = label.copy()		
 		for clss in self.paramsTrain.known_classes:
 			label_with_unknown[label_with_unknown==int(clss) + 1] = 0
 		label_with_unknown[label_with_unknown!=0] = 40
 		ic(np.unique(label_with_unknown, return_counts=True))
-		self.patches_label[label_with_unknown==40] = 40
-		ic(np.unique(self.patches_label, return_counts=True))
+		label[label_with_unknown==40] = 40
+		ic(np.unique(label, return_counts=True))
+		return label
 #		pdb.set_trace()
 	
 class DatasetWithCoords(Dataset):

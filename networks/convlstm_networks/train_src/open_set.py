@@ -521,8 +521,10 @@ class OpenSetMethodGaussian(OpenSetMethod):
             print("*"*30, "List was saved in pickle")
 
         #self.setModelSaveNameID()
-        save_list_in_pickle(self.model_list, "models_"+self.nameID+".pckl")
-        save_list_in_pickle(self.covariance_matrix_list, "covariance_matrix_list_"+self.nameID+".pckl")
+        save_list_in_pickle(self.model_list, 
+            "results/open_set/models/models_"+self.nameID+".pckl")
+        save_list_in_pickle(self.covariance_matrix_list, 
+            "results/open_set/covariance_matrix/covariance_matrix_list_"+self.nameID+".pckl")
             
         #predictions_test[pred_proba_max < self.threshold] = self.loco_class + 1
 
