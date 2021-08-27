@@ -82,7 +82,7 @@ class SoftmaxThresholding(OpenSetMethod):
         self.scores = pred_proba_max
         #ic(self.scores.shape)
         #ic()
-    def predict(self, predictions_test, scores = None, debug = 1):
+    def applyThreshold(self, predictions_test, scores = None, debug = 1):
         if np.all(scores) == None:
             scores = self.scores
         predictions_test[scores < self.threshold] = 40 #self.loco_class + 1

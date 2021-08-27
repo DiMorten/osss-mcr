@@ -222,7 +222,7 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 	
 	ic(label_train.shape)
 	ic(np.unique(label_train, return_counts=True))
-	pdb.set_trace()
+	#pdb.set_trace()
 	deb.prints(np.unique(predictions,return_counts=True))
 	deb.prints(np.unique(label_metrics,return_counts=True))
 
@@ -757,7 +757,7 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 				ic(label_train.shape, predictions_train.shape, train_pred_proba.shape)
 				ic(np.unique(label_train, return_counts=True))
 				ic(np.unique(predictions_train, return_counts=True))
-				pdb.set_trace()
+				#pdb.set_trace()
 				openModel.fit(label_train, predictions_train, train_pred_proba)
 				'''
 				deb.prints(predictions_train.shape)

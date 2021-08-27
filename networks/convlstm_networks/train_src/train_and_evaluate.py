@@ -256,63 +256,64 @@ class TrainTest():
 		if self.paramsTrain.openSetLoadModel == True:
 			self.postProcessing.openSetMosaic.loadFittedModel()
 		else:
-			prediction_dtype = np.float16
+			if self.paramsTrain.openSetMethod == 'OpenPCS' or self.paramsTrain.openSetMethod == 'OpenPCS++':
+				prediction_dtype = np.float16
 
-			# first, translate self.train_label
+				# first, translate self.train_label
 
-			ic(self.data.full_label_train.shape)
+				ic(self.data.full_label_train.shape)
 
-			ic(np.unique(self.data.full_label_train, return_counts=True))
+				ic(np.unique(self.data.full_label_train, return_counts=True))
 
-			label_with_unknown_train = self.data.getTrainLabelWithUnknown()
+				label_with_unknown_train = self.data.getTrainLabelWithUnknown()
 
-			ic(self.data.full_label_train.shape)
-			ic(np.unique(self.data.full_label_train, return_counts=True))
+				ic(self.data.full_label_train.shape)
+				ic(np.unique(self.data.full_label_train, return_counts=True))
 
-			self.data.patches_in = self.data.getSequencePatchesFromCoords(
-				self.data.full_ims_train, self.data.patches['train']['coords']).astype(prediction_dtype) # test coords is called self.coords, make custom init in this class. self.full_ims is also set independent
-			self.data.patches_label = self.data.getPatchesFromCoords(
-				label_with_unknown_train, self.data.patches['train']['coords'])
-#       	self.coords = self.data.patches['train']['coords'] # not needed. use train coords directly
-			
+				self.data.patches_in = self.data.getSequencePatchesFromCoords(
+					self.data.full_ims_train, self.data.patches['train']['coords']).astype(prediction_dtype) # test coords is called self.coords, make custom init in this class. self.full_ims is also set independent
+				self.data.patches_label = self.data.getPatchesFromCoords(
+					label_with_unknown_train, self.data.patches['train']['coords'])
+	#       	self.coords = self.data.patches['train']['coords'] # not needed. use train coords directly
+				
 
-			self.data.predictions=(self.model.graph.predict(self.data.patches_in)).argmax(axis=-1).astype(np.uint8) 
+				self.data.predictions=(self.model.graph.predict(self.data.patches_in)).argmax(axis=-1).astype(np.uint8) 
 
-			self.data.setDateList(self.paramsTrain)
+				self.data.setDateList(self.paramsTrain)
 
-			ic(np.unique(self.data.predictions, return_counts=True))
+				ic(np.unique(self.data.predictions, return_counts=True))
 
-			self.data.predictions = self.data.newLabel2labelTranslate(self.data.predictions, 
-					'results/label_translations/new_labels2labels_'+self.paramsTrain.dataset+'_'+self.data.dataset_date+'_S1.pkl')
+				self.data.predictions = self.data.newLabel2labelTranslate(self.data.predictions, 
+						'results/label_translations/new_labels2labels_'+self.paramsTrain.dataset+'_'+self.data.dataset_date+'_S1.pkl')
 
-			if self.paramsTrain.openSetMethod =='OpenPCS' or self.paramsTrain.openSetMethod =='OpenPCS++':
-				self.data.intermediate_features = self.model.load_decoder_features(self.data.patches_in).astype(prediction_dtype)
-			else:
-				self.data.intermediate_features = self.data.predictions.copy() # to-do: avoid copy
-			ic(self.data.patches_in.shape, self.data.patches_label.shape)
-			ic(self.data.predictions.shape)
-			ic(self.data.intermediate_features.shape)
+				if self.paramsTrain.openSetMethod =='OpenPCS' or self.paramsTrain.openSetMethod =='OpenPCS++':
+					self.data.intermediate_features = self.model.load_decoder_features(self.data.patches_in).astype(prediction_dtype)
+				else:
+					self.data.intermediate_features = self.data.predictions.copy() # to-do: avoid copy
+				ic(self.data.patches_in.shape, self.data.patches_label.shape)
+				ic(self.data.predictions.shape)
+				ic(self.data.intermediate_features.shape)
 
-			self.data.patches_label = self.data.patches_label.flatten()
-			self.data.predictions = self.data.predictions.flatten()
-			self.data.intermediate_features = np.reshape(self.data.intermediate_features,(-1, self.data.intermediate_features.shape[-1]))
+				self.data.patches_label = self.data.patches_label.flatten()
+				self.data.predictions = self.data.predictions.flatten()
+				self.data.intermediate_features = np.reshape(self.data.intermediate_features,(-1, self.data.intermediate_features.shape[-1]))
 
-			self.data.intermediate_features = self.data.intermediate_features[self.data.patches_label!=0]
-			self.data.predictions = self.data.predictions[self.data.patches_label!=0]
-			self.data.patches_label = self.data.patches_label[self.data.patches_label!=0]
+				self.data.intermediate_features = self.data.intermediate_features[self.data.patches_label!=0]
+				self.data.predictions = self.data.predictions[self.data.patches_label!=0]
+				self.data.patches_label = self.data.patches_label[self.data.patches_label!=0]
 
-			self.data.predictions = self.data.predictions - 1
-			self.data.patches_label = self.data.patches_label - 1
+				self.data.predictions = self.data.predictions - 1
+				self.data.patches_label = self.data.patches_label - 1
 
-			ic(np.unique(self.data.patches_label, return_counts=True))
-			ic(np.unique(self.data.predictions, return_counts=True))
+				ic(np.unique(self.data.patches_label, return_counts=True))
+				ic(np.unique(self.data.predictions, return_counts=True))
 
-			ic(self.data.patches_in.shape, self.data.patches_label.shape)
-			ic(self.data.predictions.shape)
-			ic(self.data.intermediate_features.shape)
-			
-#			pdb.set_trace()
-			self.postProcessing.fit(self.data)	
+				ic(self.data.patches_in.shape, self.data.patches_label.shape)
+				ic(self.data.predictions.shape)
+				ic(self.data.intermediate_features.shape)
+				
+	#			pdb.set_trace()
+				self.postProcessing.fit(self.data)	
 
 	def main(self):				
 

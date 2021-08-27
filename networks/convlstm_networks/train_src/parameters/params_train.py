@@ -74,7 +74,8 @@ class ParamsTrain(Params):
 
 		if self.openSetMethod == None:
 			self.openMode = 'NoMode'
-		elif self.openSetMethod == 'OpenPCS' or self.openSetMethod == 'OpenPCS++':
+#		elif self.openSetMethod == 'OpenPCS' or self.openSetMethod == 'OpenPCS++':
+		else:
 			if self.train == False:
 				self.openMode = 'SaveNonaugmentedTrainPatches'
 			else:

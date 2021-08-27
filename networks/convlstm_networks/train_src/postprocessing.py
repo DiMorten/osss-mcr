@@ -54,6 +54,7 @@ class OpenSetMosaic():
 
 		elif self.openSetMethod == 'SoftmaxThresholding':
 			self.openModel = SoftmaxThresholding()
+			threshold = 0.9
 		
 
 		self.openModel.setThreshold(threshold)
