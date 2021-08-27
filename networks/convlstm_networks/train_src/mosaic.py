@@ -134,7 +134,8 @@ class Mosaic():
 		ic(np.unique(self.data.full_label_test), len(np.unique(self.data.full_label_test)))
 		ic(np.unique(self.data.full_label_train), len(np.unique(self.data.full_label_train)))
 		class_n = len(np.unique(self.data.full_label_train)) - 1
-
+		ic(class_n)
+		pdb.set_trace()
 		self.defineMosaicVars(h, w, class_n)
 		
 		t0 = time.time()

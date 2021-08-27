@@ -25,7 +25,7 @@ class PostProcessingMosaic():
 		self.openSetMosaic.openModel.appendToSaveNameId('_'+self.paramsTrain.seq_date)
 		self.openSetMosaic.openModel.appendToSaveNameId('_'+self.paramsTrain.dataset)
 		self.openSetMosaic.openModel.setModelSaveNameID(self.paramsTrain.seq_date, self.paramsTrain.dataset)
-		self.openSetMosaic.openModel.fit(self.data.patches_label, self.data.predictions, self.data.intermediate_features)
+		self.openSetMosaic.openModel.fit(data.patches_label, data.predictions, data.intermediate_features)
 		
 
 #        self.openSetMosaic.openModel.fit(label_train, predictions_train, train_pred_proba)

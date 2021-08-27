@@ -384,7 +384,7 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 		
 		# test label with loco class. 
 		# If loco_class=8, batch['label_with_unknown'] contains the loco class as 8+1=9 because 0 is the background ID
-		deb.prints(np.unique(batch['label_with_unknown'], return_counts=True))
+		ic(np.unique(batch['label_with_unknown'], return_counts=True))
 		
 #		self.known_classes = [0, 1, 10, 12]
 
@@ -417,18 +417,21 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 		batch['label_with_unknown'][batch['label_with_unknown']!=0] = 40 # group all unknown classes into one single class
 		deb.prints(np.unique(batch['label_with_unknown'], return_counts=True))
 
+		ic(np.unique(batch['label_with_unknown'], return_counts=True))
+
 		self.label_with_unknown = batch['label_with_unknown'].copy() 
-		
+
+		pdb.set_trace()		
 		ic(batch['in'].shape)
 		ic(batch['label'].shape)
 		return batch
-	def addLocoClass(self, test_label):
-		print('*'*20, 'addLocoClass')
+	def addUnknownClass(self, test_label):
+		print('*'*20, 'addUnknownClass')
 		deb.prints(np.unique(test_label,return_counts=True))
 		deb.prints(np.unique(self.label_with_unknown, return_counts=True))
 		test_label[self.label_with_unknown == 40] = 40
 		deb.prints(np.unique(test_label,return_counts=True))
-		print('*'*20, 'end addLocoClass')
+		print('*'*20, 'end addUnknownClass')
 		return test_label
 
 	def loadPredictions(self,path_model,seq_date=None, model_dataset=None):
@@ -436,7 +439,7 @@ class PredictionsLoaderModelNto1FixedSeqFixedLabelOpenSet(PredictionsLoaderModel
 		test_predictions, test_label, pred_proba, model = super().loadPredictions(path_model, seq_date, model_dataset)
 		print(2)
 
-		test_label = self.addLocoClass(test_label)
+		test_label = self.addUnknownClass(test_label)
 		print(3)
 
 		return test_predictions, test_label, pred_proba, model

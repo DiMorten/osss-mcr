@@ -206,15 +206,23 @@ def labels_predictions_filter_transform(label_test,predictions,test_pred_proba, 
 		predictions_train=predictions_train[label_train!=0]
 		test_pred_proba=test_pred_proba[label_test!=0]	
 		train_pred_proba=train_pred_proba[label_train!=0]	
-			
+
+		ic(label_train.shape)
+		ic(np.unique(label_train, return_counts=True))
+					
 		label_metrics=label_metrics[label_metrics!=0]	
 		label_train=label_train[label_train!=0]
+
+		ic(np.unique(label_train, return_counts=True))
 
 		predictions = predictions - 1
 		predictions_train = predictions_train - 1
 		label_metrics = label_metrics - 1
 		label_train = label_train - 1
-
+	
+	ic(label_train.shape)
+	ic(np.unique(label_train, return_counts=True))
+	pdb.set_trace()
 	deb.prints(np.unique(predictions,return_counts=True))
 	deb.prints(np.unique(label_metrics,return_counts=True))
 
@@ -747,6 +755,9 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 			openModel.setModelSaveNameID(paramsTrain.seq_date, paramsTrain.dataset)
 			if paramsAnalysis.loadOpenResults == False:
 				ic(label_train.shape, predictions_train.shape, train_pred_proba.shape)
+				ic(np.unique(label_train, return_counts=True))
+				ic(np.unique(predictions_train, return_counts=True))
+				pdb.set_trace()
 				openModel.fit(label_train, predictions_train, train_pred_proba)
 				'''
 				deb.prints(predictions_train.shape)
