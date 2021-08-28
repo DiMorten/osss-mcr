@@ -70,16 +70,17 @@ class OpenSetMosaic():
 		
 
 	def loadFittedModel(self):
-		try:
-			self.openModel.setModelSaveNameID(self.paramsTrain.seq_date, self.paramsTrain.dataset)
-			self.openModel.loadFittedModel(path = 'results/open_set/', nameID = self.openModel.nameID)
-			return 0
+		self.openModel.setModelSaveNameID(self.paramsTrain.seq_date, self.paramsTrain.dataset)
+		if self.openSetMethod == 'OpenPCS' or self.openSetMethod == 'OpenPCS++':
+			try:
+				self.openModel.loadFittedModel(path = 'results/open_set/', nameID = self.openModel.nameID)
+				return 0
 
-		except:
-			print("Exception: No fitted model method.")
-			ic(self.openModel.nameID)
-			sys.exit()
-			return 1 # error
+			except:
+				print("Exception: No fitted model method.")
+				ic(self.openModel.nameID)
+				sys.exit()
+				return 1 # error
 	def applyThreshold(self, prediction_mosaic, debug = 0):
 		return self.openModel.applyThreshold(prediction_mosaic, self.scores_mosaic, debug = debug)
 

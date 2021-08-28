@@ -16,11 +16,11 @@ if __name__ == '__main__':
 		'getFullIms': False, # only True if first time
 		'coordsExtract': False, # only True if first time
 		'train': False,
-		'openSetMethod': 'SoftmaxThresholding', # OpenPCS, SoftmaxThresholding, OpenPCS++
+		'openSetMethod': 'OpenPCS++', # OpenPCS, SoftmaxThresholding, OpenPCS++
 		'openSetLoadModel': False,
 		'selectMainClasses': True,
 		'dataset': 'lm',
-		'seq_date': 'mar'		
+		'seq_date': 'jun'	# jun, mar	
 	}
 
 	paramsTrain = ParamsTrain('parameters/', **paramsTrainCustom)

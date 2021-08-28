@@ -270,6 +270,9 @@ class TrainTest():
 				ic(self.data.full_label_train.shape)
 				ic(np.unique(self.data.full_label_train, return_counts=True))
 
+				self.data.full_ims_train = self.data.addPaddingToInput(
+					self.model.model_t_len, self.data.full_ims_train)
+
 				self.data.patches_in = self.data.getSequencePatchesFromCoords(
 					self.data.full_ims_train, self.data.patches['train']['coords']).astype(prediction_dtype) # test coords is called self.coords, make custom init in this class. self.full_ims is also set independent
 				self.data.patches_label = self.data.getPatchesFromCoords(
