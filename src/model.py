@@ -102,9 +102,9 @@ class NetModel(object):
 		self.report={'best':{}, 'val':{}}
 		self.report['exp_id']=paramsTrain.exp_id
 		self.report['best']['text_name']='result_'+paramsTrain.exp_id+'.txt'
-		self.report['best']['text_path']='../results/'+self.report['best']['text_name']
-		self.report['best']['text_history_path']='../results/'+'history.txt'
-		self.report['val']['history_path']='../results/'+'history_val.txt'
+		self.report['best']['text_path']='results/'+self.report['best']['text_name']
+		self.report['best']['text_history_path']='results/'+'history.txt'
+		self.report['val']['history_path']='results/'+'history_val.txt'
 		
 		self.t_len=paramsTrain.t_len
 		deb.prints(self.t_len)

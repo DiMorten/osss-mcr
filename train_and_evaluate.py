@@ -24,12 +24,12 @@ import glob
 
 from sklearn.metrics import confusion_matrix,f1_score,accuracy_score,classification_report
 # Local
-from densnet import DenseNetFCN
-from densnet_timedistributed import DenseNetFCNTimeDistributed
+from src.densnet import DenseNetFCN
+from src.densnet_timedistributed import DenseNetFCNTimeDistributed
 
 #from metrics import fmeasure,categorical_accuracy
 import deb
-from keras_weighted_categorical_crossentropy import weighted_categorical_crossentropy, sparse_accuracy_ignoring_last_label, weighted_categorical_crossentropy_ignoring_last_label, categorical_focal_ignoring_last_label, weighted_categorical_focal_ignoring_last_label
+from src.keras_weighted_categorical_crossentropy import weighted_categorical_crossentropy, sparse_accuracy_ignoring_last_label, weighted_categorical_crossentropy_ignoring_last_label, categorical_focal_ignoring_last_label, weighted_categorical_focal_ignoring_last_label
 from tensorflow.keras.models import load_model
 from tensorflow.keras.layers import ConvLSTM2D, UpSampling2D, multiply
 from tensorflow.keras.regularizers import l1,l2
@@ -47,26 +47,26 @@ from collections import Counter
 
 
 #from datagenerator import DataGenerator
-from generator import DataGenerator, DataGeneratorWithCoords
+from src.generator import DataGenerator, DataGeneratorWithCoords
 
 import matplotlib.pyplot as plt
 # sys.path.append('../../../dataset/dataset/patches_extract_script/')
-from dataSource import DataSource, SARSource, Dataset, LEM, LEM2, CampoVerde
-from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixedLabelAllLabels, MIMFixed_PaddedSeq
+from src.dataSource import DataSource, SARSource, Dataset, LEM, LEM2, CampoVerde
+from src.model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixedLabelAllLabels, MIMFixed_PaddedSeq
 from parameters.params_train import ParamsTrain
 from parameters.params_mosaic import ParamsReconstruct
 
 from icecream import ic
-from monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerator
-from model import ModelLoadGeneratorWithCoords
-from dataset import Dataset, DatasetWithCoords
+from src.monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerator
+from src.model import ModelLoadGeneratorWithCoords
+from src.dataset import Dataset, DatasetWithCoords
 
-from patch_extractor import PatchExtractor
+from src.patch_extractor import PatchExtractor
 
-from mosaic import seq_add_padding, add_padding, Mosaic, MosaicHighRAM, MosaicHighRAMPostProcessing
-from postprocessing import PostProcessingMosaic
+from src.mosaic import seq_add_padding, add_padding, Mosaic, MosaicHighRAM, MosaicHighRAMPostProcessing
+from src.postprocessing import PostProcessingMosaic
 
-from metrics import Metrics, MetricsTranslated
+from src.metrics import Metrics, MetricsTranslated
 
 ic.configureOutput(includeContext=True)
 np.random.seed(2021)
