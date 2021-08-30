@@ -1,0 +1,17 @@
+{
+    "train": false,
+    "model_load": true,
+    "open_set": true,
+    "balancing": false,
+    "val_set": false,
+    "store_patches": true,
+    "select_kept_classes_flag": true,
+    "group_bcknd_classes": false,
+    "unknown_classes": [],
+    "samples_per_class": 2000,
+    "val_set_mode": "random",
+    "seq_len": 12,
+    "seq_mode": "fixed",
+
+    "sliceFromCoords": true     
+}

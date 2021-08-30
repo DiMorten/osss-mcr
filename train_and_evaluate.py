@@ -24,12 +24,12 @@ import glob
 
 from sklearn.metrics import confusion_matrix,f1_score,accuracy_score,classification_report
 # Local
-from densnet import DenseNetFCN
-from densnet_timedistributed import DenseNetFCNTimeDistributed
+from src.densnet import DenseNetFCN
+from src.densnet_timedistributed import DenseNetFCNTimeDistributed
 
 #from metrics import fmeasure,categorical_accuracy
 import deb
-from keras_weighted_categorical_crossentropy import weighted_categorical_crossentropy, sparse_accuracy_ignoring_last_label, weighted_categorical_crossentropy_ignoring_last_label, categorical_focal_ignoring_last_label, weighted_categorical_focal_ignoring_last_label
+from src.keras_weighted_categorical_crossentropy import weighted_categorical_crossentropy, sparse_accuracy_ignoring_last_label, weighted_categorical_crossentropy_ignoring_last_label, categorical_focal_ignoring_last_label, weighted_categorical_focal_ignoring_last_label
 from tensorflow.keras.models import load_model
 from tensorflow.keras.layers import ConvLSTM2D, UpSampling2D, multiply
 from tensorflow.keras.regularizers import l1,l2
@@ -47,26 +47,26 @@ from collections import Counter
 
 
 #from datagenerator import DataGenerator
-from generator import DataGenerator, DataGeneratorWithCoords
+from src.generator import DataGenerator, DataGeneratorWithCoords
 
 import matplotlib.pyplot as plt
 # sys.path.append('../../../dataset/dataset/patches_extract_script/')
-from dataSource import DataSource, SARSource, Dataset, LEM, LEM2, CampoVerde
-from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixedLabelAllLabels, MIMFixed_PaddedSeq
+from src.dataSource import DataSource, SARSource, Dataset, LEM, LEM2, CampoVerde
+from src.model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixedLabelAllLabels, MIMFixed_PaddedSeq
 from parameters.params_train import ParamsTrain
 from parameters.params_mosaic import ParamsReconstruct
 
 from icecream import ic
-from monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerator
-from model import ModelLoadGeneratorWithCoords
-from dataset import Dataset, DatasetWithCoords
+from src.monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerator
+from src.model import ModelLoadGeneratorWithCoords
+from src.dataset import Dataset, DatasetWithCoords
 
-from patch_extractor import PatchExtractor
+from src.patch_extractor import PatchExtractor
 
-from mosaic import seq_add_padding, add_padding, Mosaic, MosaicHighRAM, MosaicHighRAMPostProcessing
-from postprocessing import PostProcessingMosaic
+from src.mosaic import seq_add_padding, add_padding, Mosaic, MosaicHighRAM, MosaicHighRAMPostProcessing
+from src.postprocessing import PostProcessingMosaic
 
-from metrics import Metrics, MetricsTranslated
+from src.metrics import Metrics, MetricsTranslated
 
 ic.configureOutput(includeContext=True)
 np.random.seed(2021)
@@ -155,7 +155,8 @@ class TrainTest():
 
 		
 
-
+		self.data.unbalanced_train_coords = self.data.patches['train']['coords'].copy()
+		
 		print("=== SELECT VALIDATION SET FROM TRAIN SET")
 			
 		#val_set = False # fix this
@@ -277,7 +278,7 @@ class TrainTest():
 					self.data.full_ims_train, self.data.unbalanced_train_coords).astype(prediction_dtype) # test coords is called self.coords, make custom init in this class. self.full_ims is also set independent
 				self.data.patches_label = self.data.getPatchesFromCoords(
 					label_with_unknown_train, self.data.unbalanced_train_coords)
-	#       	self.coords = self.data.unbalanced_train_coords # not needed. use train coords directly
+	#       	self.coords = self.data.patches['train']['coords'] # not needed. use train coords directly
 				
 
 				self.data.predictions=(self.model.graph.predict(self.data.patches_in)).argmax(axis=-1).astype(np.uint8) 
@@ -316,7 +317,13 @@ class TrainTest():
 				ic(self.data.intermediate_features.shape)
 				
 	#			pdb.set_trace()
-				self.postProcessing.fit(self.data)	
+				self.postProcessing.fit(self.data)
+
+				del self.data.intermediate_features
+				del self.data.patches_in
+				del self.data.predictions
+				del self.data.patches_label
+				del self.data.full_ims_train	
 
 	def main(self):				
 

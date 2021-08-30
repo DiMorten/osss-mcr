@@ -102,9 +102,9 @@ class NetModel(object):
 		self.report={'best':{}, 'val':{}}
 		self.report['exp_id']=paramsTrain.exp_id
 		self.report['best']['text_name']='result_'+paramsTrain.exp_id+'.txt'
-		self.report['best']['text_path']='../results/'+self.report['best']['text_name']
-		self.report['best']['text_history_path']='../results/'+'history.txt'
-		self.report['val']['history_path']='../results/'+'history_val.txt'
+		self.report['best']['text_path']='results/'+self.report['best']['text_name']
+		self.report['best']['text_history_path']='results/'+'history.txt'
+		self.report['val']['history_path']='results/'+'history_val.txt'
 		
 		self.t_len=paramsTrain.t_len
 		deb.prints(self.t_len)
@@ -346,7 +346,7 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 #		pdb.set_trace()
 		history = self.graph.fit(training_generator,
 #			batch_size = self.batch['train']['size'], 
-			epochs = 2, 
+			epochs = 70, 
 			validation_data=validation_generator,
 #			validation_data=(data.patches['val']['in'], data.patches['val']['label']),
 #			callbacks = [es])
@@ -455,7 +455,7 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 															out3, #16x16
 															out4]) #32x32
 
-		intermediate_features=intermediate_layer_model.predict(in_) 
+		intermediate_features=intermediate_layer_model.predict(in_)
 
 		if debug > 0:
 			deb.prints(intermediate_features[0].shape)
@@ -479,4 +479,4 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 		if debug > 0:
 			deb.prints(intermediate_features.shape)
 			print("intermediate_features stats", np.min(intermediate_features), np.average(intermediate_features), np.max(intermediate_features))
-		return intermediate_features
+		return intermediate_features.astype(np.float16)

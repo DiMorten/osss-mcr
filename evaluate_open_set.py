@@ -13,14 +13,17 @@ from train_and_evaluate import TrainTest
 if __name__ == '__main__':
 
 	paramsTrainCustom = {
-		'getFullIms': True, # only True if first time
-		'coordsExtract': True, # only True if first time
-		'train': True,
-		'openSetMethod': 'OpenPCS++', # OpenPCS, SoftmaxThresholding, OpenPCS++
-		'openSetLoadModel': False,
-		'selectMainClasses': True,
+		'getFullIms': False, # only True if first time
+		'coordsExtract': False, # only True if first time
+		'train': False,
+#		'openSetMethod': 'SoftmaxThresholding', # SoftmaxThresholding, OpenPCS++
+#		'openSetMethod': 'OpenPCS', # SoftmaxThresholding, OpenPCS++
+		'openSetMethod': 'OpenPCS++', # SoftmaxThresholding, OpenPCS++
+
+		'openSetLoadModel': True,
+		'selectMainClasses': True,		
 		'dataset': 'lm',
-		'seq_date': 'mar'	# jun, mar	
+		'seq_date': 'jun'
 	}
 
 	paramsTrain = ParamsTrain('parameters/', **paramsTrainCustom)
@@ -30,6 +33,7 @@ if __name__ == '__main__':
 	trainTest = TrainTest(paramsTrain)
 
 	trainTest.main()
+
 
 
 

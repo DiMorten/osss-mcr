@@ -401,8 +401,8 @@ class DatasetWithCoords(Dataset):
 		return im
 
 	def addPaddingToInputPatches(self, patches, model_t_len):
-		if self.t_len < model_t_len: 
-			seq_pad_len = model_t_len - self.t_len
+		seq_pad_len = model_t_len - patches.shape[0]
+		if seq_pad_len > 0: 
 			patch_n = patches.shape[0]
 			patches = np.concatenate(
 					(np.zeros((patch_n, seq_pad_len, *patches.shape[2:])),
@@ -540,7 +540,7 @@ class DatasetWithCoords(Dataset):
 		
 		idx = np.random.permutation(balance["coords"].shape[0])
 
-		self.unbalanced_train_coords = self.patches['train']['coords'].copy()
+		
 		self.patches['train']['coords'] = balance["coords"][idx]
 		print("Balanced train unique (coords):")
 		deb.prints(self.patches['train']['coords'].shape)
