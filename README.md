@@ -6,7 +6,7 @@
 
 ## Installing the required python packages
 
-The list of anaconda commands to recreate the environment for this project is in environment.yml. Use the following commands:
+Environment can be installed using environment.yml file. Use the following commands:
   ```
   conda env create -f environment.yml
   conda activate tfg2
