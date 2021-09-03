@@ -69,7 +69,7 @@ class ModelArchitecture():
 		self.in_im = Input(shape=(self.model_t_len,self.patch_len, self.patch_len, self.channel_n))
 		self.weight_decay=1E-4
 
-	def dilated_layer(self, x,filter_size,dilation_rate=1, kernel_size=3):
+	def timeDistributedConvLayer(self, x,filter_size,dilation_rate=1, kernel_size=3):
 		x = TimeDistributed(Conv2D(filter_size, kernel_size, padding='same',
 			dilation_rate=(dilation_rate, dilation_rate)))(x)
 		x = BatchNormalization(gamma_regularizer=l2(self.weight_decay),
@@ -78,7 +78,7 @@ class ModelArchitecture():
 		return x
 
 
-	def dilated_layer_3D(self, x,filter_size,dilation_rate=1, kernel_size=3):
+	def timeDistributedConvLayer3D(self, x,filter_size,dilation_rate=1, kernel_size=3):
 		if isinstance(dilation_rate, int):
 			dilation_rate = (dilation_rate, dilation_rate, dilation_rate)
 		x = Conv3D(filter_size, kernel_size, padding='same',
@@ -120,7 +120,7 @@ class ModelArchitecture():
 				deb.prints(K.int_shape(x))
 				
 		deb.prints(K.int_shape(x))
-		#x=dilated_layer(x,filter_size,1,kernel_size=1)
+		#x=timeDistributedConvLayer(x,filter_size,1,kernel_size=1)
 		deb.prints(K.int_shape(x))
 
 		if pooling==True:
@@ -138,13 +138,13 @@ class ModelArchitecture():
 		max_rate=8,global_average_pooling=False):
 		x=[]
 		if max_rate>=1:
-			x.append(self.dilated_layer(x,filter_size,1)) # (1,1,1)
+			x.append(self.timeDistributedConvLayer(x,filter_size,1)) # (1,1,1)
 		if max_rate>=2:
-			x.append(self.dilated_layer(x,filter_size,2)) #6 (1,2,2)
+			x.append(self.timeDistributedConvLayer(x,filter_size,2)) #6 (1,2,2)
 		if max_rate>=4:
-			x.append(self.dilated_layer(x,filter_size,4)) #12 (2,4,4)
+			x.append(self.timeDistributedConvLayer(x,filter_size,4)) #12 (2,4,4)
 		if max_rate>=8:
-			x.append(self.dilated_layer(x,filter_size,8)) #18 (4,8,8)
+			x.append(self.timeDistributedConvLayer(x,filter_size,8)) #18 (4,8,8)
 		if global_average_pooling==True:
 			x.append(im_pooling_layer(x,filter_size))
 		out = keras.layers.concatenate(x, axis=-1)
@@ -154,13 +154,13 @@ class ModelArchitecture():
 		max_rate=8,global_average_pooling=False):
 		x=[]
 		if max_rate>=1:
-			x.append(self.dilated_layer_3D(x,filter_size,1))
+			x.append(self.timeDistributedConvLayer3D(x,filter_size,1))
 		if max_rate>=2:
-			x.append(self.dilated_layer_3D(x,filter_size,(1,2,2))) #6
+			x.append(self.timeDistributedConvLayer3D(x,filter_size,(1,2,2))) #6
 		if max_rate>=4:
-			x.append(self.dilated_layer_3D(x,filter_size,(2,4,4))) #12
+			x.append(self.timeDistributedConvLayer3D(x,filter_size,(2,4,4))) #12
 		if max_rate>=8:
-			x.append(self.dilated_layer_3D(x,filter_size,(4,8,8))) #18
+			x.append(self.timeDistributedConvLayer3D(x,filter_size,(4,8,8))) #18
 		if global_average_pooling==True:
 			x.append(im_pooling_layer(x,filter_size))
 		out = keras.layers.concatenate(x, axis=-1)
@@ -170,15 +170,15 @@ class ModelArchitecture():
 		max_rate=4):
 		x=[]
 		if max_rate>=1:
-			x.append(self.dilated_layer_3D(x,filter_size,1))
+			x.append(self.timeDistributedConvLayer3D(x,filter_size,1))
 		if max_rate>=2:
-			x.append(self.dilated_layer_3D(x,filter_size,(2,1,1))) #2
+			x.append(self.timeDistributedConvLayer3D(x,filter_size,(2,1,1))) #2
 		if max_rate>=3:
-			x.append(self.dilated_layer_3D(x,filter_size,(3,1,1))) #2
+			x.append(self.timeDistributedConvLayer3D(x,filter_size,(3,1,1))) #2
 		if max_rate>=4:
-			x.append(self.dilated_layer_3D(x,filter_size,(4,1,1))) #4
+			x.append(self.timeDistributedConvLayer3D(x,filter_size,(4,1,1))) #4
 		if max_rate>=5:
-			x.append(self.dilated_layer_3D(x,filter_size,(5,1,1))) #4
+			x.append(self.timeDistributedConvLayer3D(x,filter_size,(5,1,1))) #4
 		out = keras.layers.concatenate(x, axis=4)
 		return out
 
@@ -186,23 +186,23 @@ class ModelArchitecture():
 		max_rate=4):
 		x=[]
 		if max_rate>=1:
-			x.append(self.dilated_layer_3D(x,filter_size,1))
+			x.append(self.timeDistributedConvLayer3D(x,filter_size,1))
 		if max_rate>=2:
-			x.append(self.dilated_layer_3D(x,filter_size,(2,2,2))) #2
+			x.append(self.timeDistributedConvLayer3D(x,filter_size,(2,2,2))) #2
 		if max_rate>=3:
-			x.append(self.dilated_layer_3D(x,filter_size,(3,3,3))) #2
+			x.append(self.timeDistributedConvLayer3D(x,filter_size,(3,3,3))) #2
 		if max_rate>=4:
-			x.append(self.dilated_layer_3D(x,filter_size,(4,4,4))) #4
+			x.append(self.timeDistributedConvLayer3D(x,filter_size,(4,4,4))) #4
 		out = keras.layers.concatenate(x, axis=4)
 		return out
 
 	def unetEncoder(self, x, fs):
-		p1=self.dilated_layer(x,fs)			
-		p1=self.dilated_layer(p1,fs)
+		p1=self.timeDistributedConvLayer(x,fs)			
+		p1=self.timeDistributedConvLayer(p1,fs)
 		e1 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p1)
-		p2=self.dilated_layer(e1,fs*2)
+		p2=self.timeDistributedConvLayer(e1,fs*2)
 		e2 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p2)
-		p3=self.dilated_layer(e2,fs*4)
+		p3=self.timeDistributedConvLayer(e2,fs*4)
 		e3 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p3)
 		return e3, p1, p2, p3
 
@@ -213,7 +213,7 @@ class ModelArchitecture():
 		d2 = keras.layers.concatenate([d2, p2], axis=4)
 		d1 = self.transpose_layer(d2,fs*2)
 		d1 = keras.layers.concatenate([d1, p1], axis=4)
-		out=self.dilated_layer(d1,fs)
+		out=self.timeDistributedConvLayer(d1,fs)
 		return out
 
 class UnetConvLSTM(ModelArchitecture):
@@ -261,16 +261,16 @@ class UnetConvLSTM_Skip(ModelArchitecture):
 		#fs=32
 		fs=16
 
-		p1=self.dilated_layer(self.in_im,fs)
-		p1=self.dilated_layer(p1,fs)
+		p1=self.timeDistributedConvLayer(self.in_im,fs)
+		p1=self.timeDistributedConvLayer(p1,fs)
 		x_p1 = Bidirectional(ConvLSTM2D(64,3,return_sequences=True,
 				padding="same"),merge_mode='concat')(p1)
 		e1 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p1)
-		p2=self.dilated_layer(e1,fs*2)
+		p2=self.timeDistributedConvLayer(e1,fs*2)
 		x_p2 = Bidirectional(ConvLSTM2D(64,3,return_sequences=True,
 				padding="same"),merge_mode='concat')(p2)
 		e2 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p2)
-		p3=self.dilated_layer(e2,fs*4)
+		p3=self.timeDistributedConvLayer(e2,fs*4)
 		x_p3 = Bidirectional(ConvLSTM2D(64,3,return_sequences=True,
 				padding="same"),merge_mode='concat')(p3)
 		e3 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p3)
@@ -280,13 +280,13 @@ class UnetConvLSTM_Skip(ModelArchitecture):
 
 		d3 = self.transpose_layer(x,fs*4)
 		d3 = keras.layers.concatenate([d3, x_p3], axis=4)
-		d3 = self.dilated_layer(d3,fs*4)
+		d3 = self.timeDistributedConvLayer(d3,fs*4)
 		d2 = self.transpose_layer(d3,fs*2)
 		d2 = keras.layers.concatenate([d2, x_p2], axis=4)
-		d2 = self.dilated_layer(d2,fs*2)
+		d2 = self.timeDistributedConvLayer(d2,fs*2)
 		d1 = self.transpose_layer(d2,fs)
 		d1 = keras.layers.concatenate([d1, x_p1], axis=4)
-		out = self.dilated_layer(d1,fs)
+		out = self.timeDistributedConvLayer(d1,fs)
 		out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
 									padding='same'))(out)
 		self.graph = Model(self.in_im, out)
@@ -299,22 +299,22 @@ class Unet3D(ModelArchitecture):
 		fs=32
 		#fs=16
 
-		p1=self.dilated_layer_3D(self.in_im,fs,kernel_size=(7,3,3))
+		p1=self.timeDistributedConvLayer3D(self.in_im,fs,kernel_size=(7,3,3))
 		e1 = AveragePooling3D((1, 2, 2), strides=(1, 2, 2))(p1)
-		p2=self.dilated_layer_3D(e1,fs*2,kernel_size=(7,3,3))
+		p2=self.timeDistributedConvLayer3D(e1,fs*2,kernel_size=(7,3,3))
 		e2 = AveragePooling3D((1, 2, 2), strides=(1, 2, 2))(p2)
-		p3=self.dilated_layer_3D(e2,fs*4,kernel_size=(7,3,3))
+		p3=self.timeDistributedConvLayer3D(e2,fs*4,kernel_size=(7,3,3))
 		e3 = AveragePooling3D((1, 2, 2), strides=(1, 2, 2))(p3)
 
 		d3 = self.transpose_layer_3D(e3,fs*4)
 		d3 = keras.layers.concatenate([d3, p3], axis=4)
-		d3 = self.dilated_layer_3D(d3,fs*4,kernel_size=(7,3,3))
+		d3 = self.timeDistributedConvLayer3D(d3,fs*4,kernel_size=(7,3,3))
 		d2 = self.transpose_layer_3D(d3,fs*2)
 		d2 = keras.layers.concatenate([d2, p2], axis=4)
-		d2 = self.dilated_layer_3D(d2,fs*2,kernel_size=(7,3,3))
+		d2 = self.timeDistributedConvLayer3D(d2,fs*2,kernel_size=(7,3,3))
 		d1 = self.transpose_layer_3D(d2,fs)
 		d1 = keras.layers.concatenate([d1, p1], axis=4)
-		out = self.dilated_layer_3D(d1,fs,kernel_size=(7,3,3))
+		out = self.timeDistributedConvLayer3D(d1,fs,kernel_size=(7,3,3))
 		out = Conv3D(self.class_n, (1, 1, 1), activation=None,
 									padding='same')(out)
 		self.graph = Model(self.in_im, out)
@@ -354,16 +354,16 @@ class BAtrousGAPConvLSTM(ModelArchitecture):
 		#fs=32
 		fs=16
 		
-		#x=dilated_layer(self.in_im,fs)
-		x=self.dilated_layer(self.in_im,fs)
-		x=self.dilated_layer(x,fs)
+		#x=timeDistributedConvLayer(self.in_im,fs)
+		x=self.timeDistributedConvLayer(self.in_im,fs)
+		x=self.timeDistributedConvLayer(x,fs)
 		x=self.spatial_pyramid_pooling(x,fs*4,max_rate=8,
 			global_average_pooling=True)
 		
 		x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
 				padding="same"),merge_mode='concat')(x)
 
-		out=self.dilated_layer(x,fs)
+		out=self.timeDistributedConvLayer(x,fs)
 		out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
 									padding='same'))(out)
 		self.graph = Model(self.in_im, out)
@@ -389,12 +389,12 @@ class ModelArchitectureNto1(ModelArchitecture):
 		
 	def unetEncoderNto1(self, x, fs):
 
-		p1=self.dilated_layer(x,fs)			
-		p1=self.dilated_layer(p1,fs)
+		p1=self.timeDistributedConvLayer(x,fs)			
+		p1=self.timeDistributedConvLayer(p1,fs)
 		e1 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p1)
-		p2=self.dilated_layer(e1,fs*2)
+		p2=self.timeDistributedConvLayer(e1,fs*2)
 		e2 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p2)
-		p3=self.dilated_layer(e2,fs*4)
+		p3=self.timeDistributedConvLayer(e2,fs*4)
 		e3 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p3)
 		return e3, p1, p2, p3
 
