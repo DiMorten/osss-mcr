@@ -45,7 +45,7 @@ class PatchExtractor():
 
 		self.mask=cv2.imread(
 			str(self.conf["train"]["mask"]["dir"]),-1).astype(np.uint8)
-
+		ic(self.mask.shape)
 	def label_seq_mask(self,im,mask): 
 		im=im.astype(np.uint8) 
 		im_train=im.copy() 
@@ -81,10 +81,13 @@ class PatchExtractor():
 #		ic(os.listdir(self.conf["train"]["mask"]["dir"]))
 		
 
-
+		print("starting getFullIms...")
 		patch["full_ims"]=np.zeros((self.conf["t_len"],)+self.conf["im_3d_size"]).astype(np.float16)
+		ic(patch["full_ims"].shape)
 		self.full_label = np.zeros((self.conf["t_len"],)+self.conf["im_3d_size"][0:2]).astype(np.int8)
+		ic(self.full_label.shape)
 		patch["full_label_ims"] = self.full_label
+		ic(patch["full_label_ims"].shape)
 
 
 		ic(patch["full_ims"].shape)
