@@ -100,7 +100,7 @@ class ParamsTrain(Params):
 		self.model_name = 'dummy'
 
 		self.learning_rate = 0.0001
-		self.id = "checking_deleted_files_ok"
+		self.id = "dummy"
 		
 		
 

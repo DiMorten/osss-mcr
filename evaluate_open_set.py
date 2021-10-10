@@ -1,13 +1,13 @@
-from dataSource import DataSource, SARSource, Dataset, LEM, LEM2, CampoVerde
-from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixedLabelAllLabels, MIMFixed_PaddedSeq
+from src.dataSource import DataSource, SARSource, Dataset, LEM, LEM2, CampoVerde
+from src.model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixedLabelAllLabels, MIMFixed_PaddedSeq
 from parameters.params_train import ParamsTrain
 from parameters.params_mosaic import ParamsReconstruct
 from icecream import ic
-from monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerator
-from model import ModelLoadGeneratorWithCoords
-from dataset import Dataset, DatasetWithCoords
+from src.monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerator
+from src.model import ModelLoadGeneratorWithCoords
+from src.dataset import Dataset, DatasetWithCoords
 
-from patch_extractor import PatchExtractor
+from src.patch_extractor import PatchExtractor
 from train_and_evaluate import TrainTest
 
 if __name__ == '__main__':
