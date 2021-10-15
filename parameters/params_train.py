@@ -175,8 +175,13 @@ class ParamsTrain(Params):
 		# usually editable params
 
 		model_type = UUnetConvLSTM # Options: UUnetConvLSTM, UnetSelfAttention
+
 		self.model_type = model_type(self.model_t_len, self.patch_len, self.channel_n)
 
+		self.dropout = 0.3
+		model_type = UUnetConvLSTM_dropout
+		self.model_type = model_type(self.model_t_len, self.patch_len, self.channel_n,
+			self.dropout)
 
 
 #        self.seq_mode = "fixed"

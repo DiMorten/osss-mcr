@@ -88,7 +88,14 @@ class SoftmaxThresholding(OpenSetMethod):
         predictions_test[scores < self.threshold] = 40 #self.loco_class + 1
         return predictions_test
 
-
+class Uncertainty(OpenSetMethod):
+    def __init__(self, known_classes, n_components, loco_class=0):
+        super().__init__(loco_class)
+        self.known_classes = known_classes
+        self.n_components = n_components
+        self.fittedFlag = False
+    def predictScores(self, predictions_test, open_features, debug=1):     
+        pass # heren, calculate metrics       
 class OpenSetMethodGaussian(OpenSetMethod):
     def __init__(self, known_classes, n_components, loco_class=0):
         super().__init__(loco_class)

@@ -23,7 +23,7 @@ if __name__ == '__main__':
 		'openSetLoadModel': True,
 		'selectMainClasses': True,		
 		'dataset': 'lm',
-		'seq_date': 'jun'
+		'seq_date': 'mar'
 	}
 
 	paramsTrain = ParamsTrain('parameters/', **paramsTrainCustom)

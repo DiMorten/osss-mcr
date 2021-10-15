@@ -4,7 +4,7 @@ import deb
 import numpy as np
 import sys
 from icecream import ic
-from open_set import OpenPCS, SoftmaxThresholding
+from open_set import OpenPCS, SoftmaxThresholding, Uncertainty
 class PostProcessingMosaic():
 	def __init__(self, paramsTrain, h, w):
 		self.paramsTrain = paramsTrain
@@ -56,7 +56,9 @@ class OpenSetMosaic():
 			self.openModel = SoftmaxThresholding()
 			threshold = 0.9
 		
-
+		elif self.openSetMethod == 'Uncertainty':
+			self.openModel = Uncertainty()
+			threshold = 0.9
 		self.openModel.setThreshold(threshold)
 
 	def fit(self, data):

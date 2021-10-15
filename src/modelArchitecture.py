@@ -398,6 +398,20 @@ class ModelArchitectureNto1(ModelArchitecture):
 		e3 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p3)
 		return e3, p1, p2, p3
 
+	def unetEncoderNto1_dropout(self, x, fs, dropout = 0):
+
+		p1=self.timeDistributedConvLayer(x,fs)			
+		p1=self.timeDistributedConvLayer(p1,fs)
+		p1 = SpatialDropout2D(dropout)(p1)
+		e1 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p1)
+		p2=self.timeDistributedConvLayer(e1,fs*2)
+		p2 = SpatialDropout2D(dropout)(p2)
+		e2 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p2)
+		p3=self.timeDistributedConvLayer(e2,fs*4)
+		p3 = SpatialDropout2D(dropout)(p3)
+		e3 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p3)
+		return e3, p1, p2, p3
+
 	def unetDecoderNto1(self, x, p1, p2, p3, fs):
 		d3 = self.transpose_layer(x,fs*4)
 		p3 = self.slice_tensor(p3)
@@ -413,6 +427,35 @@ class ModelArchitectureNto1(ModelArchitecture):
 
 		d2 = keras.layers.concatenate([d2, p2], axis=-1)
 		d2=self.dilated_layer_Nto1(d2,fs*2)
+		d1 = self.transpose_layer(d2,fs)
+		p1 = self.slice_tensor(p1)
+		deb.prints(K.int_shape(p1))
+		deb.prints(K.int_shape(d1))
+
+		d1 = keras.layers.concatenate([d1, p1], axis=-1)
+		out=self.dilated_layer_Nto1(d1,fs)
+		return out
+
+	def unetDecoderNto1_dropout(self, x, p1, p2, p3, fs, dropout=0):
+		x = SpatialDropout2D(dropout)(x)
+		d3 = self.transpose_layer(x,fs*4)
+		p3 = self.slice_tensor(p3)
+		deb.prints(K.int_shape(p3))
+		deb.prints(K.int_shape(d3))
+		
+		d3 = keras.layers.concatenate([d3, p3], axis=-1)
+		d3=self.dilated_layer_Nto1(d3,fs*4)
+		d3 = SpatialDropout2D(dropout)(d3)
+
+		d2 = self.transpose_layer(d3,fs*2)
+		p2 = self.slice_tensor(p2)
+		deb.prints(K.int_shape(p2))
+		deb.prints(K.int_shape(d2))
+
+		d2 = keras.layers.concatenate([d2, p2], axis=-1)
+		d2=self.dilated_layer_Nto1(d2,fs*2)
+		d2 = SpatialDropout2D(dropout)(d2)
+
 		d1 = self.transpose_layer(d2,fs)
 		p1 = self.slice_tensor(p1)
 		deb.prints(K.int_shape(p1))
@@ -442,7 +485,33 @@ class UUnetConvLSTM(ModelArchitectureNto1):
 									padding='same')(out)
 		self.graph = Model(self.in_im, out)
 		print(self.graph.summary())
-		
+
+
+class UUnetConvLSTMDropout(ModelArchitectureNto1):
+
+	def __init__(self, t_len, patch_len, channel_n, dropout):
+		self.dropout = dropout
+		super().__init__(t_len, patch_len, channel_n)
+	def __repr__(self):
+		return "UUnetConvLSTM"
+	def build(self):
+		super().build()		
+		concat_axis = 3
+		#fs=32
+		fs=16
+
+		e3, p1, p2, p3 = self.unetEncoderNto1_dropout(self.in_im, fs, dropout = self.dropout)
+
+		x = ConvLSTM2D(256,3,return_sequences=False,
+				padding="same")(e3)
+
+		out = self.unetDecoderNto1_dropout(x, p1, p2, p3, fs, dropout = self.dropout)
+
+		out = Conv2D(self.class_n, (1, 1), activation=None,
+									padding='same')(out)
+		self.graph = Model(self.in_im, out)
+		print(self.graph.summary())
+
 class UnetSelfAttention(ModelArchitectureNto1):
 	def __repr__(self):
 		return "UnetSelfAttention"	
