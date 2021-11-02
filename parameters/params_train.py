@@ -5,7 +5,7 @@ import pdb
 from pathlib import Path
 import sys
 sys.path.append('src/')
-from modelArchitecture import UUnetConvLSTM, UnetSelfAttention
+from modelArchitecture import UUnetConvLSTM, UnetSelfAttention, UUnetConvLSTMDropout
 from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixedLabelAllLabels, MIMFixed_PaddedSeq
 import deb
 from icecream import ic
@@ -52,6 +52,7 @@ class ParamsTrain(Params):
 		self.coordsExtract = False if ('coordsExtract' not in kwargs.keys()) else kwargs['coordsExtract']
 		self.train = False if ('train' not in kwargs.keys()) else kwargs['train']
 		self.openSetLoadModel = False if ('openSetLoadModel' not in kwargs.keys()) else kwargs['openSetLoadModel']
+		self.dropoutInference = False if ('dropoutInference' not in kwargs.keys()) else kwargs['dropoutInference']
 
 #        self.model_load = True
 
@@ -173,16 +174,17 @@ class ParamsTrain(Params):
 		self.t_len = 12 # variable? depends on dataset?
 		self.model_t_len = 12
 		# usually editable params
+		self.dropout_mode = True
+		if self.dropout_mode == False:
+			model_type = UUnetConvLSTM # Options: UUnetConvLSTM, UnetSelfAttention
 
-		model_type = UUnetConvLSTM # Options: UUnetConvLSTM, UnetSelfAttention
-
-		self.model_type = model_type(self.model_t_len, self.patch_len, self.channel_n)
-		'''
-		self.dropout = 0.3
-		model_type = UUnetConvLSTM_dropout
-		self.model_type = model_type(self.model_t_len, self.patch_len, self.channel_n,
-			self.dropout)
-		'''
+			self.model_type = model_type(self.model_t_len, self.patch_len, self.channel_n)
+		else:
+			self.dropout = 0.2
+			model_type = UUnetConvLSTMDropout
+			self.model_type = model_type(self.model_t_len, self.patch_len, self.channel_n,
+				self.dropout)
+		
 
 #        self.seq_mode = "fixed"
 		#self.seq_date = "mar"
