@@ -5,7 +5,7 @@ from icecream import ic
 import sklearn
 import matplotlib.pyplot as plt
 from icecream import ic
-
+import pathlib
 class Metrics():
 
 	def __init__(self, paramsTrain):
@@ -161,6 +161,8 @@ class Metrics():
 		deb.prints(thresholds_by_tpr)
 #        pdb.set_trace()
 		# ========================== Plot
+		pathlib.Path("results/open_set/roc_curve/").mkdir(parents=True, exist_ok=True)
+
 		np.savez("results/open_set/roc_curve/roc_curve_"+modelId+"_"+nameId+".npz", fpr=fpr, tpr=tpr)
 		plt.figure(1)
 		plt.plot([0, 1], [0, 1], 'k--')

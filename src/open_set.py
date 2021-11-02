@@ -16,6 +16,7 @@ from scipy.spatial.distance import mahalanobis
 from scipy.linalg import fractional_matrix_power
 from scipy import linalg
 from math import log
+import pathlib
 ic.configureOutput(includeContext=False, prefix='[@debug] ')
 
 
@@ -528,6 +529,9 @@ class OpenSetMethodGaussian(OpenSetMethod):
             print("*"*30, "List was saved in pickle")
 
         #self.setModelSaveNameID()
+        pathlib.Path("results/open_set/models/").mkdir(parents=True, exist_ok=True)
+        pathlib.Path("results/open_set/covariance_matrix/").mkdir(parents=True, exist_ok=True)
+
         save_list_in_pickle(self.model_list, 
             "results/open_set/models/models_"+self.nameID+".pckl")
         save_list_in_pickle(self.covariance_matrix_list, 
