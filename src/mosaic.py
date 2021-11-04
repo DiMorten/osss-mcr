@@ -514,6 +514,10 @@ class MosaicHighRAM(Mosaic):
 		assert self.patches_per_batch * self.pb.batch_processing_n == self.count_mask
 		assert self.patches_per_batch < 10200
 
+	def deleteAllButLogits(self):
+		del self.prediction_mosaic
+		# del self.test_pred_proba
+		del self.scores_mosaic
 class MosaicHighRAMPostProcessing(MosaicHighRAM):
 	def create(self, paramsTrain, model, data, ds, postProcessing):
 		self.postProcessing = postProcessing

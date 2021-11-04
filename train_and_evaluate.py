@@ -58,7 +58,7 @@ from parameters.params_mosaic import ParamsReconstruct
 
 from icecream import ic
 from src.monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerator
-from src.model import ModelLoadGeneratorWithCoords
+from src.model import ModelCropRecognition
 from src.dataset import Dataset, DatasetWithCoords
 
 from src.patch_extractor import PatchExtractor
@@ -128,10 +128,13 @@ class TrainTest():
 #		pdb.set_trace()
 	def setModel(self, model_name_id):
 
-		self.model_name = model_name_id
-
-		self.model = ModelLoadGeneratorWithCoords(paramsTrain = self.paramsTrain, ds = self.ds, 
-						) 
+		#self.model_name = model_name_id
+		#if self.paramsTrain.dropoutInference == False:
+		modelObj = ModelCropRecognition
+		#else:
+	#		modelObj = ModelDropout
+		
+		self.model = modelObj(paramsTrain = self.paramsTrain, ds = self.ds) 
 		self.model.class_n=self.data.class_n-1 # Model is designed without background class
 
 		self.model.name = model_name_id
@@ -350,8 +353,37 @@ class TrainTest():
 		self.mosaicCreate(paramsMosaic)
 		self.evaluate()
 
+class TrainTestDropout(TrainTest):
+	def mosaicCreate(self, paramsMosaic):
+
+		self.data.full_ims_test = self.data.addPaddingToInput(
+			self.model.model_t_len, self.data.full_ims_test)
+
+		_, h,w,channel_n = self.data.full_ims_test.shape
+
+		self.data.reloadLabel()
+
+		times = 10
+		ic(times, h,w, self.model.class_n)
+		self.prediction_logits_mosaic_group = np.ones((times, h,w, self.model.class_n)).astype(np.float16)
+		for t in range(times):
+			self.mosaic = MosaicHighRAM(self.paramsTrain, paramsMosaic)
+			self.postProcessing = None
+
+			self.mosaic.create(self.paramsTrain, self.model, self.data, self.ds, self.postProcessing)
+
+			#self.mosaic.deleteAllButLogits()
+
+			self.prediction_logits_mosaic_group[t] = self.mosaic.prediction_logits_mosaic.copy()
 
 
+		self.prediction_logits_mosaic_mean = np.mean(self.prediction_logits_mosaic_group, axis = 0)
+		self.prediction_logits_mosaic_std = np.std(self.prediction_logits_mosaic_group, axis = 0)
+
+		np.save('prediction_logits_mosaic_group.npy', self.prediction_logits_mosaic_group)
+		
+		ic(self.prediction_logits_mosaic_mean.shape, self.prediction_logits_mosaic_std.shape)
+		pdb.set_trace()
 
 if __name__ == '__main__':
 

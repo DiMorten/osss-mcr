@@ -4,7 +4,7 @@ from parameters.params_train import ParamsTrain
 from parameters.params_mosaic import ParamsReconstruct
 from icecream import ic
 from monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerator
-from model import ModelLoadGeneratorWithCoords
+from model import ModelCropRecognition
 from dataset import Dataset, DatasetWithCoords
 
 from patch_extractor import PatchExtractor

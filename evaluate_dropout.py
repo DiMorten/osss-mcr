@@ -4,11 +4,13 @@ from parameters.params_train import ParamsTrain
 from parameters.params_mosaic import ParamsReconstruct
 from icecream import ic
 from src.monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerator
-from src.model import ModelLoadGeneratorWithCoords
+from src.model import ModelCropRecognition
 from src.dataset import Dataset, DatasetWithCoords
 
 from src.patch_extractor import PatchExtractor
-from train_and_evaluate import TrainTest
+from train_and_evaluate import TrainTest, TrainTestDropout
+
+
 
 if __name__ == '__main__':
 
@@ -17,7 +19,7 @@ if __name__ == '__main__':
 		'coordsExtract': False, # only True if first time
 		'train': False,
 		'openSetMethod': None, # OpenPCS, SoftmaxThresholding, OpenPCS++
-		'dropoutInference': True
+		'dropoutInference': True,
 		'openSetLoadModel': False,
 		'selectMainClasses': True,
 		'dataset': 'lm',
@@ -28,7 +30,7 @@ if __name__ == '__main__':
 
 	paramsTrain.dataSource = SARSource()
 
-	trainTest = TrainTest(paramsTrain)
+	trainTest = TrainTestDropout(paramsTrain)
 
 	trainTest.main()
 

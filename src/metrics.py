@@ -164,15 +164,15 @@ class Metrics():
 		pathlib.Path("results/open_set/roc_curve/").mkdir(parents=True, exist_ok=True)
 
 		np.savez("results/open_set/roc_curve/roc_curve_"+modelId+"_"+nameId+".npz", fpr=fpr, tpr=tpr)
-		plt.figure(1)
+		plt.figure()
 		plt.plot([0, 1], [0, 1], 'k--')
 #        plt.plot(tpr, fpr, label = 'AUC = %0.2f' % roc_auc)
 		plt.plot(fpr, tpr, label = 'AUC = %0.2f' % roc_auc)
 		plt.xlabel('False Positive Rate')
 		plt.ylabel('True Positive Rate')
-		
+		plt.savefig('roc_auc_'+modelId+"_"+nameId+'.png', dpi = 500)
 #        plt.gca().set_aspect('equal', adjustable='box')
-		plt.show()
+		#plt.show()
 
 class MetricsTranslated(Metrics):
 	def filterSamples(self, prediction, label, class_n):

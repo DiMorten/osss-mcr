@@ -66,7 +66,7 @@ def load_obj(name ):
 		return pickle.load(f)
 
 
-class NetModel(object):
+class ModelCropRecognition(object):
 	def __init__(self, paramsTrain, ds, 
 		*args, **kwargs):
 
@@ -230,7 +230,7 @@ class NetModel(object):
 		print('oa={}, aa={}, f1={}, f1_wght={}'.format(metrics['overall_acc'],
 			metrics['average_acc'],metrics['f1_score'],metrics['f1_score_weighted']))
 
-class ModelFit(NetModel):
+
 	def train(self, data):
 		#========= VAL INIT
 
@@ -301,9 +301,6 @@ class ModelFit(NetModel):
 			data.patches['test']['label'],debug=2)
 		deb.prints(metrics_test)
 		
-
-class ModelLoadGeneratorWithCoords(ModelFit):
-
 	def applyFitMethod(self,data):
 		ic(self.class_n)
 		#pdb.set_trace()
@@ -480,3 +477,61 @@ class ModelLoadGeneratorWithCoords(ModelFit):
 			deb.prints(intermediate_features.shape)
 			print("intermediate_features stats", np.min(intermediate_features), np.average(intermediate_features), np.max(intermediate_features))
 		return intermediate_features
+'''
+class ModelDropout(ModelCropRecognition):
+	def evaluate(self, data, ds, paramsMosaic):
+		params_test = {
+			'dim': (self.model_t_len,self.patch_len,self.patch_len),
+			'label_dim': (self.patch_len,self.patch_len),
+			'batch_size': 1,
+#			'n_classes': self.class_n,
+			'n_classes': self.class_n + 1, # it was 6. Now it is 13 + 1 = 14
+
+			'n_channels': 2,
+			'shuffle': False,
+#			'printCoords': False,
+			'augm': False}	
+
+		data.full_ims_test = data.addPaddingToInput(
+			self.model_t_len, data.full_ims_test)
+
+		_, h,w,channel_n = data.full_ims_test.shape
+
+		data.reloadLabel()
+
+		self.paramsMosaic = paramsMosaic
+		times = 10
+
+		self.prediction_logits_mosaic_group = np.ones((times, h,w, class_n)).astype(np.float16)
+		for t in range(times):
+			mosaic = MosaicHighRAM(self.paramsTrain, self.paramsMosaic)
+
+			self.postProcessing = PostProcessingMosaic(self.paramsTrain, h, w)
+
+			mosaic.create(self.paramsTrain, self, data, ds, self.postProcessing)
+
+			mosaic.deleteAllButLogits()
+
+			self.prediction_logits_mosaic_group[t] = mosaic.prediction_logits_mosaic.copy()
+		
+		self.prediction_logits_mosaic_mean = np.mean(self.prediction_logits_mosaic_group, axis = 0)
+		self.prediction_logits_mosaic_std = np.std(self.prediction_logits_mosaic_group, axis = 0)
+		
+		ic(self.prediction_logits_mosaic_mean.shape, self.prediction_logits_mosaic_std.shape)
+		pdb.set_trace()
+
+
+
+
+
+		metrics = MetricsTranslated(self.paramsTrain)
+		metrics_test = metrics.get(mosaic.prediction_mosaic, mosaic.label_mosaic)
+
+		deb.prints(metrics_test)
+
+#		label_flat = mosaic.getFlatLabel()
+#		scores_flat = mosaic.getFlatScores()
+		if self.paramsTrain.openSetMethod != None:
+			metrics.plotROCCurve(mosaic.getFlatLabel(), mosaic.getFlatScores(), 
+				modelId = mosaic.name_id, nameId = mosaic.name_id, unknown_class_id = 20)
+'''
