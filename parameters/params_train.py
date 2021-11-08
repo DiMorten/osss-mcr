@@ -53,7 +53,8 @@ class ParamsTrain(Params):
 		self.train = False if ('train' not in kwargs.keys()) else kwargs['train']
 		self.openSetLoadModel = False if ('openSetLoadModel' not in kwargs.keys()) else kwargs['openSetLoadModel']
 		self.dropoutInference = False if ('dropoutInference' not in kwargs.keys()) else kwargs['dropoutInference']
-
+		self.evidentialDL = False if ('evidentialDL' not in kwargs.keys()) else kwargs['evidentialDL']
+		ic(self.evidentialDL)
 #        self.model_load = True
 
 		self.train_overlap_percentage = 0
@@ -174,8 +175,8 @@ class ParamsTrain(Params):
 		self.t_len = 12 # variable? depends on dataset?
 		self.model_t_len = 12
 		# usually editable params
-		self.dropout_mode = True
-		if self.dropout_mode == False:
+		# self.dropout_mode = True
+		if self.dropoutInference == False:
 			model_type = UUnetConvLSTM # Options: UUnetConvLSTM, UnetSelfAttention
 
 			self.model_type = model_type(self.model_t_len, self.patch_len, self.channel_n)

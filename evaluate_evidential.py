@@ -213,7 +213,7 @@ class TrainTest():
 			loss=categorical_focal_ignoring_last_label(alpha=0.25,gamma=2)
 		else:
 			current_epoch = K.variable(0.0)
-			loss=evidential_categorical_focal_ignoring_last_label(alpha=0.25,gamma=2, current_epoch = current_epoch)
+			loss=evidential_categorical_focal_ignoring_last_label(alpha=0.25,gamma=2)
 		
 		#loss=weighted_categorical_focal_ignoring_last_label(self.model.loss_weights,alpha=0.25,gamma=2)
 
@@ -248,6 +248,8 @@ class TrainTest():
 
 
 		self.mosaic.create(self.paramsTrain, self.model, self.data, self.ds, self.postProcessing)
+
+		np.save('prediction_logits_mosaic.npy', self.mosaic.prediction_logits_mosaic)
 
 	def evaluate(self):
 
@@ -394,12 +396,13 @@ if __name__ == '__main__':
 
 
 	paramsTrainCustom = {
-		'getFullIms': True,
-		'coordsExtract': True,
-		'train': True,
+		'getFullIms': False,
+		'coordsExtract': False,
+		'train': False,
 		'openSetMethod': None, # Options: None, OpenPCS, OpenPCS++
 #		'openSetLoadModel': True,
 		'selectMainClasses': True,
+		'evidentialDL': True,
 		'dataset': 'lm', # lm: L Eduardo Magalhaes.
 		'seq_date': 'mar'
 	}
