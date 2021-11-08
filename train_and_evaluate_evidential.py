@@ -249,7 +249,6 @@ class TrainTest():
 
 		self.mosaic.create(self.paramsTrain, self.model, self.data, self.ds, self.postProcessing)
 
-		np.save('prediction_logits_mosaic.npy', self.mosaic.prediction_logits_mosaic)
 
 	def evaluate(self):
 
@@ -360,37 +359,22 @@ class TrainTest():
 		self.mosaicCreate(paramsMosaic)
 		self.evaluate()
 
-class TrainTestDropout(TrainTest):
+class TrainTestEvidential(TrainTest):
+	def predict(self, test_img_input):
+		# evidence = np.squeeze(model.predict(np.expand_dims(test_img_input, axis=0)))
+		class_n = evidence.shape[-1]
+		ic(class_n)
+		alpha = evidence + 1
+		u = np.squeeze(class_n / np.sum(alpha, axis= -1, keepdims=True))
+
+		print("alpha", alpha.shape)
+		print("u", u.shape)
+		predictions = alpha / np.sum(alpha, axis = -1, keepdims=True)  # prob
+		return predictions.argmax(axis=-1), u	
 	def mosaicCreate(self, paramsMosaic):
-
-		self.data.full_ims_test = self.data.addPaddingToInput(
-			self.model.model_t_len, self.data.full_ims_test)
-
-		_, h,w,channel_n = self.data.full_ims_test.shape
-
-		self.data.reloadLabel()
-
-		times = 30
-		ic(times, h,w, self.model.class_n)
-		self.prediction_logits_mosaic_group = np.ones((times, h,w, self.model.class_n), dtype = np.float16)
-		for t in range(times):
-			self.mosaic = MosaicHighRAM(self.paramsTrain, paramsMosaic)
-			self.postProcessing = None
-
-			self.mosaic.create(self.paramsTrain, self.model, self.data, self.ds, self.postProcessing)
-
-			#self.mosaic.deleteAllButLogits()
-
-			self.prediction_logits_mosaic_group[t] = self.mosaic.prediction_logits_mosaic.copy()
-
-
-		self.prediction_logits_mosaic_mean = np.mean(self.prediction_logits_mosaic_group, axis = 0)
-		self.prediction_logits_mosaic_std = np.std(self.prediction_logits_mosaic_group, axis = 0)
-
-		np.save('prediction_logits_mosaic_group.npy', self.prediction_logits_mosaic_group)
-		
-		ic(self.prediction_logits_mosaic_mean.shape, self.prediction_logits_mosaic_std.shape)
-		pdb.set_trace()
+		super().mosaicCreate(paramsMosaic)
+		np.save('prediction_logits_mosaic.npy', self.mosaic.prediction_logits_mosaic)
+		self.mosaic.prediction_mosaic, _ = self.predict(self.mosaic.prediction_logits_mosaic)
 
 if __name__ == '__main__':
 
