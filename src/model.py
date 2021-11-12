@@ -18,6 +18,7 @@ from tensorflow.keras.models import *
 from tensorflow.keras.layers import *
 from tensorflow.keras.optimizers import *
 from tensorflow.keras import metrics
+from tensorflow.keras.callbacks import Callback
 import sys
 import glob
 
@@ -341,6 +342,31 @@ class ModelCropRecognition(object):
 #		pdb.set_trace()
 
 #		pdb.set_trace()
+		if self.paramsTrain.evidentialDL == True:
+			class GetCurrentEpoch(Callback):
+				"""get the current epoch to pass it within the loss function.
+				# Arguments
+					current_epoch: The tensor withholding the current epoch on_epoch_begin
+				"""
+
+				def __init__(self, current_epoch):
+					super().__init__()
+					self.current_epoch = current_epoch
+
+				def on_epoch_begin(self, epoch, logs=None):
+					new_epoch = epoch
+					# Set new value
+					K.set_value(self.current_epoch, new_epoch)
+			current_epoch = K.variable(0.0)
+			get_current_epoch = GetCurrentEpoch(current_epoch=current_epoch)
+			callbacks = [MonitorGenerator(
+				validation=validation_generator,
+				patience=10, classes=self.class_n), get_current_epoch]
+		else:		
+			callbacks = [MonitorGenerator(
+				validation=validation_generator,
+				patience=10, classes=self.class_n)]
+
 		history = self.graph.fit(training_generator,
 #			batch_size = self.batch['train']['size'], 
 			epochs = 70, 
@@ -348,12 +374,7 @@ class ModelCropRecognition(object):
 #			validation_data=(data.patches['val']['in'], data.patches['val']['label']),
 #			callbacks = [es])
 #			callbacks = [MonitorNPY(
-			callbacks = [MonitorGenerator(
-#			callbacks = [MonitorNPYAndGenerator(
-#				validation=((data.patches['val']['in'], data.patches['val']['label']),validation_generator),
-#				validation=(data.patches['val']['in'], data.patches['val']['label']),				
-				validation=validation_generator,
-				patience=10, classes=self.class_n)], # it was 5
+			callbacks = callbacks, # it was 5
 			shuffle = False
 			)
 

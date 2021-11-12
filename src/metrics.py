@@ -121,7 +121,7 @@ class Metrics():
 		label=label[label<class_n] #logic
 		return prediction, label
 
-	def plotROCCurve(self, y_test, y_pred, modelId, nameId, unknown_class_id = 39):
+	def plotROCCurve(self, y_test, y_pred, modelId, nameId, unknown_class_id = 39, pos_label=0):
 		print("y_test.shape", y_test.shape)
 		print("y_pred.shape", y_pred.shape)
 		print("y_test.dtype", y_test.dtype)
@@ -137,7 +137,7 @@ class Metrics():
 		# =========================== Get metric value
 
 
-		fpr, tpr, thresholds = sklearn.metrics.roc_curve(y_test, y_pred, pos_label=0)
+		fpr, tpr, thresholds = sklearn.metrics.roc_curve(y_test, y_pred, pos_label=pos_label)
 #        roc_auc = metrics.auc(tpr, fpr)
 		roc_auc = sklearn.metrics.auc(fpr, tpr)
 
@@ -145,6 +145,12 @@ class Metrics():
 		deb.prints(thresholds)
 		deb.prints(tpr)
 #        pdb.set_trace()
+
+		optimal_idx = np.argmax(tpr - fpr)
+		#optimal_idx = np.argmax(fpr - tpr)
+		
+		optimal_threshold = thresholds[optimal_idx]
+		deb.prints(optimal_threshold)
 
 		# =================== Find thresholds for specified TPR value
 		tpr_threshold_values = [0.1, 0.3, 0.5, 0.7, 0.9]
@@ -173,6 +179,7 @@ class Metrics():
 		plt.savefig('roc_auc_'+modelId+"_"+nameId+'.png', dpi = 500)
 #        plt.gca().set_aspect('equal', adjustable='box')
 		#plt.show()
+		return optimal_threshold
 
 class MetricsTranslated(Metrics):
 	def filterSamples(self, prediction, label, class_n):

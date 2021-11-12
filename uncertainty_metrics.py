@@ -68,6 +68,7 @@ from src.postprocessing import PostProcessingMosaic
 
 from src.metrics import Metrics, MetricsTranslated
 from parameters.params_train import ParamsTrain
+from sklearn.metrics import f1_score
 
 ic.configureOutput(includeContext=True)
 np.random.seed(2021)
@@ -138,9 +139,9 @@ paramsTrainCustom = {
 		'dataset': 'lm', # lm: L Eduardo Magalhaes.
 		'seq_date': 'mar'
 	}
-dropout_flag = False
+dropout_flag = True
 name_id = "t30"
-
+dropout_repetitions = 10
 paramsTrain = ParamsTrain('parameters/', **paramsTrainCustom)
 
 mask = cv2.imread(str(paramsTrain.path / 'TrainTestMask.tif'),-1)
@@ -177,7 +178,7 @@ plt.savefig('mask.png', dpi = 500)
 
 if dropout_flag == True:
 	filename = 'prediction_logits_mosaic_group.npy'
-	pred_probs = np.load(filename)
+	pred_probs = np.load(filename)[0:10]
 
 	for t in range(pred_probs.shape[0]):
 		for c in range(pred_probs.shape[-1]):
@@ -207,11 +208,10 @@ else:
 #pdb.set_trace()
 
 if dropout_flag == True:
-	dropout_repetitions = 30
-	if dropout_repetition == 30:
+	if dropout_repetitions == 30:
 		for idx in range(3):
 			pred_probs[idx*10:(idx+1)*10] = scipy.special.softmax(pred_probs[idx*10:(idx+1)*10], axis=-1)
-	elif dropout_repetition == 10:
+	elif dropout_repetitions == 10:
 			pred_probs = scipy.special.softmax(pred_probs, axis=-1)
 
 
@@ -219,14 +219,33 @@ if dropout_flag == True:
 #pred_probs = pred_probs[:, 1800:2090, 3910:4210]
 #ic(pred_probs.shape)
 metrics = MetricsTranslated(None)
-def plotROC(label_test, scores, scores_flat, modelId, nameId):
-	metrics.plotROCCurve(label_test, scores_flat, 
-					modelId = modelId, nameId = nameId, unknown_class_id = 20)
+def getMetrics(label_test, scores, scores_flat, modelId, nameId, pos_label = 1):
+	unknown_class_id = 20
+
+	optimal_threshold = metrics.plotROCCurve(label_test, scores_flat, 
+					modelId = modelId, nameId = nameId, unknown_class_id = unknown_class_id,
+					pos_label = pos_label)
 			
 	plt.figure()
 	plt.imshow(scores.astype(np.float32))
 	plt.axis('off')
 	plt.savefig(nameId + '.png', dpi = 500)
+	scores_thresholded = scores_flat.copy()
+	scores_thresholded[scores_flat>optimal_threshold] = 1
+	scores_thresholded[scores_flat<=optimal_threshold] = 0
+	label_test_binary = label_test.copy()
+	label_test_binary[label_test_binary!=unknown_class_id] = 0
+	label_test_binary[label_test_binary==unknown_class_id] = 1
+
+	ic(np.unique(label_test_binary, return_counts = True))
+	ic(np.unique(scores_thresholded, return_counts=True))
+	#pdb.set_trace()
+
+	f1 = f1_score(label_test_binary, scores_thresholded, average = None)
+	f1_avg = f1_score(label_test_binary, scores_thresholded, average = 'macro')
+	ic(f1, f1_avg)
+
+	#return optimal_threshold
 
 if dropout_flag == False:
 	ic(u.shape)
@@ -234,66 +253,45 @@ if dropout_flag == False:
 	u_flat = u_flat[mask_flat == 2]
 	ic(u_flat.shape, mask_flat.shape)
 	print("Evidential uncertainty")
-	plotROC(label_test, u, u_flat, "UUnetConvLSTM", "EvidentialDL")
+	getMetrics(label_test, u, u_flat, "UUnetConvLSTM", "EvidentialDL")
 
 
 elif dropout_flag == True:
+
+	softmax_thresholdling = pred_probs[0]
+	softmax_thresholdling = np.amax(softmax_thresholdling, axis = -1)
+
+	softmax_thresholdling_flat = softmax_thresholdling.flatten()
+	softmax_thresholdling_flat = softmax_thresholdling_flat[mask_flat==2]
+	print("Softmax thresholding")
+	getMetrics(label_test, softmax_thresholdling, softmax_thresholdling_flat, "UUnetConvLSTM", "SoftmaxThresholding" + name_id)
+
+	pred_entropy_single = single_experiment_entropy(pred_probs[0])
+	pred_entropy_single_flat = pred_entropy_single.flatten()
+	pred_entropy_single_flat = pred_entropy_single_flat[mask_flat==2]
+	print("Predictive entropy single experiment")
+	getMetrics(label_test, pred_entropy_single, pred_entropy_single_flat, "UUnetConvLSTM", "DropoutPredEntropySingle" + name_id)
+
 	pred_entropy = predictive_entropy(pred_probs)
 	np.save('pred_entropy_30.npy', pred_entropy)
 	pred_entropy_flat = pred_entropy.flatten()
 	pred_entropy_flat = pred_entropy_flat[mask_flat==2]
 	ic(label_test.shape, pred_entropy.shape)
 	print("Predictive entropy")
-	plotROC(label_test, pred_entropy, pred_entropy_flat, "UUnetConvLSTM", "DropoutPredEntropy" + name_id)
-
-	metrics.plotROCCurve(label_test, pred_entropy_flat, 
-					modelId = "UUnetConvLSTM", nameId = "DropoutPredEntropy" + name_id, unknown_class_id = 20)
-			
-	plt.figure()
-	plt.imshow(pred_entropy.astype(np.float32))
-	plt.axis('off')
-	plt.savefig('pred_entropy' + name_id + '.png', dpi = 500)
+	getMetrics(label_test, pred_entropy, pred_entropy_flat, "UUnetConvLSTM", "DropoutPredEntropy" + name_id)
 
 	MI = mutual_information(pred_probs)
 	MI_flat = MI.flatten()
 	MI_flat = MI_flat[mask_flat==2]
 	MI_flat = np.nan_to_num(MI_flat, nan = 0.)
 	print("MI")
-
-	metrics.plotROCCurve(label_test, MI_flat, 
-					modelId = "UUnetConvLSTM", nameId = "DropoutMI" + name_id, unknown_class_id = 20)
-
-	plt.figure()
-	plt.imshow(MI.astype(np.float32))
-	plt.axis('off')
-	plt.savefig('MI' + name_id + '.png', dpi = 500)
-	#plt.show()
+	getMetrics(label_test, MI, MI_flat, "UUnetConvLSTM", "DropoutMI" + name_id)
 
 	pred_var = predictive_variance(pred_probs)
 	pred_var_flat = pred_var.flatten()
 	pred_var_flat = pred_var_flat[mask_flat==2]
 	print("Predictive variance")
-
-	metrics.plotROCCurve(label_test, pred_var_flat, 
-					modelId = "UUnetConvLSTM", nameId = "DropoutPredVar" + name_id, unknown_class_id = 20)
-
-	plt.figure()
-	plt.imshow(pred_var.astype(np.float32))
-	plt.axis('off')
-	plt.savefig('pred_var' + name_id + '.png', dpi = 500)
-
-	pred_entropy_single = single_experiment_entropy(pred_probs[0])
-	pred_entropy_single_flat = pred_entropy_single.flatten()
-	pred_entropy_single_flat = pred_entropy_single_flat[mask_flat==2]
-	print("Predictive entropy single experiment")
-
-	metrics.plotROCCurve(label_test, pred_entropy_single_flat, 
-					modelId = "UUnetConvLSTM", nameId = "DropoutPredEntropySingle" + name_id, unknown_class_id = 20)
-
-	plt.figure()
-	plt.imshow(pred_entropy_single.astype(np.float32))
-	plt.axis('off')
-	plt.savefig('pred_entropy_single' + name_id + '.png', dpi = 500)
+	getMetrics(label_test, pred_var, pred_var_flat, "UUnetConvLSTM", "DropoutPredVar" + name_id)
 
 
 '''
