@@ -126,6 +126,42 @@ def mutual_information(pred_probs):
     MI = H - sum_entropy
     return MI
 
+metrics = MetricsTranslated(None)
+
+def getMetrics(label_test, scores, scores_flat, modelId, nameId, pos_label = 1):
+	unknown_class_id = 20
+
+	optimal_threshold = metrics.plotROCCurve(label_test, scores_flat, 
+					modelId = modelId, nameId = nameId, unknown_class_id = unknown_class_id,
+					)
+					#pos_label = pos_label)
+	
+	plt.figure()
+	plt.imshow(scores.astype(np.float32))
+	plt.axis('off')
+	plt.savefig(nameId + '.png', dpi = 500)
+
+#	ic(optimal_threshold)
+#	getThresholdMetrics(label_test, scores_flat, optimal_threshold, unknown_class_id)
+
+def getThresholdMetrics(label_test, scores_flat, threshold, unknown_class_id):
+	ic(threshold)
+	scores_thresholded = scores_flat.copy()
+	scores_thresholded[scores_flat>threshold] = 1
+	scores_thresholded[scores_flat<=threshold] = 0
+	label_test_binary = label_test.copy()
+	label_test_binary[label_test_binary!=unknown_class_id] = 0
+	label_test_binary[label_test_binary==unknown_class_id] = 1
+
+	ic(np.unique(label_test_binary, return_counts = True))
+	ic(np.unique(scores_thresholded, return_counts=True))
+	#pdb.set_trace()
+
+	f1 = f1_score(label_test_binary, scores_thresholded, average = None)
+	f1_avg = f1_score(label_test_binary, scores_thresholded, average = 'macro')
+	ic(f1, f1_avg)
+
+	#return optimal_threshold
 
 
 
@@ -139,9 +175,12 @@ paramsTrainCustom = {
 		'dataset': 'lm', # lm: L Eduardo Magalhaes.
 		'seq_date': 'mar'
 	}
-dropout_flag = True
+mode = 'dropout' # dropout, evidential, closed_set
+#mode = 'closed_set'
+#mode = 'evidential'
+
 name_id = "t30"
-dropout_repetitions = 10
+dropout_repetitions = 30
 paramsTrain = ParamsTrain('parameters/', **paramsTrainCustom)
 
 mask = cv2.imread(str(paramsTrain.path / 'TrainTestMask.tif'),-1)
@@ -176,16 +215,30 @@ plt.axis('off')
 plt.savefig('mask.png', dpi = 500)
 '''
 
-if dropout_flag == True:
+if mode == 'dropout':
 	filename = 'prediction_logits_mosaic_group.npy'
-	pred_probs = np.load(filename)[0:10]
+	pred_probs = np.load(filename) # [0:10]
 
 	for t in range(pred_probs.shape[0]):
 		for c in range(pred_probs.shape[-1]):
 			pred_probs[t,...,c][mask != 2] = 0
 	ic(pred_probs.shape, pred_probs.dtype)
+elif mode == 'closed_set':
+	filename = 'prediction_logits_mosaic.npy'
+	evidence = np.load(filename)
+	
+	softmax_thresholdling = scipy.special.softmax(evidence, axis=-1)
+	softmax_thresholdling = np.amax(softmax_thresholdling, axis = -1)
 
-else:
+	softmax_thresholdling_flat = softmax_thresholdling.flatten()
+	softmax_thresholdling_flat = softmax_thresholdling_flat[mask_flat==2]
+	print("Softmax thresholding")
+	getMetrics(label_test, softmax_thresholdling, softmax_thresholdling_flat, "UUnetConvLSTM", "SoftmaxThresholding" + name_id)
+	getThresholdMetrics(label_test, softmax_thresholdling_flat, threshold = 0.96, unknown_class_id = 20)
+#	getThresholdMetrics(label_test, softmax_thresholdling_flat, threshold = 0.98, unknown_class_id = 20)
+	pdb.set_trace()
+	
+elif mode == 'evidential':
 	filename = 'prediction_logits_mosaic.npy'
 	evidence = np.load(filename)
 
@@ -205,9 +258,17 @@ else:
 #	for c in range(pred_probs.shape[-1]):
 	u[mask != 2] = 0
 
+	ic(u.shape)
+	u_flat = u.flatten()
+	u_flat = u_flat[mask_flat == 2]
+	ic(u_flat.shape, mask_flat.shape)
+	print("Evidential uncertainty")
+	getMetrics(label_test, u, u_flat, "UUnetConvLSTM", "EvidentialDL")
+	getThresholdMetrics(label_test, u_flat, threshold = 0.16, unknown_class_id = 20)
+	pdb.set_trace()
 #pdb.set_trace()
 
-if dropout_flag == True:
+if mode == 'dropout':
 	if dropout_repetitions == 30:
 		for idx in range(3):
 			pred_probs[idx*10:(idx+1)*10] = scipy.special.softmax(pred_probs[idx*10:(idx+1)*10], axis=-1)
@@ -218,46 +279,10 @@ if dropout_flag == True:
 	ic(pred_probs.shape)
 #pred_probs = pred_probs[:, 1800:2090, 3910:4210]
 #ic(pred_probs.shape)
-metrics = MetricsTranslated(None)
-def getMetrics(label_test, scores, scores_flat, modelId, nameId, pos_label = 1):
-	unknown_class_id = 20
-
-	optimal_threshold = metrics.plotROCCurve(label_test, scores_flat, 
-					modelId = modelId, nameId = nameId, unknown_class_id = unknown_class_id,
-					pos_label = pos_label)
-			
-	plt.figure()
-	plt.imshow(scores.astype(np.float32))
-	plt.axis('off')
-	plt.savefig(nameId + '.png', dpi = 500)
-	scores_thresholded = scores_flat.copy()
-	scores_thresholded[scores_flat>optimal_threshold] = 1
-	scores_thresholded[scores_flat<=optimal_threshold] = 0
-	label_test_binary = label_test.copy()
-	label_test_binary[label_test_binary!=unknown_class_id] = 0
-	label_test_binary[label_test_binary==unknown_class_id] = 1
-
-	ic(np.unique(label_test_binary, return_counts = True))
-	ic(np.unique(scores_thresholded, return_counts=True))
-	#pdb.set_trace()
-
-	f1 = f1_score(label_test_binary, scores_thresholded, average = None)
-	f1_avg = f1_score(label_test_binary, scores_thresholded, average = 'macro')
-	ic(f1, f1_avg)
-
-	#return optimal_threshold
-
-if dropout_flag == False:
-	ic(u.shape)
-	u_flat = u.flatten()
-	u_flat = u_flat[mask_flat == 2]
-	ic(u_flat.shape, mask_flat.shape)
-	print("Evidential uncertainty")
-	getMetrics(label_test, u, u_flat, "UUnetConvLSTM", "EvidentialDL")
 
 
-elif dropout_flag == True:
 
+	'''
 	softmax_thresholdling = pred_probs[0]
 	softmax_thresholdling = np.amax(softmax_thresholdling, axis = -1)
 
@@ -265,7 +290,7 @@ elif dropout_flag == True:
 	softmax_thresholdling_flat = softmax_thresholdling_flat[mask_flat==2]
 	print("Softmax thresholding")
 	getMetrics(label_test, softmax_thresholdling, softmax_thresholdling_flat, "UUnetConvLSTM", "SoftmaxThresholding" + name_id)
-
+	'''
 	pred_entropy_single = single_experiment_entropy(pred_probs[0])
 	pred_entropy_single_flat = pred_entropy_single.flatten()
 	pred_entropy_single_flat = pred_entropy_single_flat[mask_flat==2]

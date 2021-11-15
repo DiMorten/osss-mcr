@@ -176,6 +176,7 @@ class Metrics():
 		plt.plot(fpr, tpr, label = 'AUC = %0.2f' % roc_auc)
 		plt.xlabel('False Positive Rate')
 		plt.ylabel('True Positive Rate')
+		plt.title('AUC = %0.2f' % roc_auc)
 		plt.savefig('roc_auc_'+modelId+"_"+nameId+'.png', dpi = 500)
 #        plt.gca().set_aspect('equal', adjustable='box')
 		#plt.show()

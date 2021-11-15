@@ -99,10 +99,11 @@ class ParamsTrain(Params):
 
 		self.seq_date = 'mar'  if ('seq_date' not in kwargs.keys()) else kwargs['seq_date']
 		
-		self.model_name = 'dummy'
+#		self.model_name = 'dummy'
+		self.model_name = 'focal'
 
 		self.learning_rate = 0.0001
-		self.id = "dummy"
+		self.id = self.model_name
 		
 		
 

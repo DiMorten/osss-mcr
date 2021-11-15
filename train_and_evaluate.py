@@ -248,7 +248,9 @@ class TrainTest():
 
 
 		self.mosaic.create(self.paramsTrain, self.model, self.data, self.ds, self.postProcessing)
-
+		
+		np.save('prediction_logits_mosaic.npy', self.mosaic.prediction_logits_mosaic)
+	
 	def evaluate(self):
 
 		metrics = MetricsTranslated(self.paramsTrain)

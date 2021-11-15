@@ -127,7 +127,7 @@ class TrainTestEvidential(TrainTest):
 		ic(np.unique(self.mosaic.prediction_mosaic, return_counts = True))
 
 		#self.data.mask
-		pdb.set_trace()
+		#pdb.set_trace()
 
 if __name__ == '__main__':
 
@@ -148,6 +148,6 @@ if __name__ == '__main__':
 
 	paramsTrain.dataSource = SARSource()
 
-	trainTest = TrainTest(paramsTrain)
+	trainTest = TrainTestEvidential(paramsTrain)
 
 	trainTest.main()
