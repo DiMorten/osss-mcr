@@ -5,7 +5,7 @@ import pdb
 from pathlib import Path
 import sys
 sys.path.append('src/')
-from modelArchitecture import UUnetConvLSTM, UnetSelfAttention, UUnetConvLSTMDropout
+from modelArchitecture import UUnetConvLSTM, UnetSelfAttention, UUnetConvLSTMDropout, UUnetConvLSTMEvidential
 from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_PaddedSeq, MIMFixedLabelAllLabels, MIMFixed_PaddedSeq
 import deb
 from icecream import ic
@@ -52,6 +52,8 @@ class ParamsTrain(Params):
 		self.coordsExtract = False if ('coordsExtract' not in kwargs.keys()) else kwargs['coordsExtract']
 		self.train = False if ('train' not in kwargs.keys()) else kwargs['train']
 		self.openSetLoadModel = False if ('openSetLoadModel' not in kwargs.keys()) else kwargs['openSetLoadModel']
+		self.model_type = UUnetConvLSTM if ('model_type' not in kwargs.keys()) else kwargs['model_type']
+
 		self.dropoutInference = False if ('dropoutInference' not in kwargs.keys()) else kwargs['dropoutInference']
 		self.evidentialDL = False if ('evidentialDL' not in kwargs.keys()) else kwargs['evidentialDL']
 		ic(self.evidentialDL)
@@ -100,10 +102,13 @@ class ParamsTrain(Params):
 		self.seq_date = 'mar'  if ('seq_date' not in kwargs.keys()) else kwargs['seq_date']
 		
 #		self.model_name = 'dummy'
-		self.model_name = 'focal'
+#		self.id = 'focal'
+		self.id = 'dummy' if ('id' not in kwargs.keys()) else kwargs['id']
+
+		ic(self.id)
+		self.model_name = self.id
 
 		self.learning_rate = 0.0001
-		self.id = self.model_name
 		
 		
 
@@ -177,16 +182,18 @@ class ParamsTrain(Params):
 		self.model_t_len = 12
 		# usually editable params
 		# self.dropout_mode = True
+		
 		if self.dropoutInference == False:
-			model_type = UUnetConvLSTM # Options: UUnetConvLSTM, UnetSelfAttention
+#			model_type = UUnetConvLSTM # Options: UUnetConvLSTM, UnetSelfAttention
+#			model_type = UUnetConvLSTMEvidential
 
-			self.model_type = model_type(self.model_t_len, self.patch_len, self.channel_n)
+			self.model_type = self.model_type(self.model_t_len, self.patch_len, self.channel_n)
 		else:
 			self.dropout = 0.2
-			model_type = UUnetConvLSTMDropout
-			self.model_type = model_type(self.model_t_len, self.patch_len, self.channel_n,
+			self.model_type = UUnetConvLSTMDropout
+
+			self.model_type = self.model_type(self.model_t_len, self.patch_len, self.channel_n,
 				self.dropout)
-		
 
 #        self.seq_mode = "fixed"
 		#self.seq_date = "mar"
@@ -222,7 +229,7 @@ class ParamsTrain(Params):
 #		self.model_path = Path('../results/convlstm_results/model/lm/')
 		self.model_path = Path('results/model/' + self.dataset + '/')
 
-		self.modelNameSpecify = False
+		self.modelNameSpecify = True
 
 		if self.modelNameSpecify == True:
 			assert isinstance(str(self.model_type), str)

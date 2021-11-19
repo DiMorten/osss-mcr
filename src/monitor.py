@@ -143,6 +143,45 @@ class MonitorGenerator(Monitor):
             self.targ.extend(val_targ)        
 
 
+class MonitorGeneratorEvidential(Monitor):
+    def getValidationData(self):
+#        deb.prints(range(len(self.validation)))
+        for batch_index in range(len(self.validation)):
+            val_targ = self.validation[batch_index][1]   
+            evidence = np.squeeze(self.model.predict(self.validation[batch_index][0]))
+            class_n = evidence.shape[-1]
+            alpha = evidence + 1
+            u = np.squeeze(class_n / np.sum(alpha, axis= -1, keepdims=True))
+
+            # print("alpha", alpha.shape)
+            # print("u", u.shape)
+            val_pred = alpha / np.sum(alpha, axis = -1, keepdims=True)  # prob
+            # ic(val_pred.shape)
+            #deb.prints(val_pred.shape) # was programmed to get two outputs> classif. and depth
+            #deb.prints(val_targ.shape) # was programmed to get two outputs> classif. and depth
+            #deb.prints(len(self.validation[batch_index][1])) # was programmed to get two outputs> classif. and depth
+
+
+            val_prob = val_pred.copy()
+            val_predict = np.argmax(val_prob,axis=-1)
+            # ic(val_predict.shape)
+
+            if batch_index == 0:
+                #plot_figures(self.validation[batch_index][0],val_targ,val_predict,
+                #             val_prob,self.model_dir,epoch, 
+                #             self.classes,'val')
+                #plot_figures_timedistributed(self.validation[batch_index][0],val_targ,val_predict,
+                #             val_prob,self.model_dir,epoch, 
+                #             self.classes,'val')
+                pass
+            val_targ = np.squeeze(val_targ)
+            #ic(val_predict.shape, val_targ.shape)
+            val_predict = val_predict[val_targ<self.classes]
+            val_targ = val_targ[val_targ<self.classes]
+            self.pred.extend(val_predict)
+            self.targ.extend(val_targ)        
+
+
 
 class MonitorNPYAndGenerator(Monitor):
     def on_epoch_begin(self, epoch, logs={}):        

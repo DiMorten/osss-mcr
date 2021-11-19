@@ -128,13 +128,12 @@ def mutual_information(pred_probs):
 
 metrics = MetricsTranslated(None)
 
-def getMetrics(label_test, scores, scores_flat, modelId, nameId, pos_label = 1):
+def getMetrics(label_test, scores, scores_flat, modelId, nameId, pos_label = 0):
 	unknown_class_id = 20
 
 	optimal_threshold = metrics.plotROCCurve(label_test, scores_flat, 
 					modelId = modelId, nameId = nameId, unknown_class_id = unknown_class_id,
-					)
-					#pos_label = pos_label)
+					pos_label = pos_label)
 	
 	plt.figure()
 	plt.imshow(scores.astype(np.float32))
@@ -145,13 +144,14 @@ def getMetrics(label_test, scores, scores_flat, modelId, nameId, pos_label = 1):
 #	getThresholdMetrics(label_test, scores_flat, optimal_threshold, unknown_class_id)
 
 def getThresholdMetrics(label_test, scores_flat, threshold, unknown_class_id):
+	class_ids = {"known": 0, "unknown": 1}
 	ic(threshold)
 	scores_thresholded = scores_flat.copy()
 	scores_thresholded[scores_flat>threshold] = 1
 	scores_thresholded[scores_flat<=threshold] = 0
 	label_test_binary = label_test.copy()
-	label_test_binary[label_test_binary!=unknown_class_id] = 0
-	label_test_binary[label_test_binary==unknown_class_id] = 1
+	label_test_binary[label_test_binary!=unknown_class_id] = class_ids['known']
+	label_test_binary[label_test_binary==unknown_class_id] = class_ids['unknown']
 
 	ic(np.unique(label_test_binary, return_counts = True))
 	ic(np.unique(scores_thresholded, return_counts=True))
@@ -175,9 +175,9 @@ paramsTrainCustom = {
 		'dataset': 'lm', # lm: L Eduardo Magalhaes.
 		'seq_date': 'mar'
 	}
-mode = 'dropout' # dropout, evidential, closed_set
+#mode = 'dropout' # dropout, evidential, closed_set
 #mode = 'closed_set'
-#mode = 'evidential'
+mode = 'evidential'
 
 name_id = "t30"
 dropout_repetitions = 30
@@ -227,20 +227,41 @@ elif mode == 'closed_set':
 	filename = 'prediction_logits_mosaic.npy'
 	evidence = np.load(filename)
 	
+			
 	softmax_thresholdling = scipy.special.softmax(evidence, axis=-1)
 	softmax_thresholdling = np.amax(softmax_thresholdling, axis = -1)
+
+	softmax_thresholdling[mask != 2] = 0
 
 	softmax_thresholdling_flat = softmax_thresholdling.flatten()
 	softmax_thresholdling_flat = softmax_thresholdling_flat[mask_flat==2]
 	print("Softmax thresholding")
 	getMetrics(label_test, softmax_thresholdling, softmax_thresholdling_flat, "UUnetConvLSTM", "SoftmaxThresholding" + name_id)
-	getThresholdMetrics(label_test, softmax_thresholdling_flat, threshold = 0.96, unknown_class_id = 20)
+	# getThresholdMetrics(label_test, softmax_thresholdling_flat, threshold = 0.96, unknown_class_id = 20)
 #	getThresholdMetrics(label_test, softmax_thresholdling_flat, threshold = 0.98, unknown_class_id = 20)
 	pdb.set_trace()
 	
 elif mode == 'evidential':
 	filename = 'prediction_logits_mosaic.npy'
 	evidence = np.load(filename)
+	ic(evidence.dtype)
+	evidence = evidence.astype(np.float32)
+
+	softmax_thresholdling = scipy.special.softmax(evidence, axis=-1)
+	softmax_thresholdling = np.amax(softmax_thresholdling, axis = -1)
+	softmax_thresholdling[mask != 2] = 0
+
+	softmax_thresholdling_flat = softmax_thresholdling.flatten()
+	softmax_thresholdling_flat = softmax_thresholdling_flat[mask_flat==2]
+	print("Softmax thresholding")
+	getMetrics(label_test, softmax_thresholdling, softmax_thresholdling_flat, "UUnetConvLSTMEviential", "SoftmaxThresholding" + name_id)
+
+	evidence_max = np.amax(evidence, axis = -1)
+	evidence_max_flat = evidence_max.flatten()
+	evidence_max_flat = evidence_max_flat[mask_flat==2]
+	print("Evidence max")
+	getMetrics(label_test, evidence_max, evidence_max_flat, "UUnetConvLSTMEviential", "EvidenceMax" + name_id)
+
 
 	def predict(test_img_input):
 		# evidence = np.squeeze(model.predict(np.expand_dims(test_img_input, axis=0)))
@@ -252,8 +273,42 @@ elif mode == 'evidential':
 		print("alpha", alpha.shape)
 		print("u", u.shape)
 		predictions = alpha / np.sum(alpha, axis = -1, keepdims=True)  # prob
-		return predictions, u
-	_, u = predict(evidence)
+		return predictions, u, alpha
+	predictions, u, alpha = predict(evidence)
+
+	def getTestIm(im):
+		im_flat = np.reshape(im, (-1, im.shape[-1]))
+		im_test = np.zeros((evidence_max_flat.shape[0], im_flat.shape[1]))
+		for chan in range(im_test.shape[-1]):
+			im_test[..., chan] = im_flat[..., chan][mask_flat==2]
+		return im_test
+
+	alpha_test = getTestIm(alpha)
+	evidence_test = getTestIm(evidence)
+	predictions_test = getTestIm(predictions)
+
+	ic(np.min(alpha_test), 
+		np.mean(alpha_test), 
+		np.std(alpha_test), 
+		np.max(alpha_test))
+
+	ic(np.min(np.sum(alpha_test, axis= -1, keepdims=True)), 
+		np.mean(np.sum(alpha_test, axis= -1, keepdims=True)), 
+		np.std(np.sum(alpha_test, axis= -1, keepdims=True)), 
+		np.max(np.sum(alpha_test, axis= -1, keepdims=True)))
+
+	ic(np.min(u), np.mean(u), np.std(u), np.max(u))
+
+	alpha_max = np.amax(alpha, axis = -1)
+	alpha_max_flat = alpha_max.flatten()
+	alpha_max_flat = alpha_max_flat[mask_flat==2]
+	
+	print("alpha max")
+	getMetrics(label_test, alpha_max, alpha_max_flat, "UUnetConvLSTMEviential", "AlphaMax" + name_id)
+
+
+
+
 	ic(u.shape)
 #	for c in range(pred_probs.shape[-1]):
 	u[mask != 2] = 0
@@ -261,9 +316,21 @@ elif mode == 'evidential':
 	ic(u.shape)
 	u_flat = u.flatten()
 	u_flat = u_flat[mask_flat == 2]
+	ic(np.count_nonzero(np.isnan(u_flat)))
+	ic(np.min(u_flat), 
+		np.mean(u_flat), 
+		np.std(u_flat), 
+		np.max(u_flat))
+
+
+	ic(evidence_test[0])
+	ic(alpha_test[0])
+	ic(predictions_test[0])
+	ic(u_flat[0])
+
 	ic(u_flat.shape, mask_flat.shape)
 	print("Evidential uncertainty")
-	getMetrics(label_test, u, u_flat, "UUnetConvLSTM", "EvidentialDL")
+	getMetrics(label_test, u, u_flat, "UUnetConvLSTMEviential", "EvidentialDL", pos_label = 1)
 	getThresholdMetrics(label_test, u_flat, threshold = 0.16, unknown_class_id = 20)
 	pdb.set_trace()
 #pdb.set_trace()
@@ -295,7 +362,7 @@ if mode == 'dropout':
 	pred_entropy_single_flat = pred_entropy_single.flatten()
 	pred_entropy_single_flat = pred_entropy_single_flat[mask_flat==2]
 	print("Predictive entropy single experiment")
-	getMetrics(label_test, pred_entropy_single, pred_entropy_single_flat, "UUnetConvLSTM", "DropoutPredEntropySingle" + name_id)
+	getMetrics(label_test, pred_entropy_single, pred_entropy_single_flat, "UUnetConvLSTM", "DropoutPredEntropySingle" + name_id, pos_label = 1)
 
 	pred_entropy = predictive_entropy(pred_probs)
 	np.save('pred_entropy_30.npy', pred_entropy)
@@ -303,20 +370,20 @@ if mode == 'dropout':
 	pred_entropy_flat = pred_entropy_flat[mask_flat==2]
 	ic(label_test.shape, pred_entropy.shape)
 	print("Predictive entropy")
-	getMetrics(label_test, pred_entropy, pred_entropy_flat, "UUnetConvLSTM", "DropoutPredEntropy" + name_id)
+	getMetrics(label_test, pred_entropy, pred_entropy_flat, "UUnetConvLSTM", "DropoutPredEntropy" + name_id, pos_label = 1)
 
 	MI = mutual_information(pred_probs)
 	MI_flat = MI.flatten()
 	MI_flat = MI_flat[mask_flat==2]
 	MI_flat = np.nan_to_num(MI_flat, nan = 0.)
 	print("MI")
-	getMetrics(label_test, MI, MI_flat, "UUnetConvLSTM", "DropoutMI" + name_id)
+	getMetrics(label_test, MI, MI_flat, "UUnetConvLSTM", "DropoutMI" + name_id, pos_label = 1)
 
 	pred_var = predictive_variance(pred_probs)
 	pred_var_flat = pred_var.flatten()
 	pred_var_flat = pred_var_flat[mask_flat==2]
 	print("Predictive variance")
-	getMetrics(label_test, pred_var, pred_var_flat, "UUnetConvLSTM", "DropoutPredVar" + name_id)
+	getMetrics(label_test, pred_var, pred_var_flat, "UUnetConvLSTM", "DropoutPredVar" + name_id, pos_label = 1)
 
 
 '''

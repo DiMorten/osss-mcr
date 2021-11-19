@@ -128,21 +128,19 @@ def evidential_categorical_focal_ignoring_last_label(alpha=0.25,gamma=2, current
         
         class_n = K.int_shape(y_pred)[-1]
         y_pred = K.reshape(y_pred, (-1, class_n))
-        evidence = tf.nn.relu(y_pred) # I should do softmax before the loss
+        evidence = y_pred # I should do softmax before the loss
 
         y_true = K.one_hot(tf.cast(K.flatten(y_true), tf.int32), class_n + 1)
         unpacked = tf.unstack(y_true, axis=-1)
         y_true = tf.stack(unpacked[:-1], axis=-1)
-        #focal_term = alpha * K.pow(1. - y_pred_softmax, gamma)
-        #cross_entropy = -K.sum(focal_term * y_true * K.log(y_pred_softmax), axis=1)
-        
-        #loss = K.mean(cross_entropy)
 
         alpha = evidence + 1
         u = class_n / tf.reduce_sum(alpha, axis= -1, keepdims=True)
         prob = alpha / tf.reduce_sum(alpha, axis = -1, keepdims=True) 
-
+        print("Loss current epoch", current_epoch)
+#        loss = loss_eq5(y_true, alpha, class_n, current_epoch, 30)
         loss = loss_eq5(y_true, alpha, class_n, current_epoch, 30)
+
         loss = tf.reduce_mean(loss)
 
         return loss

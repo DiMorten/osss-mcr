@@ -212,9 +212,12 @@ class TrainTest():
 		if self.paramsTrain.evidentialDL == False:
 			loss=categorical_focal_ignoring_last_label(alpha=0.25,gamma=2)
 		else:
-			current_epoch = K.variable(0.0)
-			loss=evidential_categorical_focal_ignoring_last_label(alpha=0.25,gamma=2, current_epoch = current_epoch)
+			self.model.current_epoch = K.variable(0.0)
+			loss=evidential_categorical_focal_ignoring_last_label(alpha=0.25,gamma=2, current_epoch = self.model.current_epoch)
+			print("evidential")
+			#pdb.set_trace()
 		
+		#pdb.set_trace()
 		#loss=weighted_categorical_focal_ignoring_last_label(self.model.loss_weights,alpha=0.25,gamma=2)
 
 		self.model.graph.compile(loss=loss,
@@ -350,6 +353,8 @@ class TrainTest():
 			self.train()
 		else:
 			self.model.graph = load_model(self.paramsTrain.model_name_id, compile=False)
+			ic(self.paramsTrain.model_name_id)
+			pdb.set_trace()
 
 		paramsMosaic = ParamsReconstruct(self.paramsTrain)
 

@@ -513,6 +513,29 @@ class UUnetConvLSTMDropout(ModelArchitectureNto1):
 		self.graph = Model(self.in_im, out)
 		print(self.graph.summary())
 
+class UUnetConvLSTMEvidential(ModelArchitectureNto1):
+
+	def __repr__(self):
+		return "UUnetConvLSTMEvidential"
+	def build(self):
+		super().build()		
+		concat_axis = 3
+		#fs=32
+		fs=16
+
+		e3, p1, p2, p3 = self.unetEncoderNto1(self.in_im, fs)
+
+		x = ConvLSTM2D(256,3,return_sequences=False,
+				padding="same")(e3)
+
+		out = self.unetDecoderNto1(x, p1, p2, p3, fs)
+
+		out = Conv2D(self.class_n, (1, 1), activation='relu',
+									padding='same')(out)
+		self.graph = Model(self.in_im, out)
+		print(self.graph.summary())
+
+
 class UnetSelfAttention(ModelArchitectureNto1):
 	def __repr__(self):
 		return "UnetSelfAttention"	

@@ -55,7 +55,7 @@ from model_input_mode import MIMFixed, MIMVarLabel, MIMVarSeqLabel, MIMVarLabel_
 from parameters.params_train import ParamsTrain
 
 from icecream import ic
-from monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerator
+from monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerator, MonitorGeneratorEvidential
 
 from mosaic import seq_add_padding, add_padding, Mosaic, MosaicHighRAM, MosaicHighRAMPostProcessing
 from metrics import Metrics, MetricsTranslated
@@ -357,9 +357,10 @@ class ModelCropRecognition(object):
 					new_epoch = epoch
 					# Set new value
 					K.set_value(self.current_epoch, new_epoch)
-			current_epoch = K.variable(0.0)
-			get_current_epoch = GetCurrentEpoch(current_epoch=current_epoch)
-			callbacks = [MonitorGenerator(
+					print(new_epoch)
+			# current_epoch = K.variable(0.0)
+			get_current_epoch = GetCurrentEpoch(current_epoch=self.current_epoch)
+			callbacks = [MonitorGeneratorEvidential(
 				validation=validation_generator,
 				patience=10, classes=self.class_n), get_current_epoch]
 		else:		

@@ -69,6 +69,8 @@ from src.postprocessing import PostProcessingMosaic
 from src.metrics import Metrics, MetricsTranslated
 from train_and_evaluate_evidential import TrainTestEvidential
 
+from src.modelArchitecture import UUnetConvLSTM, UnetSelfAttention, UUnetConvLSTMDropout, UUnetConvLSTMEvidential
+
 ic.configureOutput(includeContext=True)
 np.random.seed(2021)
 tf.random.set_seed(2021)
@@ -107,7 +109,9 @@ if __name__ == '__main__':
 		'selectMainClasses': True,
 		'evidentialDL': True,
 		'dataset': 'lm', # lm: L Eduardo Magalhaes.
-		'seq_date': 'mar'
+		'seq_date': 'mar',
+		'id': 'evidential4',
+		'model_type': UUnetConvLSTMEvidential
 	}
 
 	paramsTrain = ParamsTrain('parameters/', **paramsTrainCustom)
