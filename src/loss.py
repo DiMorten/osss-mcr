@@ -139,7 +139,9 @@ def evidential_categorical_focal_ignoring_last_label(alpha=0.25,gamma=2, current
         prob = alpha / tf.reduce_sum(alpha, axis = -1, keepdims=True) 
         print("Loss current epoch", current_epoch)
 #        loss = loss_eq5(y_true, alpha, class_n, current_epoch, 30)
-        loss = loss_eq5(y_true, alpha, class_n, current_epoch, 30)
+#        loss = loss_eq5(y_true, alpha, class_n, current_epoch, 30)
+        loss = loss_eq5(y_true, alpha, class_n, current_epoch, 60)
+
 
         loss = tf.reduce_mean(loss)
 
