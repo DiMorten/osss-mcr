@@ -10,6 +10,7 @@ from src.dataset import Dataset, DatasetWithCoords
 from src.patch_extractor import PatchExtractor
 from train_and_evaluate import TrainTest, TrainTestDropout
 
+from src.modelArchitecture import UUnetConvLSTM, UnetSelfAttention, UUnetConvLSTMDropout, UUnetConvLSTMDropout2, UUnetConvLSTMEvidential
 
 
 if __name__ == '__main__':
@@ -23,7 +24,9 @@ if __name__ == '__main__':
 		'openSetLoadModel': False,
 		'selectMainClasses': True,
 		'dataset': 'lm',
-		'seq_date': 'mar'	# jun, mar	
+		'seq_date': 'mar',	# jun, mar	
+		'id': 'dropout1',
+		'model_type': UUnetConvLSTMDropout2,
 	}
 
 	paramsTrain = ParamsTrain('parameters/', **paramsTrainCustom)

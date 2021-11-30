@@ -190,7 +190,7 @@ class ParamsTrain(Params):
 			self.model_type = self.model_type(self.model_t_len, self.patch_len, self.channel_n)
 		else:
 			self.dropout = 0.2
-			self.model_type = UUnetConvLSTMDropout
+			#self.model_type = UUnetConvLSTMDropout
 
 			self.model_type = self.model_type(self.model_t_len, self.patch_len, self.channel_n,
 				self.dropout)

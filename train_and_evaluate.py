@@ -354,7 +354,7 @@ class TrainTest():
 		else:
 			self.model.graph = load_model(self.paramsTrain.model_name_id, compile=False)
 			ic(self.paramsTrain.model_name_id)
-			pdb.set_trace()
+			#pdb.set_trace()
 
 		paramsMosaic = ParamsReconstruct(self.paramsTrain)
 

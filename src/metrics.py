@@ -180,7 +180,7 @@ class Metrics():
 		plt.savefig('roc_auc_'+modelId+"_"+nameId+'.png', dpi = 500)
 #        plt.gca().set_aspect('equal', adjustable='box')
 		#plt.show()
-		return optimal_threshold
+		return optimal_threshold, fpr, tpr, roc_auc
 
 class MetricsTranslated(Metrics):
 	def filterSamples(self, prediction, label, class_n):

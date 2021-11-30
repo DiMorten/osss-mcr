@@ -513,6 +513,33 @@ class UUnetConvLSTMDropout(ModelArchitectureNto1):
 		self.graph = Model(self.in_im, out)
 		print(self.graph.summary())
 
+
+class UUnetConvLSTMDropout2(ModelArchitectureNto1):
+
+	def __init__(self, t_len, patch_len, channel_n, dropout):
+		self.dropout = dropout
+		self.training = True
+		super().__init__(t_len, patch_len, channel_n)
+	def __repr__(self):
+		return "UUnetConvLSTMDropout2"
+	def build(self):
+		super().build()		
+		concat_axis = 3
+		#fs=32
+		fs=16
+
+		e3, p1, p2, p3 = self.unetEncoderNto1_dropout(self.in_im, fs, dropout = self.dropout, training = self.training)
+
+		x = ConvLSTM2D(256,3,return_sequences=False,
+				padding="same")(e3)
+
+		out = self.unetDecoderNto1_dropout(x, p1, p2, p3, fs, dropout = self.dropout, training = self.training)
+
+		out = Conv2D(self.class_n, (1, 1), activation=None,
+									padding='same')(out)
+		self.graph = Model(self.in_im, out)
+		print(self.graph.summary())
+
 class UUnetConvLSTMEvidential(ModelArchitectureNto1):
 
 	def __repr__(self):
