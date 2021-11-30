@@ -184,8 +184,8 @@ paramsTrainCustom = {
 		'dataset': 'lm', # lm: L Eduardo Magalhaes.
 		'seq_date': 'mar'
 	}
-#mode = 'dropout' # dropout, evidential, closed_set
-mode = 'closed_set'
+mode = 'dropout' # dropout, evidential, closed_set
+#mode = 'closed_set'
 #mode = 'evidential'
 
 name_id = ""
@@ -202,6 +202,33 @@ label_test = label_test.flatten()
 #ic(label_test.shape)
 
 label_test = label_test[mask_flat==2]
+
+# === get coords test
+def get_coords_test(mask):
+	coords_test = []
+	for h in range(mask.shape[0]):
+		for w in range(mask.shape[1]):
+			if mask[h,w] == 2:
+				coords_test.append([h,w])
+	return coords_test
+
+coords_test = get_coords_test(mask)
+
+def im_from_coords_samples(x, mask, coords):
+	im = np.zeros_like(mask, dtype = np.float32)
+	im.shape
+	for count, coord in enumerate(coords):
+		h, w = coord
+		im[h,w] = x[count]
+
+	return im
+
+def im_save(im, nameId):
+	plt.figure()
+	plt.imshow(im.astype(np.float32))
+	plt.axis('off')
+	plt.savefig(nameId + '.png', dpi = 500)	
+
 
 #ic(label_test.shape)
 label_test = label_test - 1
@@ -250,17 +277,17 @@ elif mode == 'closed_set':
 	evidence = np.load(filename)
 	
 			
-	softmax_thresholdling = scipy.special.softmax(evidence, axis=-1)
-	softmax_thresholdling = np.amax(softmax_thresholdling, axis = -1)
+	softmax_thresholding = scipy.special.softmax(evidence, axis=-1)
+	softmax_thresholding = np.amax(softmax_thresholding, axis = -1)
 
-	softmax_thresholdling[mask != 2] = 0
+	softmax_thresholding[mask != 2] = 0
 
-	softmax_thresholdling_flat = softmax_thresholdling.flatten()
-	softmax_thresholdling_flat = softmax_thresholdling_flat[mask_flat==2]
+	softmax_thresholding_flat = softmax_thresholding.flatten()
+	softmax_thresholding_flat = softmax_thresholding_flat[mask_flat==2]
 	print("Softmax thresholding")
-	getMetrics(label_test, softmax_thresholdling, softmax_thresholdling_flat, "UUnetConvLSTM", "SoftmaxThresholding" + name_id)
-	# getThresholdMetrics(label_test, softmax_thresholdling_flat, threshold = 0.96, unknown_class_id = 20)
-#	getThresholdMetrics(label_test, softmax_thresholdling_flat, threshold = 0.98, unknown_class_id = 20)
+	getMetrics(label_test, softmax_thresholding, softmax_thresholding_flat, "UUnetConvLSTM", "SoftmaxThresholding" + name_id)
+	# getThresholdMetrics(label_test, softmax_thresholding_flat, threshold = 0.96, unknown_class_id = 20)
+#	getThresholdMetrics(label_test, softmax_thresholding_flat, threshold = 0.98, unknown_class_id = 20)
 	pdb.set_trace()
 
 elif mode == 'evidential':
@@ -269,14 +296,14 @@ elif mode == 'evidential':
 	ic(evidence.dtype)
 	evidence = evidence.astype(np.float32)
 
-	softmax_thresholdling = scipy.special.softmax(evidence, axis=-1)
-	softmax_thresholdling = np.amax(softmax_thresholdling, axis = -1)
-	softmax_thresholdling[mask != 2] = 0
+	softmax_thresholding = scipy.special.softmax(evidence, axis=-1)
+	softmax_thresholding = np.amax(softmax_thresholding, axis = -1)
+	softmax_thresholding[mask != 2] = 0
 
-	softmax_thresholdling_flat = softmax_thresholdling.flatten()
-	softmax_thresholdling_flat = softmax_thresholdling_flat[mask_flat==2]
+	softmax_thresholding_flat = softmax_thresholding.flatten()
+	softmax_thresholding_flat = softmax_thresholding_flat[mask_flat==2]
 	print("Softmax thresholding")
-	getMetrics(label_test, softmax_thresholdling, softmax_thresholdling_flat, "UUnetConvLSTMEviential", "SoftmaxThresholding" + name_id)
+	getMetrics(label_test, softmax_thresholding, softmax_thresholding_flat, "UUnetConvLSTMEviential", "SoftmaxThresholding" + name_id)
 
 	evidence_max = np.amax(evidence, axis = -1)
 	evidence_max_flat = evidence_max.flatten()
@@ -366,18 +393,23 @@ if mode == 'dropout':
 	# pdb.set_trace()
 
 	ic(pred_probs.shape)
-
+	approach_name = "DropSoftmaxThresholding"
 	for idx in range(pred_probs.shape[0]):
-		softmax_thresholdling = pred_probs[idx]
-		softmax_thresholdling = np.amax(softmax_thresholdling, axis = -1)
+		softmax_thresholding = pred_probs[idx]
+		softmax_thresholding = np.amax(softmax_thresholding, axis = -1)
 
 
 		print("Softmax thresholding")
+		
 		if idx == 0:
 			addToPlot = True
+			im = im_from_coords_samples(softmax_thresholding, mask, coords_test)
+			im_save(im, approach_name)			
+			pdb.set_trace()
 		else:
 			addToPlot = False
-		getMetrics(label_test, softmax_thresholdling, "UUnetConvLSTM", "DropSoftmaxThresholding" + name_id, addToPlot = addToPlot)
+		getMetrics(label_test, softmax_thresholding, "UUnetConvLSTM", approach_name + name_id, addToPlot = addToPlot)
+		
 	pred_entropy_single = single_experiment_entropy(pred_probs[1])
 	'''
 	print("Predictive entropy single experiment")
@@ -391,18 +423,27 @@ if mode == 'dropout':
 
 	ic(label_test.shape, pred_entropy.shape)
 	print("Predictive entropy")
-	getMetrics(label_test, pred_entropy, "UUnetConvLSTM", "DropoutPredEntropy" + name_id, pos_label = 1)
-
+	approach_name = "DropoutPredEntropy"
+	getMetrics(label_test, pred_entropy, "UUnetConvLSTM", approach_name + name_id, pos_label = 1)
+	im = im_from_coords_samples(pred_entropy, mask, coords_test)
+	im_save(im, approach_name)		
 	MI = mutual_information(pred_probs)
 
 	MI = np.nan_to_num(MI, nan = 0.)
 	print("MI")
-	getMetrics(label_test, MI, "UUnetConvLSTM", "DropoutMI" + name_id, pos_label = 1)
+	approach_name = "DropoutMI"
+	im = im_from_coords_samples(MI, mask, coords_test)
+	im_save(im, approach_name)		
+	getMetrics(label_test, MI, "UUnetConvLSTM", approach_name + name_id, pos_label = 1)
 
 	pred_var = predictive_variance(pred_probs)
 
 	print("Predictive variance")
-	getMetrics(label_test, pred_var, "UUnetConvLSTM", "DropoutPredVar" + name_id, pos_label = 1)
+	approach_name = "DropoutPredVar"
+	im = im_from_coords_samples(pred_var, mask, coords_test)
+	im_save(im, approach_name)		
+	getMetrics(label_test, pred_var, "UUnetConvLSTM", approach_name + name_id, pos_label = 1)
+
 
 
 plt.figure(400)

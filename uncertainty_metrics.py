@@ -176,8 +176,8 @@ paramsTrainCustom = {
 		'seq_date': 'mar'
 	}
 #mode = 'dropout' # dropout, evidential, closed_set
-#mode = 'closed_set'
-mode = 'evidential'
+mode = 'closed_set'
+#mode = 'evidential'
 
 name_id = ""
 dropout_repetitions = 30
