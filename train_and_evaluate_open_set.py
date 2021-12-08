@@ -9,6 +9,7 @@ from src.dataset import Dataset, DatasetWithCoords
 
 from src.patch_extractor import PatchExtractor
 from train_and_evaluate import TrainTest
+from src.modelArchitecture import UUnetConvLSTM, UnetSelfAttention, UUnetConvLSTMDropout, UUnetConvLSTMEvidential
 
 if __name__ == '__main__':
 
@@ -20,7 +21,11 @@ if __name__ == '__main__':
 		'openSetLoadModel': False,
 		'selectMainClasses': True,
 		'dataset': 'lm',
-		'seq_date': 'mar'	# jun, mar	
+		'seq_date': 'mar',	# jun, mar	
+#		'id': 'evidential4',
+#		'model_type': UUnetConvLSTMEvidential
+		'id': 'focal',
+		'model_type': UUnetConvLSTM
 	}
 
 	paramsTrain = ParamsTrain('parameters/', **paramsTrainCustom)
