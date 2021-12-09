@@ -167,6 +167,8 @@ class TrainTest():
 			deb.prints(self.paramsTrain.val_set_mode)
 			self.data.val_set_get(self.paramsTrain.val_set_mode,0.15)
 			ic(self.data.patches['val']['coords'].shape)
+
+
 #			pdb.set_trace()
 		else:
 			self.data.patches['val']={}
@@ -175,7 +177,9 @@ class TrainTest():
 			self.data.patches['val']['in']=np.zeros((1,1))
 			
 			deb.prints(self.data.patches['val']['label'].shape)
-			
+		
+		np.save('val_coords.npy', self.data.patches['val']['coords'])
+		pdb.set_trace()
 		#balancing=False
 		
 		if self.paramsTrain.balancing==True:
@@ -408,7 +412,9 @@ if __name__ == '__main__':
 #		'openSetLoadModel': True,
 		'selectMainClasses': True,
 		'dataset': 'lm', # lm: L Eduardo Magalhaes.
-		'seq_date': 'mar'
+		'seq_date': 'mar',
+		'id': 'focal',
+		'model_type': UUnetConvLSTM		
 	}
 
 	paramsTrain = ParamsTrain('parameters/', **paramsTrainCustom)
