@@ -9,7 +9,7 @@
 Environment can be installed using environment.yml file. Use the following commands:
   ```
   conda env create -f environment.yml
-  conda activate tfg2
+  conda activate tf2
   ```
 ## Preparing the input images 
 
@@ -27,58 +27,17 @@ dataset/
 Where dataset_folder is cv_data for Campo Verde and lm_data for LEM
   
   
-## Paper 1: Instructions for training and evaluation
-
-The main routine is in main.py. For default training use:
+## Closed set training and evaluation
 
 ```
-cd src/...train_src/
-python main.py
+python train_and_evaluate.py
 ```
 
-Finally for metrics and qualitative (reconstructed) results:
-
-```
-cd src/...reconstruct/
-python reconstruct.py
-```
-
-## Paper 2: Instructions for Open Set training and evaluation
+## Open Set training and evaluation
 
 
-For open set training, in params_reader.py, change the parameter:
 ```
-mode='OpenSet'
+python train_and_evaluate_open_set.py
 ```
-Then:
-```
-cd src/...train_src/
-python main.py
-```
-For ROC AUC curve metrics, execute:
-```
-cd src/...analysis/
-python analysis_...py
-```
-For qualitative results, execute:
-```
-cd src/...reconstruct/
-python reconstruct...py
-```
-## Instructions for changing parameters
-
-### Training parameters 
-In params_reader.py, edit the next parameters:
-
-- ```self.dataset```: ```'cv'``` for CV dataset and ```'lm'``` for LEM dataset
-- ```self.date```: ```'jun'``` for CV dataset and ```'jun'```, ```'mar'``` for LEM dataset
-
-### AUC ROC metric and qualitative results parameters
-
-In params_analysis.py, edit the next parameters:
-
-- ```self.open_mode```: ```'SoftmaxThresholding'```, ```'OpenPCS'```
-- ```self.covMatrixInvert```: ```False``` for OpenPCS, ```True``` for OpenPCS++
-
 
 
