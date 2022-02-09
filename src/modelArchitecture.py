@@ -465,6 +465,7 @@ class ModelArchitectureNto1(ModelArchitecture):
 		out=self.dilated_layer_Nto1(d1,fs)
 		return out
 
+
 class UUnetConvLSTM(ModelArchitectureNto1):
 	def __repr__(self):
 		return "UUnetConvLSTM"

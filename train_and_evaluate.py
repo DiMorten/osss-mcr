@@ -67,6 +67,7 @@ from src.mosaic import seq_add_padding, add_padding, Mosaic, MosaicHighRAM, Mosa
 from src.postprocessing import PostProcessingMosaic
 
 from src.metrics import Metrics, MetricsTranslated
+from src.modelArchitecture import UUnetConvLSTM, UnetSelfAttention, UUnetConvLSTMDropout, UUnetConvLSTMEvidential
 
 ic.configureOutput(includeContext=True)
 np.random.seed(2021)
@@ -179,7 +180,7 @@ class TrainTest():
 			deb.prints(self.data.patches['val']['label'].shape)
 		
 		np.save('val_coords.npy', self.data.patches['val']['coords'])
-		pdb.set_trace()
+		# pdb.set_trace()
 		#balancing=False
 		
 		if self.paramsTrain.balancing==True:
