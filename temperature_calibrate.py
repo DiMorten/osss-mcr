@@ -40,7 +40,7 @@ from parameters.params_mosaic import ParamsReconstruct
 
 from icecream import ic
 from src.monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerator
-from src.model import ModelCropRecognition
+from src.modelManager import ModelManagerCropRecognition
 from src.dataset import Dataset, DatasetWithCoords
 
 from src.patch_extractor import PatchExtractor

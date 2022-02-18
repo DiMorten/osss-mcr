@@ -58,7 +58,7 @@ from parameters.params_mosaic import ParamsReconstruct
 
 from icecream import ic
 from src.monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerator
-from src.model import ModelCropRecognition
+from src.modelManager import ModelManagerCropRecognition
 from src.dataset import Dataset, DatasetWithCoords
 
 from src.patch_extractor import PatchExtractor
@@ -129,25 +129,25 @@ class TrainTest():
 #		pdb.set_trace()
 	def setModel(self, model_name_id):
 
-		#self.model_name = model_name_id
+		#self.modelManager_name = model_name_id
 		#if self.paramsTrain.dropoutInference == False:
-		modelObj = ModelCropRecognition
+		modelObj = ModelManagerCropRecognition
 		#else:
 	#		modelObj = ModelDropout
 		
-		self.model = modelObj(paramsTrain = self.paramsTrain, ds = self.ds) 
-		self.model.class_n=self.data.class_n-1 # Model is designed without background class
+		self.modelManager = modelObj(paramsTrain = self.paramsTrain, ds = self.ds) 
+		self.modelManager.class_n=self.data.class_n-1 # Model is designed without background class
 
-		self.model.name = model_name_id
-		ic(self.model.name)
+		self.modelManager.name = model_name_id
+		ic(self.modelManager.name)
 
-		ic(self.model.name)	
+		ic(self.modelManager.name)	
 
-		ic(self.model.class_n)
+		ic(self.modelManager.class_n)
 		ic(self.data.class_n)
 		deb.prints(self.data.class_n)
 
-		self.model.build(self.paramsTrain.model_type, self.data.class_n - 1) # no bcknd
+		self.modelManager.build(self.paramsTrain.model_type, self.data.class_n - 1) # no bcknd
 
 
 	def preprocess(self):
@@ -200,7 +200,7 @@ class TrainTest():
 
 			self.data.semantic_balance(self.paramsTrain.samples_per_class,label_type = label_type) #More for known classes few. Compare with 500 later
 						
-		##self.model.class_n-=1
+		##self.modelManager.class_n-=1
 
 		# Label background from 0 to last. 
 		deb.prints(self.data.patches['train']['coords'].shape)
@@ -213,22 +213,22 @@ class TrainTest():
 
 		optim = Adam(lr=self.paramsTrain.learning_rate, beta_1=0.9)
 		
-		#loss=weighted_categorical_crossentropy_ignoring_last_label(self.model.loss_weights_ones)
+		#loss=weighted_categorical_crossentropy_ignoring_last_label(self.modelManager.loss_weights_ones)
 		if self.paramsTrain.evidentialDL == False:
 			loss=categorical_focal_ignoring_last_label(alpha=0.25,gamma=2)
 		else:
-			self.model.current_epoch = K.variable(0.0)
-			loss=evidential_categorical_focal_ignoring_last_label(alpha=0.25,gamma=2, current_epoch = self.model.current_epoch)
+			self.modelManager.current_epoch = K.variable(0.0)
+			loss=evidential_categorical_focal_ignoring_last_label(alpha=0.25,gamma=2, current_epoch = self.modelManager.current_epoch)
 			print("evidential")
 			#pdb.set_trace()
 		
 		#pdb.set_trace()
-		#loss=weighted_categorical_focal_ignoring_last_label(self.model.loss_weights,alpha=0.25,gamma=2)
+		#loss=weighted_categorical_focal_ignoring_last_label(self.modelManager.loss_weights,alpha=0.25,gamma=2)
 
-		self.model.graph.compile(loss=loss,
+		self.modelManager.model.compile(loss=loss,
 					optimizer=optim, metrics=metrics)
 
-		self.model.train(self.data)
+		self.modelManager.train(self.data)
 
 
 
@@ -243,7 +243,7 @@ class TrainTest():
 	def mosaicCreate(self, paramsMosaic):
 
 		self.data.full_ims_test = self.data.addPaddingToInput(
-			self.model.model_t_len, self.data.full_ims_test)
+			self.modelManager.model_t_len, self.data.full_ims_test)
 
 
 		self.data.reloadLabel()
@@ -255,7 +255,7 @@ class TrainTest():
 			self.mosaic = MosaicHighRAMPostProcessing(self.paramsTrain, paramsMosaic)
 
 
-		self.mosaic.create(self.paramsTrain, self.model, self.data, self.ds, self.postProcessing)
+		self.mosaic.create(self.paramsTrain, self.modelManager, self.data, self.ds, self.postProcessing)
 		
 		np.save('prediction_logits_mosaic.npy', self.mosaic.prediction_logits_mosaic)
 	
@@ -289,7 +289,7 @@ class TrainTest():
 				ic(np.unique(self.data.full_label_train, return_counts=True))
 
 				self.data.full_ims_train = self.data.addPaddingToInput(
-					self.model.model_t_len, self.data.full_ims_train)
+					self.modelManager.model_t_len, self.data.full_ims_train)
 
 				self.data.patches_in = self.data.getSequencePatchesFromCoords(
 					self.data.full_ims_train, self.data.patches['train']['coords']).astype(prediction_dtype) # test coords is called self.coords, make custom init in this class. self.full_ims is also set independent
@@ -298,7 +298,7 @@ class TrainTest():
 	#       	self.coords = self.data.patches['train']['coords'] # not needed. use train coords directly
 				
 
-				self.data.predictions=(self.model.graph.predict(self.data.patches_in)).argmax(axis=-1).astype(np.uint8) 
+				self.data.predictions=(self.modelManager.model.predict(self.data.patches_in)).argmax(axis=-1).astype(np.uint8) 
 
 				self.data.setDateList(self.paramsTrain)
 
@@ -308,7 +308,7 @@ class TrainTest():
 						'results/label_translations/new_labels2labels_'+self.paramsTrain.dataset+'_'+self.data.dataset_date+'_S1.pkl')
 
 				if self.paramsTrain.openSetMethod =='OpenPCS' or self.paramsTrain.openSetMethod =='OpenPCS++':
-					self.data.intermediate_features = self.model.load_decoder_features(self.data.patches_in).astype(prediction_dtype)
+					self.data.intermediate_features = self.modelManager.load_decoder_features(self.data.patches_in).astype(prediction_dtype)
 				else:
 					self.data.intermediate_features = self.data.predictions.copy() # to-do: avoid copy
 				ic(self.data.patches_in.shape, self.data.patches_label.shape)
@@ -357,7 +357,7 @@ class TrainTest():
 		if self.paramsTrain.train == True:
 			self.train()
 		else:
-			self.model.graph = load_model(self.paramsTrain.model_name_id, compile=False)
+			self.modelManager.model = load_model(self.paramsTrain.model_name_id, compile=False)
 			ic(self.paramsTrain.model_name_id)
 			#pdb.set_trace()
 
@@ -374,20 +374,20 @@ class TrainTestDropout(TrainTest):
 	def mosaicCreate(self, paramsMosaic):
 
 		self.data.full_ims_test = self.data.addPaddingToInput(
-			self.model.model_t_len, self.data.full_ims_test)
+			self.modelManager.model_t_len, self.data.full_ims_test)
 
 		_, h,w,channel_n = self.data.full_ims_test.shape
 
 		self.data.reloadLabel()
 
 		times = 30
-		ic(times, h,w, self.model.class_n)
-		self.prediction_logits_mosaic_group = np.ones((times, h,w, self.model.class_n), dtype = np.float16)
+		ic(times, h,w, self.modelManager.class_n)
+		self.prediction_logits_mosaic_group = np.ones((times, h,w, self.modelManager.class_n), dtype = np.float16)
 		for t in range(times):
 			self.mosaic = MosaicHighRAM(self.paramsTrain, paramsMosaic)
 			self.postProcessing = None
 
-			self.mosaic.create(self.paramsTrain, self.model, self.data, self.ds, self.postProcessing)
+			self.mosaic.create(self.paramsTrain, self.modelManager, self.data, self.ds, self.postProcessing)
 
 			#self.mosaic.deleteAllButLogits()
 

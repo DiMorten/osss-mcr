@@ -231,8 +231,8 @@ class UnetConvLSTM(ModelArchitecture):
 
 		out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
 									padding='same'))(out)
-		self.graph = Model(self.in_im, out)
-		print(self.graph.summary())
+		self.model = Model(self.in_im, out)
+		print(self.model.summary())
 
 class BUnetConvLSTM(ModelArchitecture):
 	def build(self):
@@ -248,8 +248,8 @@ class BUnetConvLSTM(ModelArchitecture):
 
 		out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
 									padding='same'))(out)
-		self.graph = Model(self.in_im, out)
-		print(self.graph.summary())
+		self.model = Model(self.in_im, out)
+		print(self.model.summary())
 
 
 # ==== N to 1 ======
@@ -289,8 +289,8 @@ class UnetConvLSTM_Skip(ModelArchitecture):
 		out = self.timeDistributedConvLayer(d1,fs)
 		out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
 									padding='same'))(out)
-		self.graph = Model(self.in_im, out)
-		print(self.graph.summary())
+		self.model = Model(self.in_im, out)
+		print(self.model.summary())
 
 
 class Unet3D(ModelArchitecture):
@@ -317,8 +317,8 @@ class Unet3D(ModelArchitecture):
 		out = self.timeDistributedConvLayer3D(d1,fs,kernel_size=(7,3,3))
 		out = Conv3D(self.class_n, (1, 1, 1), activation=None,
 									padding='same')(out)
-		self.graph = Model(self.in_im, out)
-		print(self.graph.summary())
+		self.model = Model(self.in_im, out)
+		print(self.model.summary())
 
 class Unet3D_ATPP(ModelArchitecture):
 	def build(self):
@@ -345,8 +345,8 @@ class Unet3D_ATPP(ModelArchitecture):
 		out = temporal_pyramid_pooling(d1,fs,max_rate)
 		out = Conv3D(self.class_n, (1, 1, 1), activation=None,
 									padding='same')(out)
-		self.graph = Model(self.in_im, out)
-		print(self.graph.summary())
+		self.model = Model(self.in_im, out)
+		print(self.model.summary())
 
 class BAtrousGAPConvLSTM(ModelArchitecture):
 	def build(self):
@@ -366,8 +366,8 @@ class BAtrousGAPConvLSTM(ModelArchitecture):
 		out=self.timeDistributedConvLayer(x,fs)
 		out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
 									padding='same'))(out)
-		self.graph = Model(self.in_im, out)
-		print(self.graph.summary())
+		self.model = Model(self.in_im, out)
+		print(self.model.summary())
 class ModelArchitectureNto1(ModelArchitecture):
 
 	def slice_tensor(self, x):
@@ -484,8 +484,8 @@ class UUnetConvLSTM(ModelArchitectureNto1):
 
 		out = Conv2D(self.class_n, (1, 1), activation=None,
 									padding='same')(out)
-		self.graph = Model(self.in_im, out)
-		print(self.graph.summary())
+		self.model = Model(self.in_im, out)
+		print(self.model.summary())
 
 
 class UUnetConvLSTMDropout(ModelArchitectureNto1):
@@ -511,8 +511,8 @@ class UUnetConvLSTMDropout(ModelArchitectureNto1):
 
 		out = Conv2D(self.class_n, (1, 1), activation=None,
 									padding='same')(out)
-		self.graph = Model(self.in_im, out)
-		print(self.graph.summary())
+		self.model = Model(self.in_im, out)
+		print(self.model.summary())
 
 
 class UUnetConvLSTMDropout2(ModelArchitectureNto1):
@@ -538,8 +538,8 @@ class UUnetConvLSTMDropout2(ModelArchitectureNto1):
 
 		out = Conv2D(self.class_n, (1, 1), activation=None,
 									padding='same')(out)
-		self.graph = Model(self.in_im, out)
-		print(self.graph.summary())
+		self.model = Model(self.in_im, out)
+		print(self.model.summary())
 
 class UUnetConvLSTMEvidential(ModelArchitectureNto1):
 
@@ -560,8 +560,8 @@ class UUnetConvLSTMEvidential(ModelArchitectureNto1):
 
 		out = Conv2D(self.class_n, (1, 1), activation='relu',
 									padding='same')(out)
-		self.graph = Model(self.in_im, out)
-		print(self.graph.summary())
+		self.model = Model(self.in_im, out)
+		print(self.model.summary())
 
 
 class UnetSelfAttention(ModelArchitectureNto1):
@@ -603,6 +603,6 @@ class UnetSelfAttention(ModelArchitectureNto1):
 		out = self.unetDecoderNto1(x, p1, p2, p3, fs)
 		out = Conv2D(self.class_n, (1, 1), activation=None,
 									padding='same')(out)
-		self.graph = Model(self.in_im, out)
-		print(self.graph.summary())
+		self.model = Model(self.in_im, out)
+		print(self.model.summary())
 		

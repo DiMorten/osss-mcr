@@ -67,7 +67,7 @@ def load_obj(name ):
 		return pickle.load(f)
 
 
-class ModelCropRecognition(object):
+class ModelManagerCropRecognition(object):
 	def __init__(self, paramsTrain, ds, 
 		*args, **kwargs):
 
@@ -156,10 +156,10 @@ class ModelCropRecognition(object):
 		modelArchitecture.class_n = class_n
 		modelArchitecture.build()
 
-		self.graph = modelArchitecture.graph 
+		self.model = modelArchitecture.model 
 
 		with open('model_summary.txt','w') as fh:
-			self.graph.summary(line_length=125,print_fn=lambda x: fh.write(x+'\n'))
+			self.model.summary(line_length=125,print_fn=lambda x: fh.write(x+'\n'))
 
 	def loss_weights_estimate(self,data):
 		unique,count=np.unique(data.patches['train']['label'].argmax(axis=-1),return_counts=True)
@@ -213,10 +213,10 @@ class ModelCropRecognition(object):
 			batch['test']['label'] = data.patches['test']['label'][idx0:idx1]
 
 			if self.batch_test_stats:
-				self.metrics['test']['loss'] += self.graph.test_on_batch(
+				self.metrics['test']['loss'] += self.model.test_on_batch(
 					batch['test']['in'], batch['test']['label'])		# Accumulated epoch
 
-			data.patches['test']['prediction'][idx0:idx1]=self.graph.predict(batch['test']['in'],batch_size=self.batch['test']['size'])
+			data.patches['test']['prediction'][idx0:idx1]=self.model.predict(batch['test']['in'],batch_size=self.batch['test']['size'])
 
 		#====================METRICS GET================================================#
 		deb.prints(data.patches['test']['label'].shape)		
@@ -266,9 +266,9 @@ class ModelCropRecognition(object):
 				plt.savefig(path_file)
 		PlotHistory(history, 'loss', path_file='loss_fig.png')
 
-		self.graph.save('model_best_fit.h5')	
+		self.model.save('model_best_fit.h5')	
 		ic(self.name)
-		self.graph.save(self.name)	
+		self.model.save(self.name)	
 			
 
 	def applyFitMethod(self, data):
@@ -280,7 +280,7 @@ class ModelCropRecognition(object):
 		ic(np.unique(first_batch_label, return_counts=True))
 		pdb.set_trace()
 		'''
-		history = self.graph.fit(data.patches['train']['in'], data.patches['train']['label'],
+		history = self.model.fit(data.patches['train']['in'], data.patches['train']['label'],
 			batch_size = self.batch['train']['size'], 
 			epochs = 70, 
 			validation_data=(data.patches['val']['in'], data.patches['val']['label']),
@@ -297,7 +297,7 @@ class ModelCropRecognition(object):
 		data.patches['test']['in'] = data.addPaddingToInputPatches(
 			self.model_t_len, data.patches['test']['in'])
 	
-		data.patches['test']['prediction'] = self.graph.predict(data.patches['test']['in'])
+		data.patches['test']['prediction'] = self.model.predict(data.patches['test']['in'])
 		metrics_test=data.metrics_get(data.patches['test']['prediction'],
 			data.patches['test']['label'],debug=2)
 		deb.prints(metrics_test)
@@ -368,7 +368,7 @@ class ModelCropRecognition(object):
 				validation=validation_generator,
 				patience=10, classes=self.class_n)]
 
-		history = self.graph.fit(training_generator,
+		history = self.model.fit(training_generator,
 #			batch_size = self.batch['train']['size'], 
 			epochs = 70, 
 			validation_data=validation_generator,
@@ -401,7 +401,7 @@ class ModelCropRecognition(object):
 		data.getPatchesFromCoords(data.full_label_test, data.patches['test']['coords'])
 		test_generator = DataGeneratorWithCoords(data.full_ims_test, data.full_label_test, 
 				data.patches['test']['coords'], **params_test)
-		data.patches['test']['prediction'] = self.graph.predict_generator(test_generator)
+		data.patches['test']['prediction'] = self.model.predict_generator(test_generator)
 		data.patches['test']['label'] = data.getPatchesFromCoords(
 			data.full_label_test, data.patches['test']['coords'])
 
@@ -464,12 +464,12 @@ class ModelCropRecognition(object):
 
 		upsample_ratios = [8, 4, 2, 1]
 
-		out1 = UpSampling2D(size=(upsample_ratios[0], upsample_ratios[0]))(self.graph.get_layer(layer_names[0]).output)
-		out2 = UpSampling2D(size=(upsample_ratios[1], upsample_ratios[1]))(self.graph.get_layer(layer_names[1]).output)
-		out3 = UpSampling2D(size=(upsample_ratios[2], upsample_ratios[2]))(self.graph.get_layer(layer_names[2]).output)
-		out4 = UpSampling2D(size=(upsample_ratios[3], upsample_ratios[3]))(self.graph.get_layer(layer_names[3]).output)
+		out1 = UpSampling2D(size=(upsample_ratios[0], upsample_ratios[0]))(self.model.get_layer(layer_names[0]).output)
+		out2 = UpSampling2D(size=(upsample_ratios[1], upsample_ratios[1]))(self.model.get_layer(layer_names[1]).output)
+		out3 = UpSampling2D(size=(upsample_ratios[2], upsample_ratios[2]))(self.model.get_layer(layer_names[2]).output)
+		out4 = UpSampling2D(size=(upsample_ratios[3], upsample_ratios[3]))(self.model.get_layer(layer_names[3]).output)
 
-		intermediate_layer_model = Model(inputs=self.graph.input, outputs=[out1, #4x4
+		intermediate_layer_model = Model(inputs=self.model.input, outputs=[out1, #4x4
 															out2, #8x8
 															out3, #16x16
 															out4]) #32x32
@@ -500,7 +500,7 @@ class ModelCropRecognition(object):
 			print("intermediate_features stats", np.min(intermediate_features), np.average(intermediate_features), np.max(intermediate_features))
 		return intermediate_features
 '''
-class ModelDropout(ModelCropRecognition):
+class ModelDropout(ModelManagerCropRecognition):
 	def evaluate(self, data, ds, paramsMosaic):
 		params_test = {
 			'dim': (self.model_t_len,self.patch_len,self.patch_len),

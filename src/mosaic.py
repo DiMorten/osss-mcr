@@ -71,7 +71,7 @@ class Mosaic():
 								m-paramsTrain.patch_len//2:m+paramsTrain.patch_len//2 + paramsTrain.patch_len%2,
 								n-paramsTrain.patch_len//2:n+paramsTrain.patch_len//2 + paramsTrain.patch_len%2]
 					patch = np.expand_dims(patch, axis = 0)
-					pred_logits = self.model.graph.predict(patch)
+					pred_logits = self.model.model.predict(patch)
 					pred = pred_logits.argmax(axis=-1).astype(np.uint8)
 					_, x, y, c = pred_logits.shape
 
@@ -347,7 +347,7 @@ class MosaicHighRAM(Mosaic):
 			#pdb.set_trace()
 
 
-			self.pred_logits_patches = self.model.graph.predict(patches_in).astype(self.paramsMosaic.prediction_dtype)
+			self.pred_logits_patches = self.model.model.predict(patches_in).astype(self.paramsMosaic.prediction_dtype)
 			ic(self.pred_logits_patches.dtype)
 			ic(self.pred_logits_patches.shape)	
 
