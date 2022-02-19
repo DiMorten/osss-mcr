@@ -64,7 +64,7 @@ from src.dataset import Dataset, DatasetWithCoords
 from src.patch_extractor import PatchExtractor
 
 from src.mosaic import seq_add_padding, add_padding, Mosaic, MosaicHighRAM, MosaicHighRAMPostProcessing
-from src.postprocessing import PostProcessingMosaic
+from src.postprocessing import OpenSetManager
 
 from src.metrics import Metrics, MetricsTranslated
 from src.modelArchitecture import UUnetConvLSTM, UnetSelfAttention, UUnetConvLSTMDropout, UUnetConvLSTMEvidential
@@ -169,7 +169,7 @@ class TrainTest():
 			self.data.val_set_get(self.paramsTrain.val_set_mode,0.15)
 			ic(self.data.patches['val']['coords'].shape)
 
-
+			np.save('val_coords.npy', self.data.patches['val']['coords'])
 #			pdb.set_trace()
 		else:
 			self.data.patches['val']={}
@@ -179,7 +179,7 @@ class TrainTest():
 			
 			deb.prints(self.data.patches['val']['label'].shape)
 		
-		np.save('val_coords.npy', self.data.patches['val']['coords'])
+		
 		# pdb.set_trace()
 		#balancing=False
 		
@@ -232,15 +232,15 @@ class TrainTest():
 
 
 
-	def setPostProcessing(self):
+	def setOpenSet(self):
 		_, h,w,channel_n = self.data.full_ims_test.shape
-		self.postProcessing = PostProcessingMosaic(self.paramsTrain, h, w)
+		self.openSetManager = OpenSetManager(self.paramsTrain, h, w)
 
 		known_classes = [x + 1 for x in self.paramsTrain.known_classes]
-		self.postProcessing.openSetActivate(self.paramsTrain.openSetMethod, known_classes)
+		self.openSetManager.openSetActivate(self.paramsTrain.openSetMethod, known_classes)
 
 
-	def mosaicCreate(self, paramsMosaic):
+	def infer(self, paramsMosaic):
 
 		self.data.full_ims_test = self.data.addPaddingToInput(
 			self.modelManager.model_t_len, self.data.full_ims_test)
@@ -250,15 +250,19 @@ class TrainTest():
 
 		if self.paramsTrain.openSetMethod == None:
 			self.mosaic = MosaicHighRAM(self.paramsTrain, paramsMosaic)
-			self.postProcessing = None
+			self.openSetManager = None
 		else:
 			self.mosaic = MosaicHighRAMPostProcessing(self.paramsTrain, paramsMosaic)
 
 
-		self.mosaic.create(self.paramsTrain, self.modelManager, self.data, self.ds, self.postProcessing)
+		self.mosaic.infer(self.paramsTrain, self.modelManager, self.data, self.ds, self.openSetManager)
 		
 		np.save('prediction_logits_mosaic.npy', self.mosaic.prediction_logits_mosaic)
 	
+	def inferOpenSet(self, paramsMosaic):
+		self.mosaicOpenSet = MosaicOpenSet()
+		self.mosaicOpenSet.infer(self.paramsTrain, self.modelManager, self.data, self.ds, self.openSetManager)
+
 	def evaluate(self):
 
 		metrics = MetricsTranslated(self.paramsTrain)
@@ -270,9 +274,9 @@ class TrainTest():
 			metrics.plotROCCurve(self.mosaic.getFlatLabel(), self.mosaic.getFlatScores(), 
 				modelId = self.mosaic.name_id, nameId = self.mosaic.name_id, unknown_class_id = 20)
 
-	def fitPostProcessing(self):
+	def fitOpenSet(self):
 		if self.paramsTrain.openSetLoadModel == True:
-			self.postProcessing.openSetMosaic.loadFittedModel()
+			self.openSetManager.loadFittedModel()
 		else:
 			if self.paramsTrain.openSetMethod == 'OpenPCS' or self.paramsTrain.openSetMethod == 'OpenPCS++':
 				prediction_dtype = np.float16
@@ -334,7 +338,7 @@ class TrainTest():
 				ic(self.data.intermediate_features.shape)
 				
 	#			pdb.set_trace()
-				self.postProcessing.fit(self.data)	
+				self.openSetManager.fit(self.data)	
 
 	def main(self):				
 
@@ -363,15 +367,21 @@ class TrainTest():
 
 		paramsMosaic = ParamsReconstruct(self.paramsTrain)
 
-		if self.paramsTrain.openSetMethod != None:
-			self.setPostProcessing()
-			self.fitPostProcessing()
 
-		self.mosaicCreate(paramsMosaic)
+
+		if self.paramsTrain.openSetMethod != None:
+			self.setOpenSet()
+			self.fitOpenSet()
+
+		self.infer(paramsMosaic)
+
+#		if self.paramsTrain.openSetMethod != None:
+			# self.inferOpenSet() # doesnt exist yet
+
 		self.evaluate()
 
 class TrainTestDropout(TrainTest):
-	def mosaicCreate(self, paramsMosaic):
+	def infer(self, paramsMosaic):
 
 		self.data.full_ims_test = self.data.addPaddingToInput(
 			self.modelManager.model_t_len, self.data.full_ims_test)
@@ -385,9 +395,9 @@ class TrainTestDropout(TrainTest):
 		self.prediction_logits_mosaic_group = np.ones((times, h,w, self.modelManager.class_n), dtype = np.float16)
 		for t in range(times):
 			self.mosaic = MosaicHighRAM(self.paramsTrain, paramsMosaic)
-			self.postProcessing = None
+			self.openSetManager = None
 
-			self.mosaic.create(self.paramsTrain, self.modelManager, self.data, self.ds, self.postProcessing)
+			self.mosaic.create(self.paramsTrain, self.modelManager, self.data, self.ds, self.openSetManager)
 
 			#self.mosaic.deleteAllButLogits()
 
@@ -406,8 +416,8 @@ if __name__ == '__main__':
 
 
 	paramsTrainCustom = {
-		'getFullIms': True,
-		'coordsExtract': True,
+		'getFullIms': False,
+		'coordsExtract': False,
 		'train': True,
 		'openSetMethod': None, # Options: None, OpenPCS, OpenPCS++
 #		'openSetLoadModel': True,

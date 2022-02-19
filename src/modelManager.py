@@ -59,7 +59,7 @@ from monitor import Monitor, MonitorNPY, MonitorGenerator, MonitorNPYAndGenerato
 
 from mosaic import seq_add_padding, add_padding, Mosaic, MosaicHighRAM, MosaicHighRAMPostProcessing
 from metrics import Metrics, MetricsTranslated
-from postprocessing import PostProcessingMosaic
+from postprocessing import OpenSetManager
 
 
 def load_obj(name ):
@@ -441,9 +441,9 @@ class ModelManagerCropRecognition(object):
 		else:
 			mosaic = MosaicHighRAMPostProcessing(self.paramsTrain, self.paramsMosaic)
 
-		self.postProcessing = PostProcessingMosaic(self.paramsTrain, h, w)
+		self.openSetManager = OpenSetManager(self.paramsTrain, h, w)
 
-		mosaic.create(self.paramsTrain, self, data, ds, self.postProcessing)
+		mosaic.create(self.paramsTrain, self, data, ds, self.openSetManager)
 
 		metrics = MetricsTranslated(self.paramsTrain)
 		metrics_test = metrics.get(mosaic.prediction_mosaic, mosaic.label_mosaic)
@@ -528,9 +528,9 @@ class ModelDropout(ModelManagerCropRecognition):
 		for t in range(times):
 			mosaic = MosaicHighRAM(self.paramsTrain, self.paramsMosaic)
 
-			self.postProcessing = PostProcessingMosaic(self.paramsTrain, h, w)
+			self.openSetManager = OpenSetManager(self.paramsTrain, h, w)
 
-			mosaic.create(self.paramsTrain, self, data, ds, self.postProcessing)
+			mosaic.create(self.paramsTrain, self, data, ds, self.openSetManager)
 
 			mosaic.deleteAllButLogits()
 

@@ -64,7 +64,7 @@ from src.dataset import Dataset, DatasetWithCoords
 from src.patch_extractor import PatchExtractor
 
 from src.mosaic import seq_add_padding, add_padding, Mosaic, MosaicHighRAM, MosaicHighRAMPostProcessing
-from src.postprocessing import PostProcessingMosaic
+from src.postprocessing import OpenSetManager
 
 from src.metrics import Metrics, MetricsTranslated
 
@@ -111,8 +111,8 @@ class TrainTestEvidential(TrainTest):
 		print("u", u.shape)
 		predictions = alpha / np.sum(alpha, axis = -1, keepdims=True)  # prob
 		return predictions.argmax(axis=-1), u	
-	def mosaicCreate(self, paramsMosaic):
-		super().mosaicCreate(paramsMosaic)
+	def infer(self, paramsMosaic):
+		super().infer(paramsMosaic)
 		np.save('prediction_logits_mosaic.npy', self.mosaic.prediction_logits_mosaic)
 		ic("Old prediction mosaic", np.unique(self.mosaic.prediction_mosaic, return_counts = True))
 		ic(np.unique(self.mosaic.prediction_logits_mosaic.argmax(axis=-1), return_counts = True))

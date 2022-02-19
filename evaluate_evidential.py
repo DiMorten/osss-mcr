@@ -64,7 +64,7 @@ from src.dataset import Dataset, DatasetWithCoords
 from src.patch_extractor import PatchExtractor
 
 from src.mosaic import seq_add_padding, add_padding, Mosaic, MosaicHighRAM, MosaicHighRAMPostProcessing
-from src.postprocessing import PostProcessingMosaic
+from src.postprocessing import OpenSetManager
 
 from src.metrics import Metrics, MetricsTranslated
 from train_and_evaluate_evidential import TrainTestEvidential
