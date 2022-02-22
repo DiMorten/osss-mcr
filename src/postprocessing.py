@@ -5,7 +5,7 @@ import numpy as np
 import sys
 from icecream import ic
 from open_set import OpenPCS, SoftmaxThresholding, Uncertainty
-
+import pdb
 class OpenSetManager():
 	def __init__(self, paramsTrain, h, w):
 		self.paramsTrain = paramsTrain
@@ -59,18 +59,7 @@ class OpenSetManager():
 	def applyThreshold(self, prediction_mosaic, debug = 0):
 		return self.openModel.applyThreshold(prediction_mosaic, self.scores_mosaic, debug = debug)
 
-	def fit(self, data):
-		self.openModel.appendToSaveNameId('_'+self.paramsTrain.seq_date)
-		self.openModel.appendToSaveNameId('_'+self.paramsTrain.dataset)
-		self.openModel.setModelSaveNameID(self.paramsTrain.seq_date, self.paramsTrain.dataset)
-		self.openModel.fit(data.patches_label, data.predictions, data.intermediate_features)
-		
 
-#        self.openModel.fit(label_train, predictions_train, train_pred_proba)
-
-#        for clss in self.paramsTrain.known_classes:
-#            batch['label_with_unknown'][batch['label_with_unknown']==int(clss) + 1] = 0
-#        batch['label_with_unknown'][batch['label_with_unknown']!=0] = 40
 
 	def loadFittedModel(self):
 		self.openModel.setModelSaveNameID(self.paramsTrain.seq_date, self.paramsTrain.dataset)
@@ -84,3 +73,87 @@ class OpenSetManager():
 				ic(self.openModel.nameID)
 				sys.exit()
 				return 1 # error
+
+
+	def fit(self, modelManager, data):
+
+		if self.paramsTrain.openSetMethod == 'OpenPCS' or self.paramsTrain.openSetMethod == 'OpenPCS++' or \
+			(self.paramsTrain.openSetMethod == 'SoftmaxThresholding' and self.paramsTrain.confidenceScaling == True):
+			
+			if self.paramsTrain.openSetMethod == 'SoftmaxThresholding':
+				coords = data.patches['val']['coords']
+			else:
+				coords = data.patches['train']['coords']	
+			label = data.full_label_train
+
+			prediction_dtype = np.float16
+
+			# first, translate self.train_label
+
+			ic(label.shape)
+
+			ic(np.unique(label, return_counts=True))
+
+			label_with_unknown_train = data.getTrainLabelWithUnknown()
+
+			ic(label.shape)
+			ic(np.unique(label, return_counts=True))
+
+			data.full_ims_train = data.addPaddingToInput(
+				modelManager.model_t_len, data.full_ims_train)
+
+			data.patches_in = data.getSequencePatchesFromCoords(
+				data.full_ims_train, coords).astype(prediction_dtype) # test coords is called self.coords, make custom init in this class. self.full_ims is also set independent
+			data.patches_label = data.getPatchesFromCoords(
+				label_with_unknown_train, coords)
+#       	self.coords = coords # not needed. use train coords directly
+			
+
+			data.predictions=(modelManager.model.predict(data.patches_in)).argmax(axis=-1).astype(np.uint8) 
+
+			data.setDateList(self.paramsTrain)
+
+			ic(np.unique(data.predictions, return_counts=True))
+
+			data.predictions = data.newLabel2labelTranslate(data.predictions, 
+					'results/label_translations/new_labels2labels_'+self.paramsTrain.dataset+'_'+data.dataset_date+'_S1.pkl')
+
+			if self.paramsTrain.openSetMethod =='OpenPCS' or self.paramsTrain.openSetMethod =='OpenPCS++':
+				data.intermediate_features = modelManager.load_decoder_features(data.patches_in).astype(prediction_dtype)
+			else:
+				data.intermediate_features = np.expand_dims(data.predictions.copy(), axis=-1) # to-do: avoid copy
+			ic(data.patches_in.shape, data.patches_label.shape)
+			ic(data.predictions.shape)
+			ic(data.intermediate_features.shape)
+			# pdb.set_trace()
+			data.patches_label = data.patches_label.flatten()
+			data.predictions = data.predictions.flatten()
+
+			data.intermediate_features = np.reshape(data.intermediate_features,(-1, data.intermediate_features.shape[-1]))
+			ic(data.intermediate_features.shape,
+				data.patches_label.shape)
+			# pdb.set_trace()
+			data.intermediate_features = data.intermediate_features[data.patches_label!=0]
+			
+			data.predictions = data.predictions[data.patches_label!=0]
+			data.patches_label = data.patches_label[data.patches_label!=0]
+
+			data.predictions = data.predictions - 1
+			data.patches_label = data.patches_label - 1
+
+			ic(np.unique(data.patches_label, return_counts=True))
+			ic(np.unique(data.predictions, return_counts=True))
+
+			ic(data.patches_in.shape, data.patches_label.shape)
+			ic(data.predictions.shape)
+			ic(data.intermediate_features.shape)
+			
+#			pdb.set_trace()
+			self.fitPreprocessed(data)	
+
+	def fitPreprocessed(self, data):
+		self.openModel.appendToSaveNameId('_'+self.paramsTrain.seq_date)
+		self.openModel.appendToSaveNameId('_'+self.paramsTrain.dataset)
+		self.openModel.setModelSaveNameID(self.paramsTrain.seq_date, self.paramsTrain.dataset)
+		self.openModel.fit(data.patches_label, data.predictions, data.intermediate_features)
+		

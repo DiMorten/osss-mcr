@@ -73,6 +73,7 @@ class ParamsTrain(Params):
 		# options: None, OpenPCS, OpenPCS++
 		self.openSetMethod = 'OpenPCS++' if ('openSetMethod' not in kwargs.keys()) else kwargs['openSetMethod']	
 		self.selectMainClasses = True if ('selectMainClasses' not in kwargs.keys()) else kwargs['selectMainClasses']
+		self.confidenceScaling = False if ('confidenceScaling' not in kwargs.keys()) else kwargs['confidenceScaling']	
 
 		# ============== SCRIPT MODE: CLOSED SET, OPEN SET... ================= #
 

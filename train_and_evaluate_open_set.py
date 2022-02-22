@@ -13,11 +13,13 @@ from src.modelArchitecture import UUnetConvLSTM, UnetSelfAttention, UUnetConvLST
 
 if __name__ == '__main__':
 
+
 	paramsTrainCustom = {
 		'getFullIms': False, # only True if first time
 		'coordsExtract': False, # only True if first time
 		'train': False,
-		'openSetMethod': 'OpenPCS++', # OpenPCS, SoftmaxThresholding, OpenPCS++
+		'openSetMethod': 'OpenPCS', # OpenPCS, SoftmaxThresholding, OpenPCS++
+		'confidenceScaling': False,
 		'openSetLoadModel': False,
 		'selectMainClasses': True,
 		'dataset': 'lm',
@@ -27,6 +29,10 @@ if __name__ == '__main__':
 		'id': 'focal',
 		'model_type': UUnetConvLSTM
 	}
+
+
+	if paramsTrainCustom['confidenceScaling'] == True:
+		paramsTrainCustom['val_set'] = True
 
 	paramsTrain = ParamsTrain('parameters/', **paramsTrainCustom)
 
