@@ -89,7 +89,7 @@ class SoftmaxThresholding(OpenSetMethod):
         predictions_test[scores < self.threshold] = 40 #self.loco_class + 1
         return predictions_test
 
-class ScaledSoftmaxThresholding(OpenSetMethod):
+class ScaledSoftmaxThresholding(SoftmaxThresholding):
 
     def __init__(self, loco_class = 0):
         super().__init__(loco_class)
@@ -106,11 +106,12 @@ class ScaledSoftmaxThresholding(OpenSetMethod):
         
         self.confidenceScaling = TemperatureScaling()
         self.confidenceScaling.fitModel(label_train, self.logits)
+        self.fittedFlag = True
     
     def predictScores(self, predictions_test, pred_proba_test, debug=1):
         pred_proba_test = self.confidenceScaling.scale(pred_proba_test)
 
-        super().predictScores(predictions_test, pred_proba_test)
+        super().predictScores(predictions_test, pred_proba_test, debug=debug)
 
 
 class Uncertainty(OpenSetMethod):
