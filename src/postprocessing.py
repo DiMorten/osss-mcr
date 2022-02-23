@@ -4,7 +4,7 @@ import deb
 import numpy as np
 import sys
 from icecream import ic
-from open_set import OpenPCS, SoftmaxThresholding, Uncertainty
+from open_set import OpenPCS, SoftmaxThresholding, Uncertainty, ScaledSoftmaxThresholding
 import pdb
 class OpenSetManager():
 	def __init__(self, paramsTrain, h, w):
@@ -28,7 +28,7 @@ class OpenSetManager():
 				threshold = -184.4
 
 		elif self.openSetMethod == 'SoftmaxThresholding':
-			self.openModel = SoftmaxThresholding()
+			self.openModel = SoftmaxThresholding() if self.paramsTrain.confidenceScaling == False else ScaledSoftmaxThresholding()
 			threshold = 0.9
 		
 		elif self.openSetMethod == 'Uncertainty':
@@ -79,7 +79,7 @@ class OpenSetManager():
 
 		if self.paramsTrain.openSetMethod == 'OpenPCS' or self.paramsTrain.openSetMethod == 'OpenPCS++' or \
 			(self.paramsTrain.openSetMethod == 'SoftmaxThresholding' and self.paramsTrain.confidenceScaling == True):
-			
+
 			if self.paramsTrain.openSetMethod == 'SoftmaxThresholding':
 				coords = data.patches['val']['coords']
 			else:
@@ -109,7 +109,9 @@ class OpenSetManager():
 #       	self.coords = coords # not needed. use train coords directly
 			
 
-			data.predictions=(modelManager.model.predict(data.patches_in)).argmax(axis=-1).astype(np.uint8) 
+			data.logits = modelManager.model.predict(data.patches_in)
+			
+			data.predictions = data.logits.argmax(axis=-1).astype(np.uint8) 
 
 			data.setDateList(self.paramsTrain)
 
@@ -130,10 +132,13 @@ class OpenSetManager():
 			data.predictions = data.predictions.flatten()
 
 			data.intermediate_features = np.reshape(data.intermediate_features,(-1, data.intermediate_features.shape[-1]))
+			data.logits = np.reshape(data.logits,(-1, data.logits.shape[-1]))
+
 			ic(data.intermediate_features.shape,
 				data.patches_label.shape)
 			# pdb.set_trace()
 			data.intermediate_features = data.intermediate_features[data.patches_label!=0]
+			data.logits = data.logits[data.patches_label!=0]
 			
 			data.predictions = data.predictions[data.patches_label!=0]
 			data.patches_label = data.patches_label[data.patches_label!=0]
@@ -149,7 +154,9 @@ class OpenSetManager():
 			ic(data.intermediate_features.shape)
 			
 #			pdb.set_trace()
-			self.fitPreprocessed(data)	
+			if self.paramsTrain.confidenceScaling == True:
+				self.openModel.addLogits(data.logits)
+			self.fitPreprocessed(data)
 
 	def fitPreprocessed(self, data):
 		self.openModel.appendToSaveNameId('_'+self.paramsTrain.seq_date)

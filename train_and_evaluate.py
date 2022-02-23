@@ -239,6 +239,10 @@ class TrainTest():
 		known_classes = [x + 1 for x in self.paramsTrain.known_classes]
 		self.openSetManager.openSetActivate(self.paramsTrain.openSetMethod, known_classes)
 
+		if self.paramsTrain.confidenceScaling == True:
+			self.openSetManager.openModel.addClosedSetModel(self.modelManager.model)
+
+
 
 	def infer(self, paramsMosaic):
 
@@ -306,6 +310,7 @@ class TrainTest():
 			#pdb.set_trace()
 
 		paramsMosaic = ParamsReconstruct(self.paramsTrain)
+
 
 
 

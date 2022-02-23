@@ -18,7 +18,7 @@ from scipy import linalg
 from math import log
 import pathlib
 ic.configureOutput(includeContext=False, prefix='[@debug] ')
-
+from temperatureScaling import TemperatureScaling
 
 def fast_logdet(A):
     """Compute log(det(A)) for A symmetric.
@@ -91,20 +91,24 @@ class SoftmaxThresholding(OpenSetMethod):
 
 class ScaledSoftmaxThresholding(OpenSetMethod):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, loco_class = 0):
+        super().__init__(loco_class)
         self.fittedFlag = False
         self.name = 'ScaledSoftmaxThresholding'
     
-    def addModel(self, model):
+    def addClosedSetModel(self, model):
         self.model = model
-    def fit(self, label_train, logits_train, pred_proba_train):
+
+    def addLogits(self, logits):
+        self.logits = logits
+
+    def fit(self, label_train, predictions_train, pred_proba_train):
         
-        self.temperatureScaling = TemperatureScaling()
-        self.temperatureScaling.fitModel(self.model)
+        self.confidenceScaling = TemperatureScaling()
+        self.confidenceScaling.fitModel(label_train, self.logits)
     
     def predictScores(self, predictions_test, pred_proba_test, debug=1):
-        pred_proba_test = self.temperatureScaling.scale(pred_proba_test)
+        pred_proba_test = self.confidenceScaling.scale(pred_proba_test)
 
         super().predictScores(predictions_test, pred_proba_test)
 

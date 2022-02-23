@@ -3,7 +3,7 @@
     "model_load": true,
     "open_set": true,
     "balancing": false,
-    "val_set": false,
+    "val_set": true,
     "store_patches": true,
     "select_kept_classes_flag": true,
     "group_bcknd_classes": false,
