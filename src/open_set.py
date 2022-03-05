@@ -106,6 +106,7 @@ class ScaledSoftmaxThresholding(SoftmaxThresholding):
         
         self.confidenceScaling = TemperatureScaling()
         self.confidenceScaling.fitModel(label_train, self.logits)
+        # self.confidenceScaling.getExpectedCalibrationCurve(label_train, self.logits)
         self.fittedFlag = True
     
     def predictScores(self, predictions_test, pred_proba_test, debug=1):
@@ -113,6 +114,8 @@ class ScaledSoftmaxThresholding(SoftmaxThresholding):
 
         super().predictScores(predictions_test, pred_proba_test, debug=debug)
 
+    # def getExpectedCalibrationCurve(label, logits):
+    #     self.confidenceScaling.getExpectedCalibrationCurve(label, logits)
 
 class Uncertainty(OpenSetMethod):
     def __init__(self, known_classes, n_components, loco_class=0):

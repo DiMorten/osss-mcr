@@ -26,7 +26,7 @@ if __name__ == '__main__':
 		'seq_date': 'mar',	# jun, mar	
 #		'id': 'evidential4',
 #		'model_type': UUnetConvLSTMEvidential
-		'id': 'focal',
+		'id': 'temperaturescaling', # temperaturescaling, focal
 		'model_type': UUnetConvLSTM
 	}
 

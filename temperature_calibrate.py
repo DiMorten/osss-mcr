@@ -165,6 +165,15 @@ def get_ece(softmax, calibration_data):
 
 pred_prob_test = pred_prob_flatten_test(pred_prob)
 
+# apply calibration
+# T = 1.2016096
+T = 0.5
+T = 0.1
+T = 200
+T = 2
+T = 0.3
+T = 0.05
+pred_prob_test = pred_prob_test / T
 softmax = scipy.special.softmax(pred_prob_test, axis=-1)
 ic(softmax.shape, label_test.shape)
 

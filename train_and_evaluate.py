@@ -319,7 +319,10 @@ class TrainTest():
 			self.fitOpenSet()
 
 		self.infer(paramsMosaic)
-
+		# self.mosaic.openSetManager.getExpectedCalibrationCurve(
+		# 	self.data.full_label_train,
+		# 	self.mosaic.openSetManager.scores_mosaic,
+		# 	)
 #		if self.paramsTrain.openSetMethod != None:
 			# self.inferOpenSet() # doesnt exist yet
 
