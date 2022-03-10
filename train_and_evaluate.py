@@ -72,8 +72,8 @@ from src.modelArchitecture import UUnetConvLSTM, UnetSelfAttention, UUnetConvLST
 ic.configureOutput(includeContext=True)
 np.random.seed(2021)
 tf.random.set_seed(2021)
-tf.compat.v1.disable_eager_execution()
-tf.compat.v1.experimental.output_all_intermediates(True)
+# tf.compat.v1.disable_eager_execution()
+# tf.compat.v1.experimental.output_all_intermediates(True)
 
 def model_summary_print(s):
 	with open('model_summary.txt','w+') as f:
@@ -127,7 +127,7 @@ class TrainTest():
 		self.data.loadMask()
 
 #		pdb.set_trace()
-	def setModel(self, model_name_id):
+	def setModelManager(self, model_name_id):
 
 		#self.modelManager_name = model_name_id
 		#if self.paramsTrain.dropoutInference == False:
@@ -169,7 +169,7 @@ class TrainTest():
 			self.data.val_set_get(self.paramsTrain.val_set_mode,0.15)
 			ic(self.data.patches['val']['coords'].shape)
 
-			np.save('val_coords.npy', self.data.patches['val']['coords'])
+			np.save('coords_val.npy', self.data.patches['val']['coords'])
 #			pdb.set_trace()
 		else:
 			self.data.patches['val']={}
@@ -177,7 +177,7 @@ class TrainTest():
 			self.data.patches['val']['label']=np.zeros((1,1))
 			self.data.patches['val']['in']=np.zeros((1,1))
 			
-			deb.prints(self.data.patches['val']['label'].shape)
+			deb.prints(self.data.patches['val']['coords'].shape)
 		
 		
 		# pdb.set_trace()
@@ -300,7 +300,7 @@ class TrainTest():
 
 		self.preprocess() # validation set, and data augmentation
 
-		self.setModel(self.paramsTrain.model_name_id)
+		self.setModelManager(self.paramsTrain.model_name_id)
 
 		if self.paramsTrain.train == True:
 			self.train()

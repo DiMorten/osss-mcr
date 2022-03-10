@@ -174,7 +174,8 @@ class TemperatureScaling():
         ic(self.T)
         
     def scale(self, logits):
-        self.T = 0.3
+        # self.T = 0.3
+        self.T = 8.612723
         return logits / self.T
 
     '''  

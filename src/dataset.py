@@ -246,6 +246,13 @@ class DatasetWithCoords(Dataset):
 		self.patches['train']['label'][self.patches['train']['label']==255] = class_n_no_bkcnd
 		'''
 
+	def getValSamplesFromCoords(self):
+		self.patches['val']['label'] = self.getPatchesFromCoords(
+			self.full_label_train, self.patches['val']['coords'])
+
+		self.patches['val']['in'] = self.getSequencePatchesFromCoords(
+			self.full_ims_train, self.patches['val']['coords'])
+		
 	def knownClassesGet(self):
 		# known classes criteria
 		unique, count = np.unique(self.full_label_train, return_counts=True)
