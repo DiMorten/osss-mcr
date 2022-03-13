@@ -241,6 +241,7 @@ class OpenSetMethodGaussian(OpenSetMethod):
         self.makeCovMatrixIdentityFlag = makeCovMatrixIdentityFlag
     
     def predictScores(self, predictions_test, open_features, debug=1):
+        
         self.scores = np.zeros_like(predictions_test, dtype=np.float)
         if debug>0:
             print('*'*20, 'predict_unknown_class')

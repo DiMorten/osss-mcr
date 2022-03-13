@@ -18,8 +18,8 @@ if __name__ == '__main__':
 		'getFullIms': False, # only True if first time
 		'coordsExtract': False, # only True if first time
 		'train': False,
-		'openSetMethod': 'SoftmaxThresholding', # OpenPCS, SoftmaxThresholding, OpenPCS++
-		'confidenceScaling': True,
+		'openSetMethod': 'OpenPCS++', # OpenPCS, SoftmaxThresholding, OpenPCS++
+		'confidenceScaling': False,
 		'openSetLoadModel': False,
 		'selectMainClasses': True,
 		'dataset': 'lm',

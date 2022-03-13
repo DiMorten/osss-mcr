@@ -175,7 +175,13 @@ class TemperatureScaling():
         
     def scale(self, logits):
         # self.T = 0.3
-        self.T = 8.612723
+        # self.T = 8.612723
+        # self.T = 17.2
+        # self.T = 200
+        # self.T = 2
+        self.T = 8.6
+        
+        
         return logits / self.T
 
     '''  

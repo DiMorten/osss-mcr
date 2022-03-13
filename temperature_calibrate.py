@@ -183,6 +183,7 @@ T = 0.05
 T = 1
 T = 1
 T = 8.612723
+# T = 17.2
 pred_prob_test = pred_prob_test / T
 softmax = scipy.special.softmax(pred_prob_test, axis=-1)
 ic(softmax.shape, label_test.shape)

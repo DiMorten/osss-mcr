@@ -348,6 +348,10 @@ class MosaicHighRAM(Mosaic):
 
 
 			self.pred_logits_patches = self.model.model.predict(patches_in).astype(self.paramsMosaic.prediction_dtype)
+
+			T = 8.6
+			self.pred_logits_patches = self.pred_logits_patches / T
+			
 			ic(self.pred_logits_patches.dtype)
 			ic(self.pred_logits_patches.shape)	
 
