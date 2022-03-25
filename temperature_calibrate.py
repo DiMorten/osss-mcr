@@ -71,12 +71,13 @@ paramsTrainCustom = {
 #		'openSetLoadModel': True,
 		'selectMainClasses': True,
 		'dataset': 'lm', # lm: L Eduardo Magalhaes.
-		'seq_date': 'mar'
+		'seq_date': 'mar',
+		'id': 'evidential4'
 	}
 
-mode = 'dropout' # dropout, evidential, closed_set
+#mode = 'dropout' # dropout, evidential, closed_set
 #mode = 'closed_set'
-#mode = 'evidential'
+mode = 'evidential'
 
 name_id = ""
 paramsTrain = ParamsTrain('parameters/', **paramsTrainCustom)
@@ -92,8 +93,10 @@ label_test = label_test.flatten()
 
 label_test = label_test[mask_flat==2]
 
-filename = 'prediction_logits_mosaic.npy'
-filename = 'prediction_logits_mosaic.npy'
+if mode != 'evidential':
+	filename = 'prediction_logits_mosaic.npy'
+else:
+	filename = 'prediction_logits_mosaic_evidential.npy'
 
 
 pred_prob = np.load(filename)
@@ -182,9 +185,30 @@ T = 0.3
 T = 0.05
 T = 1
 T = 1
-T = 8.612723
+# T = 8.612723
+T = 8.32194
 pred_prob_test = pred_prob_test / T
-softmax = scipy.special.softmax(pred_prob_test, axis=-1)
+if mode != 'evidential':
+	softmax = scipy.special.softmax(pred_prob_test, axis=-1)
+else:
+	evidence = pred_prob_test
+	evidence_max = np.amax(evidence, axis = -1)
+	# softmax_thresholdling = np.amax(softmax_thresholdling, axis = -1)
+
+	def predict(test_img_input):
+		# evidence = np.squeeze(model.predict(np.expand_dims(test_img_input, axis=0)))
+		class_n = evidence.shape[-1]
+		ic(class_n)
+		alpha = evidence + 1
+		u = np.squeeze(class_n / np.sum(alpha, axis= -1, keepdims=True))
+
+		print("alpha", alpha.shape)
+		print("u", u.shape)
+		predictions = alpha / np.sum(alpha, axis = -1, keepdims=True)  # prob
+		return predictions, u, alpha
+	predictions, u, alpha = predict(evidence)
+	softmax = predictions.copy()
+	ic(softmax.shape)
 ic(softmax.shape, label_test.shape)
 
 label_test = label_test - 1
@@ -242,7 +266,7 @@ if trainTemperature == True:
 		calibration_model_temperature.fit(
 				x_train=x_cal_train, y_train=y_cal_train, x_val=x_cal_val, y_val=y_cal_val
 			)	
-		ic(calibration_model_temperature)
+		ic(calibration_model_temperature.temperature)
 		pdb.set_trace()
 
 		calibration_model_temperature.plot_training_history()
@@ -258,6 +282,7 @@ if trainTemperature == True:
 	paramsTrain = ParamsTrain('parameters/', **paramsTrainCustom)
 
 	paramsTrain, trainTest = loadVal(paramsTrain)
+	ic(paramsTrain.model_name_id)
 	trainTest.setModelManager(paramsTrain.model_name_id)
 
 	predictionsValFlat = predictVal(trainTest)

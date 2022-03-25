@@ -113,7 +113,7 @@ class TrainTestEvidential(TrainTest):
 		return predictions.argmax(axis=-1), u	
 	def infer(self, paramsMosaic):
 		super().infer(paramsMosaic)
-		np.save('prediction_logits_mosaic.npy', self.mosaic.prediction_logits_mosaic)
+		np.save('prediction_logits_mosaic_evidential.npy', self.mosaic.prediction_logits_mosaic)
 		ic("Old prediction mosaic", np.unique(self.mosaic.prediction_mosaic, return_counts = True))
 		ic(np.unique(self.mosaic.prediction_logits_mosaic.argmax(axis=-1), return_counts = True))
 		self.mosaic.prediction_mosaic, _ = self.predict(self.mosaic.prediction_logits_mosaic)
@@ -144,14 +144,15 @@ if __name__ == '__main__':
 		'selectMainClasses': True,
 		'evidentialDL': True,
 		'dataset': 'lm', # lm: L Eduardo Magalhaes.
-		'seq_date': 'mar',
+		'seq_date': 'mar', #jun, mar
 		'id': 'evidential4',
 		'model_type': UUnetConvLSTMEvidential
 
 	}
-
+	
 	paramsTrain = ParamsTrain('parameters/', **paramsTrainCustom)
-
+	ic(paramsTrain.id)
+	ic(paramsTrain)
 	paramsTrain.dataSource = SARSource()
 
 	trainTest = TrainTestEvidential(paramsTrain)

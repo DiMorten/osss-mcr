@@ -184,9 +184,9 @@ paramsTrainCustom = {
 		'dataset': 'lm', # lm: L Eduardo Magalhaes.
 		'seq_date': 'mar'
 	}
-mode = 'dropout' # dropout, evidential, closed_set
+#mode = 'dropout' # dropout, evidential, closed_set
 #mode = 'closed_set'
-#mode = 'evidential'
+mode = 'evidential'
 
 name_id = ""
 dropout_repetitions = 30
@@ -291,7 +291,7 @@ elif mode == 'closed_set':
 	pdb.set_trace()
 
 elif mode == 'evidential':
-	filename = 'prediction_logits_mosaic.npy'
+	filename = 'prediction_logits_mosaic_evidential.npy'
 	evidence = np.load(filename)
 	ic(evidence.dtype)
 	evidence = evidence.astype(np.float32)
