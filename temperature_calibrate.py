@@ -186,7 +186,7 @@ T = 0.05
 T = 1
 T = 1
 # T = 8.612723
-T = 8.32194
+# T = 8.32194
 pred_prob_test = pred_prob_test / T
 if mode != 'evidential':
 	softmax = scipy.special.softmax(pred_prob_test, axis=-1)

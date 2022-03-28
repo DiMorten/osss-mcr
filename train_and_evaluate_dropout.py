@@ -95,7 +95,7 @@ if __name__ == '__main__':
 		'evidentialDL': False,
 		'dropoutInference': True,
 		'dataset': 'lm', # lm: L Eduardo Magalhaes.
-		'seq_date': 'mar',
+		'seq_date': 'jun',
 		'id': 'dropout2',
 		'model_type': UUnetConvLSTMDropout2,
 

@@ -19,14 +19,14 @@ if __name__ == '__main__':
 		'coordsExtract': False, # only True if first time
 		'train': False,
 		'openSetMethod': 'SoftmaxThresholding', # OpenPCS, SoftmaxThresholding, OpenPCS++
-		'confidenceScaling': True,
+		'confidenceScaling': False,
 		'openSetLoadModel': False,
 		'selectMainClasses': True,
-		'dataset': 'lm',
-		'seq_date': 'mar',	# jun, mar	
+		'dataset': 'cv',
+		'seq_date': 'jun',	# jun, mar	
 #		'id': 'evidential4',
 #		'model_type': UUnetConvLSTMEvidential
-		'id': 'temperaturescaling', # temperaturescaling, focal
+		'id': 'focal2', # temperaturescaling, focal
 		'model_type': UUnetConvLSTM
 	}
 

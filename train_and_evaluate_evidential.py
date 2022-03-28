@@ -138,7 +138,7 @@ if __name__ == '__main__':
 	paramsTrainCustom = {
 		'getFullIms': False,
 		'coordsExtract': False,
-		'train': True,
+		'train': False,
 		'openSetMethod': None, # Options: None, OpenPCS, OpenPCS++
 #		'openSetLoadModel': True,
 		'selectMainClasses': True,

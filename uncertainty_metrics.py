@@ -173,7 +173,8 @@ paramsTrainCustom = {
 #		'openSetLoadModel': True,
 		'selectMainClasses': True,
 		'dataset': 'lm', # lm: L Eduardo Magalhaes.
-		'seq_date': 'mar'
+		'seq_date': 'mar',
+
 	}
 #mode = 'dropout' # dropout, evidential, closed_set
 #mode = 'closed_set'
@@ -247,7 +248,11 @@ elif mode == 'evidential':
 
 	temperatureScale = False
 	if temperatureScale == True:
-		T = 8.32194
+		# T = 8.32194
+		# T = 100
+		# T = 0.3
+		T = 1
+		
 		evidence = evidence / T
 	ic(evidence.dtype)
 	evidence = evidence.astype(np.float32)
