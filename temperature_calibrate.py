@@ -174,15 +174,19 @@ pred_prob_test = pred_prob_flatten_split(pred_prob, split="test")
 
 # apply calibration
 # T = 1.2016096
-T = 0.5
-T = 0.1
-T = 200
-T = 2
-T = 0.3
-T = 0.05
-T = 1
-T = 1
-T = 8.612723
+trainTemperature = True
+if trainTemperature == False:
+	T = 0.5
+	T = 0.1
+	T = 200
+	T = 2
+	T = 0.3
+	T = 0.05
+	T = 1
+	T = 1
+	T = 8.612723
+else:
+	T = 1
 # T = 17.2
 pred_prob_test = pred_prob_test / T
 softmax = scipy.special.softmax(pred_prob_test, axis=-1)
@@ -207,7 +211,7 @@ ic(ece)
 plot_reliability_diagram(calibration_data, softmax, ece=ece)
 plt.show()
 
-trainTemperature = False
+
 
 if trainTemperature == True:
 
@@ -239,12 +243,12 @@ if trainTemperature == True:
 
 		calibration_model_temperature = TemperatureCalibration(epochs=epochs)
 		ic(calibration_model_temperature)
-
+		# pdb.set_trace()
 		calibration_model_temperature.fit(
 				x_train=x_cal_train, y_train=y_cal_train, x_val=x_cal_val, y_val=y_cal_val
 			)	
 		ic(calibration_model_temperature)
-		pdb.set_trace()
+		# pdb.set_trace()
 
 		calibration_model_temperature.plot_training_history()
 		plt.show()

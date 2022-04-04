@@ -75,6 +75,7 @@ class ParamsTrain(Params):
 		self.selectMainClasses = True if ('selectMainClasses' not in kwargs.keys()) else kwargs['selectMainClasses']
 		self.confidenceScaling = False if ('confidenceScaling' not in kwargs.keys()) else kwargs['confidenceScaling']	
 
+		self.applyThreshold = True if ('applyThreshold' not in kwargs.keys()) else kwargs['applyThreshold']	
 		# ============== SCRIPT MODE: CLOSED SET, OPEN SET... ================= #
 
 		if self.openSetMethod == None:

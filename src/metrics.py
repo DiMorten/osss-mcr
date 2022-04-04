@@ -1,11 +1,14 @@
 from tensorflow.keras import backend as K
 import deb
-from sklearn.metrics import confusion_matrix,f1_score,accuracy_score,classification_report
+from sklearn.metrics import confusion_matrix,f1_score,accuracy_score,classification_report,cohen_kappa_score
 from icecream import ic
 import sklearn
 import matplotlib.pyplot as plt
 from icecream import ic
 import pathlib
+import pdb
+from sklearn import metrics
+import time
 class Metrics():
 
 	def __init__(self, paramsTrain):
@@ -162,9 +165,9 @@ class Metrics():
 			np.where(tpr>tpr_threshold_values[4])[0][0]
 		]
 		deb.prints(tpr_idxs)
-		
 		thresholds_by_tpr = thresholds[tpr_idxs]
 		deb.prints(thresholds_by_tpr)
+		self.thresholds_by_tpr = thresholds_by_tpr
 #        pdb.set_trace()
 		# ========================== Plot
 		pathlib.Path("results/open_set/roc_curve/").mkdir(parents=True, exist_ok=True)
@@ -181,6 +184,88 @@ class Metrics():
 #        plt.gca().set_aspect('equal', adjustable='box')
 		#plt.show()
 		return optimal_threshold, fpr, tpr, roc_auc
+
+	def getClosedSet(self, prediction, label, scores,
+			unknown_class_id = 20):
+		'''
+		Input is from test set
+		'''
+		ic(label.shape, prediction.shape, scores.shape)
+		ic(np.unique(label, return_counts=True))
+		ic(np.unique(prediction, return_counts=True))
+		# pdb.set_trace()
+		ic(self.thresholds_by_tpr)
+		n_known = len(np.unique(label)) - 1
+		ic(n_known)
+		ic(np.average(scores), np.std(scores))
+		for threshold in self.thresholds_by_tpr:
+			prediction_tmp = prediction.copy()
+			# label_tmp = label.copy()
+			scores_tmp = scores.copy()
+			'''
+			prediction_tmp = prediction_tmp[scores_tmp > threshold]
+			label_tmp = label_tmp[scores_tmp > threshold]
+			scores_tmp = scores_tmp[scores_tmp > threshold]
+			'''
+			prediction_tmp[scores_tmp <= threshold] = unknown_class_id
+			ic(np.unique(scores_tmp <= threshold, return_counts=True))
+
+			
+			# pdb.set_trace()
+
+			# prediction = prediction[label != unknown_class_id]
+			# scores = scores[label != unknown_class_id]
+			# label = label[label != unknown_class_id]
+
+			ic(threshold)	
+			ic(n_known, np.unique(label, return_counts=True), 
+				np.unique(prediction_tmp, return_counts=True))
+			self.calculateClosedSet(label, prediction_tmp, n_known, threshold)
+
+		
+		pdb.set_trace()
+
+	def calculateClosedSet(self, tru_valid, prd_valid, n_known, t):
+		print('Computing CM...')
+		cm = metrics.confusion_matrix(tru_valid, prd_valid)
+		ic(cm)
+		print('Computing Accs...')
+		tru_known = 0.0
+		sum_known = 0.0
+
+		for c in range(n_known):
+			tru_known += float(cm[c, c])
+			sum_known += float(cm[c, :].sum())
+
+		acc_known = float(tru_known) / float(sum_known)
+
+		tru_unknown = float(cm[n_known, n_known])
+		sum_unknown_real = float(cm[n_known, :].sum())
+		sum_unknown_pred = float(cm[:, n_known].sum())
+
+		pre_unknown = 0.0
+		rec_unknown = 0.0
+		
+		if sum_unknown_pred != 0.0:
+			pre_unknown = float(tru_unknown) / float(sum_unknown_pred)
+		if sum_unknown_real != 0.0:
+			rec_unknown = float(tru_unknown) / float(sum_unknown_real)
+			
+		acc_unknown = (tru_known + tru_unknown) / (sum_known + sum_unknown_real)
+
+		acc_mean = (acc_known + acc_unknown) / 2.0
+
+		print('Computing Balanced Acc...')
+		bal = metrics.balanced_accuracy_score(tru_valid, prd_valid)
+		
+		print('Computing Kappa...')
+		kap = metrics.cohen_kappa_score(tru_valid, prd_valid)
+
+		# toc = time.time()
+		print('OpenPCA Thresholding %.2f - Acc. Known: %.2f%%, Acc. Unk.: %.2f%%, Pre. Unk.: %.2f%%, Rec. Unk.: %.2f%%, Balanced Acc.: %.2f%%, Kappa: %.2f%%' % (t, acc_known * 100.0, acc_unknown * 100.0, pre_unknown * 100.0, rec_unknown * 100.0, bal * 100.0, kap * 100.0))
+
+
+
 
 class MetricsTranslated(Metrics):
 	def filterSamples(self, prediction, label, class_n):

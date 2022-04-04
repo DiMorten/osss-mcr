@@ -277,7 +277,9 @@ class TrainTest():
 		if self.paramsTrain.openSetMethod != None:
 			metrics.plotROCCurve(self.mosaic.getFlatLabel(), self.mosaic.getFlatScores(), 
 				modelId = self.mosaic.name_id, nameId = self.mosaic.name_id, unknown_class_id = 20)
-
+			metrics.getClosedSet(self.mosaic.getFlatPrediction(),
+				self.mosaic.getFlatLabel(), self.mosaic.getFlatScores(),
+				unknown_class_id = 20)
 	def fitOpenSet(self):
 		if self.paramsTrain.openSetLoadModel == True:
 			self.openSetManager.loadFittedModel()

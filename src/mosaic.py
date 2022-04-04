@@ -71,7 +71,7 @@ class Mosaic():
 								m-paramsTrain.patch_len//2:m+paramsTrain.patch_len//2 + paramsTrain.patch_len%2,
 								n-paramsTrain.patch_len//2:n+paramsTrain.patch_len//2 + paramsTrain.patch_len%2]
 					patch = np.expand_dims(patch, axis = 0)
-					pred_logits = self.model.model.predict(patch)
+					pred_logits = self.modelManager.model.predict(patch)
 					pred = pred_logits.argmax(axis=-1).astype(np.uint8)
 					_, x, y, c = pred_logits.shape
 
@@ -112,8 +112,8 @@ class Mosaic():
 		self.prediction_logits_mosaic=np.ones((h,w, class_n)).astype(np.float16)
 		self.h = h
 		self.w = w
-	def infer(self, paramsTrain, model, data, ds, postProcessing = None):
-		self.model = model
+	def infer(self, paramsTrain, modelManager, data, ds, postProcessing = None):
+		self.modelManager = modelManager
 		self.data = data
 		self.ds = ds
 		self.mim = MIMFixed_PaddedSeq()
@@ -347,10 +347,10 @@ class MosaicHighRAM(Mosaic):
 			#pdb.set_trace()
 
 
-			self.pred_logits_patches = self.model.model.predict(patches_in).astype(self.paramsMosaic.prediction_dtype)
+			self.pred_logits_patches = self.modelManager.model.predict(patches_in).astype(self.paramsMosaic.prediction_dtype)
 
-			T = 8.6
-			self.pred_logits_patches = self.pred_logits_patches / T
+			# T = 8.6
+			# self.pred_logits_patches = self.pred_logits_patches / T
 			
 			ic(self.pred_logits_patches.dtype)
 			ic(self.pred_logits_patches.shape)	
@@ -360,12 +360,12 @@ class MosaicHighRAM(Mosaic):
 	#		self.openSetManager = PostProcessing()
 	#		self.openSetManager.openSetActivate()
 
-	#		pred_proba_patches = self.openSetManager.predict(self.model, patches_in)
+	#		pred_proba_patches = self.openSetManager.predict(self.modelManager, patches_in)
 
-			#self.openSetManager.load_decoder_features(self.model, patches_in, )
+			#self.openSetManager.load_decoder_features(self.modelManager, patches_in, )
 			if self.paramsMosaic.open_set_mode == True:
 				self.pred_proba_patches = self.openSetManager.load_intermediate_features(
-					self.model, patches_in, self.pred_logits_patches, debug = 0)	
+					self.modelManager, patches_in, self.pred_logits_patches, debug = 0)	
 			
 				self.pred_proba_patches = self.pred_proba_patches.astype(self.paramsMosaic.prediction_dtype)
 
@@ -548,9 +548,22 @@ class MosaicHighRAMPostProcessing(MosaicHighRAM):
 
 		return scores_flat
 
+	def getFlatPrediction(self):
+		ic(self.prediction_mosaic.shape)
+		# pdb.set_trace()
+		prediction_flat = self.prediction_mosaic.flatten()
+		mask_flat = self.mask_pad.flatten()
+		prediction_flat = prediction_flat[mask_flat == 2]
+		
+		ic(prediction_flat.shape, mask_flat)
+		# ic(np.unique(prediction_flat, return_counts = True))
+		# pdb.set_trace()
+		return prediction_flat
+
 	def postProcess(self, paramsTrain):
-		self.prediction_mosaic = self.openSetManager.applyThreshold(self.prediction_mosaic, 
-			debug = self.debug)
+		if self.paramsTrain.applyThreshold == True:
+			self.prediction_mosaic = self.openSetManager.applyThreshold(self.prediction_mosaic, 
+		 		debug = self.debug)
 		ic(self.prediction_mosaic.shape)
 
 

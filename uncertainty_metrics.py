@@ -176,8 +176,8 @@ paramsTrainCustom = {
 		'seq_date': 'mar'
 	}
 #mode = 'dropout' # dropout, evidential, closed_set
-mode = 'closed_set'
-#mode = 'evidential'
+#mode = 'closed_set'
+mode = 'evidential'
 
 name_id = ""
 dropout_repetitions = 30
@@ -246,7 +246,8 @@ elif mode == 'evidential':
 	evidence = np.load(filename)
 	ic(evidence.dtype)
 	evidence = evidence.astype(np.float32)
-
+	# T = 8.6
+	# evidence = evidence / T
 	softmax_thresholdling = scipy.special.softmax(evidence, axis=-1)
 	softmax_thresholdling = np.amax(softmax_thresholdling, axis = -1)
 	softmax_thresholdling[mask != 2] = 0

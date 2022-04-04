@@ -20,6 +20,7 @@ if __name__ == '__main__':
 		'train': False,
 		'openSetMethod': 'OpenPCS++', # OpenPCS, SoftmaxThresholding, OpenPCS++
 		'confidenceScaling': False,
+		'applyThreshold': False,
 		'openSetLoadModel': False,
 		'selectMainClasses': True,
 		'dataset': 'lm',

@@ -101,6 +101,7 @@ class TemperatureScaling():
     def __init__(self):
         self.model_name = 'model_best_scale.h5'
         self.fitConfidenceScaling = False
+        self.T = 8.6
     def translateLabels(self, label):
         scale = {0: 0,
             1: 1,
