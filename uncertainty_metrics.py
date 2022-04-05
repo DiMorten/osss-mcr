@@ -140,6 +140,11 @@ def getMetrics(label_test, scores, scores_flat, modelId, nameId, pos_label = 0):
 	plt.axis('off')
 	plt.savefig(nameId + '.png', dpi = 500)
 
+def getClosedSetMetrics(label_test, scores_flat, predictions_test):
+	metrics.getClosedSet(
+		predictions_test, label_test, scores_flat,
+		unknown_class_id = 20)
+
 #	ic(optimal_threshold)
 #	getThresholdMetrics(label_test, scores_flat, optimal_threshold, unknown_class_id)
 
@@ -172,8 +177,8 @@ paramsTrainCustom = {
 		'openSetMethod': None, # Options: None, OpenPCS, OpenPCS++
 #		'openSetLoadModel': True,
 		'selectMainClasses': True,
-		'dataset': 'lm', # lm: L Eduardo Magalhaes.
-		'seq_date': 'mar'
+		'dataset': 'cv', # lm: L Eduardo Magalhaes.
+		'seq_date': 'jun'
 	}
 #mode = 'dropout' # dropout, evidential, closed_set
 #mode = 'closed_set'
@@ -242,7 +247,7 @@ elif mode == 'closed_set':
 	pdb.set_trace()
 	
 elif mode == 'evidential':
-	filename = 'prediction_logits_mosaic.npy'
+	filename = 'prediction_logits_mosaic_evidential.npy'
 	evidence = np.load(filename)
 	ic(evidence.dtype)
 	evidence = evidence.astype(np.float32)
@@ -332,6 +337,8 @@ elif mode == 'evidential':
 	ic(u_flat.shape, mask_flat.shape)
 	print("Evidential uncertainty")
 	getMetrics(label_test, u, u_flat, "UUnetConvLSTMEviential", "EvidentialDL", pos_label = 1)
+	getClosedSetMetrics(label_test, u_flat, predictions_test.argmax(axis=-1))
+
 	getThresholdMetrics(label_test, u_flat, threshold = 0.16, unknown_class_id = 20)
 	pdb.set_trace()
 #pdb.set_trace()

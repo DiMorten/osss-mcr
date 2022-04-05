@@ -23,11 +23,11 @@ if __name__ == '__main__':
 		'applyThreshold': False,
 		'openSetLoadModel': False,
 		'selectMainClasses': True,
-		'dataset': 'lm',
-		'seq_date': 'mar',	# jun, mar	
+		'dataset': 'cv',
+		'seq_date': 'jun',	# jun, mar	
 #		'id': 'evidential4',
 #		'model_type': UUnetConvLSTMEvidential
-		'id': 'temperaturescaling', # temperaturescaling, focal
+		'id': 'focal', # temperaturescaling, focal
 		'model_type': UUnetConvLSTM
 	}
 

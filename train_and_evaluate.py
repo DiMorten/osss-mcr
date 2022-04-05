@@ -372,8 +372,8 @@ if __name__ == '__main__':
 		'openSetMethod': None, # Options: None, OpenPCS, OpenPCS++
 #		'openSetLoadModel': True,
 		'selectMainClasses': True,
-		'dataset': 'lm', # lm: L Eduardo Magalhaes.
-		'seq_date': 'mar',
+		'dataset': 'cv', # lm: L Eduardo Magalhaes.
+		'seq_date': 'jun',
 		'id': 'focal',
 		'model_type': UUnetConvLSTM		
 	}

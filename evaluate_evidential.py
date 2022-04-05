@@ -108,9 +108,9 @@ if __name__ == '__main__':
 #		'openSetLoadModel': True,
 		'selectMainClasses': True,
 		'evidentialDL': True,
-		'dataset': 'lm', # lm: L Eduardo Magalhaes.
-		'seq_date': 'mar',
-		'id': 'evidential4',
+		'dataset': 'cv', # lm: L Eduardo Magalhaes.
+		'seq_date': 'jun',
+		'id': 'evidential5',
 		'model_type': UUnetConvLSTMEvidential
 	}
 
