@@ -145,7 +145,7 @@ if __name__ == '__main__':
 		'evidentialDL': True,
 		'dataset': 'lm', # lm: L Eduardo Magalhaes.
 		'seq_date': 'jun',
-		'id': 'evidential5',
+		'id': 'evidential4',
 		'model_type': UUnetConvLSTMEvidential
 
 	}

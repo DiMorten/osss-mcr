@@ -188,6 +188,19 @@ name_id = ""
 dropout_repetitions = 30
 paramsTrain = ParamsTrain('parameters/', **paramsTrainCustom)
 
+if paramsTrain.dataset == 'cv':
+	if paramsTrain.seq_date == 'jun':
+		known_classes = [1, 2, 6, 8]
+		# known_classes = [0, 1, 10, 12]
+		class_dict = {0: 1, 1: 2, 2: 6, 3: 8}
+		# class_dict =  {0: 0, 1: 1, 2: 10, 3: 12}
+elif paramsTrain.dataset == 'lm':	
+	if paramsTrain.seq_date == 'mar':
+		known_classes = [0, 1, 10, 12]
+		class_dict =  {0: 0, 1: 1, 2: 10, 3: 12}
+
+
+
 mask = cv2.imread(str(paramsTrain.path / 'TrainTestMask.tif'),-1)
 mask_flat = mask.flatten()
 
@@ -203,16 +216,18 @@ label_test = label_test[mask_flat==2]
 label_test = label_test - 1
 
 
-known_classes = [0, 1, 10, 12]
+
 unknown_id = 20
 unique = np.unique(label_test)
+ic(np.unique(label_test, return_counts = True))
+
 for unique_value in unique:
 	if unique_value not in known_classes:
 		label_test[label_test == unique_value] = unknown_id
 ic(np.unique(label_test, return_counts = True))
 
 		
-#pdb.set_trace()
+# pdb.set_trace()
 '''
 plt.figure()
 plt.imshow(mask)
@@ -244,12 +259,13 @@ elif mode == 'closed_set':
 	getMetrics(label_test, softmax_thresholdling, softmax_thresholdling_flat, "UUnetConvLSTM", "SoftmaxThresholding" + name_id)
 	# getThresholdMetrics(label_test, softmax_thresholdling_flat, threshold = 0.96, unknown_class_id = 20)
 #	getThresholdMetrics(label_test, softmax_thresholdling_flat, threshold = 0.98, unknown_class_id = 20)
-	pdb.set_trace()
+	# pdb.set_trace()
 	
 elif mode == 'evidential':
 	filename = 'prediction_logits_mosaic_evidential.npy'
 	evidence = np.load(filename)
-	ic(evidence.dtype)
+	ic(evidence.dtype, evidence.shape)
+	# pdb.set_trace()
 	evidence = evidence.astype(np.float32)
 	# T = 8.6
 	# evidence = evidence / T
@@ -337,10 +353,20 @@ elif mode == 'evidential':
 	ic(u_flat.shape, mask_flat.shape)
 	print("Evidential uncertainty")
 	getMetrics(label_test, u, u_flat, "UUnetConvLSTMEviential", "EvidentialDL", pos_label = 1)
-	getClosedSetMetrics(label_test, u_flat, predictions_test.argmax(axis=-1))
+	predictions_int = predictions_test.argmax(axis=-1)
+	
+	ic(np.unique(predictions_int, return_counts=True))
+	# example: class_dict = {0: 1, 1: 2, 2: 6, 3: 8}
+	predictions_tmp = predictions_int.copy()
+	for key in class_dict.keys():
+		ic(key, class_dict[key])
+		predictions_int[predictions_tmp == key] = class_dict[key]
+	ic(np.unique(predictions_int, return_counts=True))
+	# pdb.set_trace()
+	getClosedSetMetrics(label_test, u_flat, predictions_int)
 
 	getThresholdMetrics(label_test, u_flat, threshold = 0.16, unknown_class_id = 20)
-	pdb.set_trace()
+	# pdb.set_trace()
 #pdb.set_trace()
 
 if mode == 'dropout':
