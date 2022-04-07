@@ -171,13 +171,13 @@ def getThresholdMetrics(label_test, scores_flat, threshold, unknown_class_id):
 
 
 paramsTrainCustom = {
-		'getFullIms': True,
-		'coordsExtract': True,
-		'train': True,
+		'getFullIms': False,
+		'coordsExtract': False,
+		'train': False,
 		'openSetMethod': None, # Options: None, OpenPCS, OpenPCS++
 #		'openSetLoadModel': True,
 		'selectMainClasses': True,
-		'dataset': 'cv', # lm: L Eduardo Magalhaes.
+		'dataset': 'lm', # lm: L Eduardo Magalhaes.
 		'seq_date': 'jun'
 	}
 #mode = 'dropout' # dropout, evidential, closed_set
@@ -198,6 +198,9 @@ elif paramsTrain.dataset == 'lm':
 	if paramsTrain.seq_date == 'mar':
 		known_classes = [0, 1, 10, 12]
 		class_dict =  {0: 0, 1: 1, 2: 10, 3: 12}
+	elif paramsTrain.seq_date == 'jun':
+		known_classes = [1,  5,  6, 10, 12]
+		class_dict =  {0: 1, 1: 5, 2: 6, 3: 10, 4: 12}
 
 
 

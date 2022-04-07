@@ -398,8 +398,9 @@ class DatasetWithCoords(Dataset):
 		ic(self.class_n)
 
 	def addPaddingToInput(self, model_t_len, im):
-		if self.t_len < model_t_len: 
-			seq_pad_len = model_t_len - self.t_len
+		data_t_len = im.shape[0]
+		if data_t_len < model_t_len: 
+			seq_pad_len = model_t_len - data_t_len
 			im = np.concatenate(
 					(np.zeros((seq_pad_len, *im.shape[1:])),
 					im),
@@ -408,8 +409,9 @@ class DatasetWithCoords(Dataset):
 		return im
 
 	def addPaddingToInputPatches(self, patches, model_t_len):
-		if self.t_len < model_t_len: 
-			seq_pad_len = model_t_len - self.t_len
+		data_t_len = im.shape[0]
+		if data_t_len < model_t_len: 
+			seq_pad_len = model_t_len - data_t_len
 			patch_n = patches.shape[0]
 			patches = np.concatenate(
 					(np.zeros((patch_n, seq_pad_len, *patches.shape[2:])),

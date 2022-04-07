@@ -366,13 +366,13 @@ if __name__ == '__main__':
 
 
 	paramsTrainCustom = {
-		'getFullIms': False,
-		'coordsExtract': False,
+		'getFullIms': True,
+		'coordsExtract': True,
 		'train': True,
 		'openSetMethod': None, # Options: None, OpenPCS, OpenPCS++
 #		'openSetLoadModel': True,
 		'selectMainClasses': True,
-		'dataset': 'cv', # lm: L Eduardo Magalhaes.
+		'dataset': 'lm', # lm: L Eduardo Magalhaes.
 		'seq_date': 'jun',
 		'id': 'focal',
 		'model_type': UUnetConvLSTM		
