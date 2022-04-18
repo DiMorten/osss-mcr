@@ -143,9 +143,59 @@ if __name__ == '__main__':
 #		'openSetLoadModel': True,
 		'selectMainClasses': True,
 		'evidentialDL': True,
+		'dataset': 'cv', # lm: L Eduardo Magalhaes.
+		'seq_date': 'jun',
+		'id': 'evidential_700samples',
+		'model_type': UUnetConvLSTMEvidential
+
+	}
+
+	paramsTrain = ParamsTrain('parameters/', **paramsTrainCustom)
+
+	paramsTrain.dataSource = SARSource()
+
+	trainTest = TrainTestEvidential(paramsTrain)
+
+	trainTest.main()
+
+
+
+	paramsTrainCustom = {
+		'getFullIms': False,
+		'coordsExtract': False,
+		'train': True,
+		'openSetMethod': None, # Options: None, OpenPCS, OpenPCS++
+#		'openSetLoadModel': True,
+		'selectMainClasses': True,
+		'evidentialDL': True,
 		'dataset': 'lm', # lm: L Eduardo Magalhaes.
 		'seq_date': 'jun',
-		'id': 'evidential4',
+		'id': 'evidential_700samples',
+		'model_type': UUnetConvLSTMEvidential
+
+	}
+
+	paramsTrain = ParamsTrain('parameters/', **paramsTrainCustom)
+
+	paramsTrain.dataSource = SARSource()
+
+	trainTest = TrainTestEvidential(paramsTrain)
+
+	trainTest.main()
+
+
+
+	paramsTrainCustom = {
+		'getFullIms': False,
+		'coordsExtract': False,
+		'train': True,
+		'openSetMethod': None, # Options: None, OpenPCS, OpenPCS++
+#		'openSetLoadModel': True,
+		'selectMainClasses': True,
+		'evidentialDL': True,
+		'dataset': 'lm', # lm: L Eduardo Magalhaes.
+		'seq_date': 'mar',
+		'id': 'evidential_700samples',
 		'model_type': UUnetConvLSTMEvidential
 
 	}

@@ -360,7 +360,7 @@ class TrainTestDropout(TrainTest):
 		np.save('prediction_logits_mosaic_group.npy', self.prediction_logits_mosaic_group)
 		
 		ic(self.prediction_logits_mosaic_mean.shape, self.prediction_logits_mosaic_std.shape)
-		pdb.set_trace()
+		# pdb.set_trace()
 
 if __name__ == '__main__':
 
@@ -372,7 +372,7 @@ if __name__ == '__main__':
 		'openSetMethod': None, # Options: None, OpenPCS, OpenPCS++
 #		'openSetLoadModel': True,
 		'selectMainClasses': True,
-		'dataset': 'lm', # lm: L Eduardo Magalhaes.
+		'dataset': 'cv', # lm: L Eduardo Magalhaes.
 		'seq_date': 'jun',
 		'id': 'focal',
 		'model_type': UUnetConvLSTM		
@@ -385,3 +385,5 @@ if __name__ == '__main__':
 	trainTest = TrainTest(paramsTrain)
 
 	trainTest.main()
+
+
