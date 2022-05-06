@@ -158,15 +158,15 @@ class Metrics():
 		# =================== Find thresholds for specified TPR value
 		tpr_threshold_values = [0.1, 0.3, 0.5, 0.7, 0.9]
 		deb.prints(tpr_threshold_values)
-		tpr_idxs = [np.where(tpr>tpr_threshold_values[0])[0][0],
-			np.where(tpr>tpr_threshold_values[1])[0][0],
-			np.where(tpr>tpr_threshold_values[2])[0][0],
-			np.where(tpr>tpr_threshold_values[3])[0][0],
-			np.where(tpr>tpr_threshold_values[4])[0][0]
+		tpr_idxs = [np.where(fpr>tpr_threshold_values[0])[0][0],
+			np.where(fpr>tpr_threshold_values[1])[0][0],
+			np.where(fpr>tpr_threshold_values[2])[0][0],
+			np.where(fpr>tpr_threshold_values[3])[0][0],
+			np.where(fpr>tpr_threshold_values[4])[0][0]
 		]
 		deb.prints(tpr_idxs)
 		thresholds_by_tpr = thresholds[tpr_idxs]
-		deb.prints(thresholds_by_tpr)
+		ic(thresholds_by_tpr)
 		self.thresholds_by_tpr = thresholds_by_tpr
 #        pdb.set_trace()
 		# ========================== Plot
@@ -200,7 +200,6 @@ class Metrics():
 		ic(np.average(scores), np.std(scores))
 		for threshold in self.thresholds_by_tpr:
 			prediction_tmp = prediction.copy()
-			# label_tmp = label.copy()
 			scores_tmp = scores.copy()
 			'''
 			prediction_tmp = prediction_tmp[scores_tmp > threshold]
@@ -220,15 +219,53 @@ class Metrics():
 			ic(threshold)	
 			ic(n_known, np.unique(label, return_counts=True), 
 				np.unique(prediction_tmp, return_counts=True))
-			self.calculateClosedSet(label, prediction_tmp, n_known, threshold)
+			# pdb.set_trace()
+			acc_known, acc_unknown, pre_unknown, rec_unknown, bal, kap = \
+				self.calculateClosedSet(label, prediction_tmp, n_known)
+			print('OpenPCA Thresholding %.2f - Acc. Known: %.2f%%, Acc. Unk.: %.2f%%, Pre. Unk.: %.2f%%, Rec. Unk.: %.2f%%, Balanced Acc.: %.2f%%, Kappa: %.2f%%' % 
+				(threshold, acc_known * 100.0, acc_unknown * 100.0, 
+				pre_unknown * 100.0, rec_unknown * 100.0, 
+				bal * 100.0, kap * 100.0))
 
+		acc_known, acc_unknown, pre_unknown, rec_unknown, bal, kap = \
+			self.calculateClosedSet(label, prediction, n_known)
+		print(acc_known, kap)
+		print('OpenPCA Closed Set - Acc. Known: %.2f%%, Acc. Unk.: %.2f%%, Pre. Unk.: %.2f%%, Rec. Unk.: %.2f%%, Balanced Acc.: %.2f%%, Kappa: %.2f%%' % 
+			(acc_known * 100.0, acc_unknown * 100.0, 
+			pre_unknown * 100.0, rec_unknown * 100.0, 
+			bal * 100.0, kap * 100.0))
 		
 		pdb.set_trace()
 
-	def calculateClosedSet(self, tru_valid, prd_valid, n_known, t):
+	def getClosedSetEvidential(self, prediction, prediction_int, label, scores,
+			unknown_class_id = 20):
+		ic(label.shape, prediction.shape, scores.shape)
+		ic(np.unique(label, return_counts=True))
+		ic(np.unique(prediction, return_counts=True))
+		# pdb.set_trace()
+		ic(self.thresholds_by_tpr)
+		n_known = len(np.unique(label)) - 1
+		ic(n_known)
+		ic(np.average(scores), np.std(scores))
+		
+		prediction_max_probability = np.max(prediction, axis = -1)
+
+		prediction_int[scores > prediction_max_probability] = unknown_class_id
+
+
+		acc_known, acc_unknown, pre_unknown, rec_unknown, bal, kap = \
+			self.calculateClosedSet(label, prediction_int, n_known)
+		print(acc_known, kap)
+		print('Evidential Closed Set - Acc. Known: %.2f%%, Acc. Unk.: %.2f%%, Pre. Unk.: %.2f%%, Rec. Unk.: %.2f%%, Balanced Acc.: %.2f%%, Kappa: %.2f%%' % 
+			(acc_known * 100.0, acc_unknown * 100.0, 
+			pre_unknown * 100.0, rec_unknown * 100.0, 
+			bal * 100.0, kap * 100.0))		
+
+	def calculateClosedSet(self, tru_valid, prd_valid, n_known):
 		print('Computing CM...')
 		cm = metrics.confusion_matrix(tru_valid, prd_valid)
 		ic(cm)
+		# pdb.set_trace()
 		print('Computing Accs...')
 		tru_known = 0.0
 		sum_known = 0.0
@@ -261,8 +298,8 @@ class Metrics():
 		print('Computing Kappa...')
 		kap = metrics.cohen_kappa_score(tru_valid, prd_valid)
 
+		return acc_known, acc_unknown, pre_unknown, rec_unknown, bal, kap
 		# toc = time.time()
-		print('OpenPCA Thresholding %.2f - Acc. Known: %.2f%%, Acc. Unk.: %.2f%%, Pre. Unk.: %.2f%%, Rec. Unk.: %.2f%%, Balanced Acc.: %.2f%%, Kappa: %.2f%%' % (t, acc_known * 100.0, acc_unknown * 100.0, pre_unknown * 100.0, rec_unknown * 100.0, bal * 100.0, kap * 100.0))
 
 
 

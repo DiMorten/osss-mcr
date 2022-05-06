@@ -15,19 +15,19 @@ if __name__ == '__main__':
 
 
 	paramsTrainCustom = {
-		'getFullIms': True, # only True if first time
-		'coordsExtract': True, # only True if first time
+		'getFullIms': False, # only True if first time
+		'coordsExtract': False, # only True if first time
 		'train': False,
 		'openSetMethod': 'OpenPCS++', # OpenPCS, SoftmaxThresholding, OpenPCS++
 		'confidenceScaling': False,
 		'applyThreshold': False,
-		'openSetLoadModel': False,
+		'openSetLoadModel': True,
 		'selectMainClasses': True,
-		'dataset': 'cv',
-		'seq_date': 'jun',	# jun, mar	
+		'dataset': 'lm',
+		'seq_date': 'mar',	# jun, mar	
 #		'id': 'evidential4',
 #		'model_type': UUnetConvLSTMEvidential
-		'id': 'focal', # temperaturescaling, focal
+		'id': 'focal_lr1em3', # temperaturescaling, focal, focal_lr1em3
 		'model_type': UUnetConvLSTM
 	}
 

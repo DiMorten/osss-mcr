@@ -76,6 +76,38 @@ tf.random.set_seed(2021)
 tf.compat.v1.disable_eager_execution()
 tf.compat.v1.experimental.output_all_intermediates(True)
 
+class UncertaintyInference():
+	def __init__(self, class_dict):
+		self.class_dict = class_dict
+	def getPredictionsInt(self, predictions_test):
+		predictions_int = predictions_test.argmax(axis=-1)
+	
+		ic(np.unique(predictions_int, return_counts=True))
+		# example: class_dict = {0: 1, 1: 2, 2: 6, 3: 8}
+		predictions_tmp = predictions_int.copy()
+		for key in class_dict.keys():
+			ic(key, class_dict[key])
+			predictions_int[predictions_tmp == key] = class_dict[key]
+		ic(np.unique(predictions_int, return_counts=True))	
+		return predictions_int	
+
+	def getClosedSetMetrics(self, metrics, label_test, 
+			scores_flat, predictions_test):
+		predictions_int = self.getPredictionsInt(predictions_test)
+		metrics.getClosedSet(
+			predictions_int, label_test, scores_flat,
+			unknown_class_id = 20)
+
+class EvidentialInference(UncertaintyInference):
+
+	def getClosedSetMetrics(self, metrics, label_test, 
+			scores_flat, predictions_test):
+		predictions_int = self.getPredictionsInt(predictions_test)
+		metrics.getClosedSetEvidential(
+			predictions_test, predictions_int, label_test, scores_flat,
+			unknown_class_id = 20)
+
+		
 
 def get_mean(pred_probs):
     return np.mean(pred_probs, axis=0)
@@ -140,10 +172,6 @@ def getMetrics(label_test, scores, scores_flat, modelId, nameId, pos_label = 0):
 	plt.axis('off')
 	plt.savefig(nameId + '.png', dpi = 500)
 
-def getClosedSetMetrics(label_test, scores_flat, predictions_test):
-	metrics.getClosedSet(
-		predictions_test, label_test, scores_flat,
-		unknown_class_id = 20)
 
 #	ic(optimal_threshold)
 #	getThresholdMetrics(label_test, scores_flat, optimal_threshold, unknown_class_id)
@@ -178,7 +206,7 @@ paramsTrainCustom = {
 #		'openSetLoadModel': True,
 		'selectMainClasses': True,
 		'dataset': 'lm', # lm: L Eduardo Magalhaes.
-		'seq_date': 'jun'
+		'seq_date': 'mar'
 	}
 #mode = 'dropout' # dropout, evidential, closed_set
 #mode = 'closed_set'
@@ -356,17 +384,9 @@ elif mode == 'evidential':
 	ic(u_flat.shape, mask_flat.shape)
 	print("Evidential uncertainty")
 	getMetrics(label_test, u, u_flat, "UUnetConvLSTMEviential", "EvidentialDL", pos_label = 1)
-	predictions_int = predictions_test.argmax(axis=-1)
-	
-	ic(np.unique(predictions_int, return_counts=True))
-	# example: class_dict = {0: 1, 1: 2, 2: 6, 3: 8}
-	predictions_tmp = predictions_int.copy()
-	for key in class_dict.keys():
-		ic(key, class_dict[key])
-		predictions_int[predictions_tmp == key] = class_dict[key]
-	ic(np.unique(predictions_int, return_counts=True))
-	# pdb.set_trace()
-	getClosedSetMetrics(label_test, u_flat, predictions_int)
+	uncertaintyInference = EvidentialInference(class_dict = class_dict)
+	uncertaintyInference.getClosedSetMetrics(metrics, label_test, 
+		u_flat, predictions_test)
 
 	getThresholdMetrics(label_test, u_flat, threshold = 0.16, unknown_class_id = 20)
 	# pdb.set_trace()

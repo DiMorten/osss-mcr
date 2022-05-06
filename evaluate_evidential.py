@@ -101,16 +101,16 @@ if __name__ == '__main__':
 
 
 	paramsTrainCustom = {
-		'getFullIms': False,
-		'coordsExtract': False,
+		'getFullIms': True,
+		'coordsExtract': True,
 		'train': False,
 		'openSetMethod': None, # Options: None, OpenPCS, OpenPCS++
 #		'openSetLoadModel': True,
 		'selectMainClasses': True,
 		'evidentialDL': True,
 		'dataset': 'lm', # lm: L Eduardo Magalhaes.
-		'seq_date': 'jun',
-		'id': 'evidential4',
+		'seq_date': 'mar',
+		'id': 'evidential_700samples',
 		'model_type': UUnetConvLSTMEvidential
 	}
 
